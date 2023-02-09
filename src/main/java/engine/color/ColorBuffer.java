@@ -19,6 +19,7 @@ public class ColorBuffer extends CustomBuffer<ColorBuffer> implements Iterable<C
 {
     public static @NotNull ColorBuffer create(@NotNull ColorFormat format, int capacity)
     {
+        if (format == ColorFormat.UNKNOWN) throw new IllegalArgumentException("Invalid Format: " + format);
         ByteBuffer container = ByteBuffer.allocateDirect(capacity * format.sizeof).order(ByteOrder.nativeOrder());
         return new ColorBuffer(format, container, capacity);
     }
@@ -30,6 +31,7 @@ public class ColorBuffer extends CustomBuffer<ColorBuffer> implements Iterable<C
     
     public static @NotNull ColorBuffer create(@NotNull ColorFormat format, long address, int capacity)
     {
+        if (format == ColorFormat.UNKNOWN) throw new IllegalArgumentException("Invalid Format: " + format);
         ByteBuffer container = MemoryUtil.memByteBuffer(address, capacity * format.sizeof);
         return new ColorBuffer(format, container, capacity);
     }
@@ -51,6 +53,7 @@ public class ColorBuffer extends CustomBuffer<ColorBuffer> implements Iterable<C
     
     public static @NotNull ColorBuffer wrap(@NotNull ColorFormat format, @NotNull ByteBuffer container)
     {
+        if (format == ColorFormat.UNKNOWN) throw new IllegalArgumentException("Invalid Format: " + format);
         return new ColorBuffer(format, container, container.remaining() / format.sizeof);
     }
     
@@ -71,6 +74,7 @@ public class ColorBuffer extends CustomBuffer<ColorBuffer> implements Iterable<C
     
     public static @NotNull ColorBuffer malloc(@NotNull ColorFormat format, int capacity)
     {
+        if (format == ColorFormat.UNKNOWN) throw new IllegalArgumentException("Invalid Format: " + format);
         ByteBuffer container = MemoryUtil.memAlloc(capacity * format.sizeof);
         return new ColorBuffer(format, container, capacity);
     }
@@ -82,6 +86,7 @@ public class ColorBuffer extends CustomBuffer<ColorBuffer> implements Iterable<C
     
     public static @NotNull ColorBuffer malloc(@NotNull ColorFormat format, int capacity, @NotNull MemoryStack stack)
     {
+        if (format == ColorFormat.UNKNOWN) throw new IllegalArgumentException("Invalid Format: " + format);
         ByteBuffer container = stack.malloc(1, capacity * format.sizeof);
         return new ColorBuffer(format, container, capacity);
     }
@@ -93,6 +98,7 @@ public class ColorBuffer extends CustomBuffer<ColorBuffer> implements Iterable<C
     
     public static @NotNull ColorBuffer calloc(@NotNull ColorFormat format, int capacity)
     {
+        if (format == ColorFormat.UNKNOWN) throw new IllegalArgumentException("Invalid Format: " + format);
         ByteBuffer container = MemoryUtil.memCalloc(capacity, format.sizeof);
         return new ColorBuffer(format, container, capacity);
     }
@@ -104,6 +110,7 @@ public class ColorBuffer extends CustomBuffer<ColorBuffer> implements Iterable<C
     
     public static @NotNull ColorBuffer calloc(@NotNull ColorFormat format, int capacity, @NotNull MemoryStack stack)
     {
+        if (format == ColorFormat.UNKNOWN) throw new IllegalArgumentException("Invalid Format: " + format);
         ByteBuffer container = stack.calloc(1, capacity * format.sizeof);
         return new ColorBuffer(format, container, capacity);
     }

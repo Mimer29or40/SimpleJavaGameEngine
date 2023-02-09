@@ -44,6 +44,8 @@ class ColorBufferTest
         Assertions.assertEquals(256, buffer.capacity());
         Assertions.assertEquals(256, buffer.remaining());
         buffer.free();
+        
+        Assertions.assertThrows(IllegalArgumentException.class, () -> ColorBuffer.create(ColorFormat.UNKNOWN, 1));
     }
     
     @Test
@@ -75,6 +77,10 @@ class ColorBufferTest
         
         buffer = ColorBuffer.createSafe(ColorFormat.RGB, MemoryUtil.NULL, 256);
         Assertions.assertNull(buffer);
+        
+        final ByteBuffer b = MemoryUtil.memAlloc(256 * ColorFormat.RGB.sizeof);
+        Assertions.assertThrows(IllegalArgumentException.class, () -> ColorBuffer.createSafe(ColorFormat.UNKNOWN, MemoryUtil.memAddress(b), 1));
+        MemoryUtil.memFree(b);
     }
     
     @Test
@@ -98,6 +104,10 @@ class ColorBufferTest
         Assertions.assertEquals(256, buffer.capacity());
         Assertions.assertEquals(256, buffer.remaining());
         buffer.free();
+        
+        final ByteBuffer b = MemoryUtil.memAlloc(4);
+        Assertions.assertThrows(IllegalArgumentException.class, () -> ColorBuffer.wrap(ColorFormat.UNKNOWN, b));
+        MemoryUtil.memFree(b);
     }
     
     @SuppressWarnings({"ConstantValue", "DataFlowIssue"})
@@ -130,6 +140,10 @@ class ColorBufferTest
         
         buffer = ColorBuffer.wrapSafe(ColorFormat.RGB, null);
         Assertions.assertNull(buffer);
+        
+        final ByteBuffer b = MemoryUtil.memAlloc(4);
+        Assertions.assertThrows(IllegalArgumentException.class, () -> ColorBuffer.wrapSafe(ColorFormat.UNKNOWN, b));
+        MemoryUtil.memFree(b);
     }
     
     @Test
@@ -165,6 +179,8 @@ class ColorBufferTest
             Assertions.assertEquals(256, buffer.capacity());
             Assertions.assertEquals(256, buffer.remaining());
         }
+        
+        Assertions.assertThrows(IllegalArgumentException.class, () -> ColorBuffer.malloc(ColorFormat.UNKNOWN, 256));
     }
     
     @Test
@@ -200,6 +216,8 @@ class ColorBufferTest
             Assertions.assertEquals(256, buffer.capacity());
             Assertions.assertEquals(256, buffer.remaining());
         }
+        
+        Assertions.assertThrows(IllegalArgumentException.class, () -> ColorBuffer.calloc(ColorFormat.UNKNOWN, 256));
     }
     
     @Test
@@ -337,7 +355,7 @@ class ColorBufferTest
         final int[] i = {0};
         buffer.forEach(c -> c.set(i[0], i[0], i[0], i[0]++));
         Assertions.assertEquals(256, i[0]);
-    
+        
         i[0] = 0;
         buffer.forEach(c -> Assertions.assertTrue(c.equals(i[0], i[0], i[0], i[0]++)));
         Assertions.assertEquals(256, i[0]);
