@@ -1,7 +1,6 @@
 package engine;
 
-import engine.util.logging.Level;
-import engine.util.logging.Logger;
+import engine.util.Logger;
 
 public class EngineDemo extends Engine
 {
@@ -36,7 +35,7 @@ public class EngineDemo extends Engine
     
     public static void main(String[] args)
     {
-        Logger.GLOBAL_LEVEL = Level.DEBUG;
+        Logger.LEVEL = Logger.Level.DEBUG;
         
         Engine instance = new EngineDemo();
         start(instance);

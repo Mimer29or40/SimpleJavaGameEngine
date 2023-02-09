@@ -1,7 +1,7 @@
 package engine;
 
 import engine.util.ThreadExecutor;
-import engine.util.logging.Logger;
+import engine.util.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector2i;
 import org.joml.Vector2ic;

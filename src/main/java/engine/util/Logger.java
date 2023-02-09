@@ -1,10 +1,15 @@
-package engine.util.logging;
+package engine.util;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.io.Writer;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
@@ -13,16 +18,14 @@ public class Logger
 {
     private static final Map<String, Logger> LOGGER_MAP = new HashMap<>();
     
-    public static @NotNull  Level                  GLOBAL_LEVEL    = Level.INFO;
-    public static final     List<@NotNull Handler> GLOBAL_HANDLERS = new ArrayList<>();
-    public static @Nullable Filter                 GLOBAL_FILTER   = null;
+    public static @NotNull  Level  LEVEL          = Level.INFO;
+    public static @Nullable Filter FILTER         = null;
+    public static @NotNull  String PREFIX_FORMAT  = "[%1$tY-%1$tm-%1$td %1$tH:%1$tM:%1$tS.%1$tL] [%2$s/%3$s] [%4$s]";
+    public static @NotNull  String MESSAGE_FORMAT = "%s: %s%n";
     
-    static
-    {
-        Handler consoleHandler = new Handler.Stream(System.out);
-        
-        Logger.GLOBAL_HANDLERS.add(consoleHandler);
-    }
+    private static final Pattern LINE_SPLIT = Pattern.compile("(\\n|\\n\\r|\\r\\n)");
+    
+    private static final Writer CONSOLE = new OutputStreamWriter(System.out);
     
     public static Logger getLogger()
     {
@@ -37,9 +40,10 @@ public class Logger
     
     public final String name;
     
-    public @Nullable Level                  level    = null;
-    public final     List<@NotNull Handler> handlers = new ArrayList<>();
-    public @Nullable Filter                 filter   = null;
+    public @Nullable Level  level         = null;
+    public @Nullable Filter filter        = null;
+    public @Nullable String prefixFormat  = null;
+    public @Nullable String messageFormat = null;
     
     private Logger(String name)
     {
@@ -55,7 +59,7 @@ public class Logger
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     public boolean isLoggable(@NotNull Level level)
     {
-        int logLevel = Logger.GLOBAL_LEVEL.value;
+        int logLevel = Logger.LEVEL.value;
         if (this.level != null) logLevel = Math.max(logLevel, this.level.value);
         return level.value >= logLevel;
     }
@@ -63,18 +67,48 @@ public class Logger
     private void logImpl(@NotNull Record record)
     {
         if (this.filter != null && !this.filter.isLoggable(record)) return;
-        if (Logger.GLOBAL_FILTER != null && !Logger.GLOBAL_FILTER.isLoggable(record)) return;
+        if (Logger.FILTER != null && !Logger.FILTER.isLoggable(record)) return;
         
-        for (Handler handler : this.handlers)
+        try
         {
-            handler.publish(record);
-            handler.flush();
+            ZonedDateTime zdt    = ZonedDateTime.ofInstant(record.instant, ZoneId.systemDefault());
+            String        thread = record.thread;
+            Level         level  = record.level;
+            String        name   = record.logger;
+            
+            String prefixFmt  = this.prefixFormat != null ? this.prefixFormat : Logger.PREFIX_FORMAT;
+            String messageFmt = this.messageFormat != null ? this.messageFormat : Logger.MESSAGE_FORMAT;
+            
+            String messagePrefix = String.format(prefixFmt, zdt, thread, level, name);
+            
+            List<String> lines = new ArrayList<>();
+            for (String line : Logger.LINE_SPLIT.split(record.message))
+            {
+                lines.add(String.format(messageFmt, messagePrefix, line));
+            }
+            
+            String linePrefix = null;
+            String lineSuffix = null;
+            if (record.level.value >= Level.SEVERE.value)
+            {
+                linePrefix = Logger.RED;
+                lineSuffix = Logger.RESET;
+            }
+            else if (record.level.value >= Level.WARNING.value)
+            {
+                linePrefix = Logger.YELLOW;
+                lineSuffix = Logger.RESET;
+            }
+            for (String line : lines)
+            {
+                if (linePrefix != null) Logger.CONSOLE.write(linePrefix);
+                Logger.CONSOLE.write(line);
+                if (lineSuffix != null) Logger.CONSOLE.write(lineSuffix);
+            }
+            
+            Logger.CONSOLE.flush();
         }
-        for (Handler handler : Logger.GLOBAL_HANDLERS)
-        {
-            handler.publish(record);
-            handler.flush();
-        }
+        catch (Exception ignored) {}
     }
     
     /**
@@ -460,4 +494,50 @@ public class Logger
     public static final String PURPLE_BACKGROUND_BRIGHT = "\033[0;105m";
     public static final String CYAN_BACKGROUND_BRIGHT   = "\033[0;106m";
     public static final String WHITE_BACKGROUND_BRIGHT  = "\033[0;107m";
+    
+    // -------------------- Sub-Classes -------------------- //
+    
+    private static final class Record
+    {
+        private final String  logger;
+        private final Level   level;
+        private final String  message;
+        private final Instant instant;
+        private final String  thread;
+        
+        private Record(@NotNull String logger, @NotNull Level level, String message)
+        {
+            this.logger  = logger;
+            this.level   = level;
+            this.message = message;
+            this.instant = Instant.now();
+            this.thread  = Thread.currentThread().getName();
+        }
+    }
+    
+    @FunctionalInterface
+    public interface Filter
+    {
+        @SuppressWarnings("BooleanMethodIsAlwaysInverted")
+        boolean isLoggable(Record record);
+    }
+    
+    public enum Level
+    {
+        OFF(Integer.MAX_VALUE),
+        SEVERE(600),
+        WARNING(500),
+        INFO(400),
+        DEBUG(300),
+        TRACE(100),
+        ALL(Integer.MIN_VALUE),
+        ;
+        
+        private final int value;
+        
+        Level(int value)
+        {
+            this.value = value;
+        }
+    }
 }

@@ -1,7 +1,6 @@
 package engine.util;
 
 import org.jetbrains.annotations.NotNull;
-import engine.util.logging.Logger;
 
 import java.util.Queue;
 import java.util.concurrent.Callable;

@@ -2,7 +2,7 @@ package engine;
 
 import engine.color.ColorBuffer;
 import engine.color.ColorFormat;
-import engine.util.logging.Logger;
+import engine.util.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.system.MemoryStack;

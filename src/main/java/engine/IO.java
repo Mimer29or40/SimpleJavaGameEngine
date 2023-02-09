@@ -1,6 +1,6 @@
 package engine;
 
-import engine.util.logging.Logger;
+import engine.util.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;

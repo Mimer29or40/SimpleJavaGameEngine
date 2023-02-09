@@ -1,6 +1,5 @@
 package engine.util;
 
-import engine.util.logging.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
