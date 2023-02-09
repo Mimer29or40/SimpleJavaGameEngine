@@ -293,7 +293,7 @@ public class ColorBuffer extends CustomBuffer<ColorBuffer> implements Iterable<C
         
         private       int index;
         private final int fence;
-    
+        
         private ColorBufferIterator(int position, int limit)
         {
             this.index = position;

@@ -455,10 +455,10 @@ public class Color implements Colorc, Externalizable, Cloneable
     @Override
     public @NotNull Color tint(@NotNull Colorc color, @NotNull Color out)
     {
-        out.r = Color.toInt(this.r * color.r() / 255);
-        out.g = Color.toInt(this.g * color.g() / 255);
-        out.b = Color.toInt(this.b * color.b() / 255);
-        out.a = Color.toInt(this.a * color.a() / 255);
+        out.r = toInt(this.r * color.r() / 255);
+        out.g = toInt(this.g * color.g() / 255);
+        out.b = toInt(this.b * color.b() / 255);
+        out.a = toInt(this.a * color.a() / 255);
         return out;
     }
     
@@ -612,10 +612,10 @@ public class Color implements Colorc, Externalizable, Cloneable
         int f        = (int) Math.round(amount * 255);
         int fInverse = 255 - f;
         
-        out.r = Color.toInt((this.r * fInverse + src.r() * f) / 255);
-        out.g = Color.toInt((this.g * fInverse + src.g() * f) / 255);
-        out.b = Color.toInt((this.b * fInverse + src.b() * f) / 255);
-        out.a = Color.toInt((this.a * fInverse + src.a() * f) / 255);
+        out.r = toInt((this.r * fInverse + src.r() * f) / 255);
+        out.g = toInt((this.g * fInverse + src.g() * f) / 255);
+        out.b = toInt((this.b * fInverse + src.b() * f) / 255);
+        out.a = toInt((this.a * fInverse + src.a() * f) / 255);
         
         return out;
     }
