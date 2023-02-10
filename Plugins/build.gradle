@@ -1,0 +1,8 @@
+version "unspecified"
+
+
+subprojects {
+    dependencies {
+        implementation project(":Engine")
+    }
+}
