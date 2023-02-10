@@ -1,5 +1,6 @@
 package engine;
 
+import engine.color.Color;
 import engine.color.ColorBuffer;
 import engine.color.ColorFormat;
 import engine.util.Logger;
@@ -34,6 +35,14 @@ public class Image
     public Image(@NotNull ColorBuffer data, int width, int height)
     {
         this.data = data;
+        
+        this.width  = width;
+        this.height = height;
+    }
+    
+    public Image(@NotNull ColorFormat format, int width, int height)
+    {
+        this.data = ColorBuffer.malloc(format, width * height);
         
         this.width  = width;
         this.height = height;
@@ -116,6 +125,52 @@ public class Image
         int stride   = this.width * channels;
         
         return stbi_write_png(filePath, this.width, this.height, channels, buffer, stride);
+    }
+    
+    @NotNull
+    public ColorBuffer palette(int maxPaletteSize)
+    {
+        int count = 0;
+        
+        ColorBuffer palette = ColorBuffer.malloc(ColorFormat.RGBA, maxPaletteSize);
+        
+        Color color0 = new Color();
+        Color color1 = new Color();
+        for (int i = 0, n = this.width * this.height; i < n; i++)
+        {
+            this.data.get(i, color0);
+            
+            if (color0.a() != 0)
+            {
+                // Check if the color is already on palette
+                boolean present = false;
+                for (int j = 0; j < count; j++)
+                {
+                    palette.get(j, color1);
+                    if (color0.equals(color1))
+                    {
+                        present = true;
+                        break;
+                    }
+                }
+                
+                // Store color if not on the palette
+                if (!present)
+                {
+                    // Add pixels[i] to palette
+                    palette.put(count, color0);
+                    count++;
+                    
+                    // We reached the limit of colors supported by palette
+                    if (count >= maxPaletteSize)
+                    {
+                        Image.LOGGER.warning("Palette is greater than %s colors", maxPaletteSize);
+                        break;
+                    }
+                }
+            }
+        }
+        return palette.limit(count);
     }
     
     // -------------------- Sub-Classes -------------------- //

@@ -151,7 +151,7 @@ public class Color implements Colorc, Externalizable, Cloneable
     
     public Color(double r, double g, double b)
     {
-        set(r, g, b, 255);
+        set(r, g, b, 1.0);
     }
     
     public Color(double gray, double a)
@@ -161,7 +161,7 @@ public class Color implements Colorc, Externalizable, Cloneable
     
     public Color(double gray)
     {
-        set(gray, 255);
+        set(gray, 1.0);
     }
     
     @Override
