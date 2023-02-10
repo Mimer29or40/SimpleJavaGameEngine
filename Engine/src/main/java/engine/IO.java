@@ -156,91 +156,91 @@ public class IO
     {
         // ---------- Window ---------- //
         {
-            IO.WINDOW_ON_CLOSE = false;
+            IO.WINDOW_ON_CLOSE.fired = false;
             if (IO.WINDOW_CLOSE_REQUESTED)
             {
-                IO.WINDOW_ON_CLOSE = true;
-                Engine.stop();
+                IO.WINDOW_ON_CLOSE.fired = true;
                 
                 IO.WINDOW_CLOSE_REQUESTED = false;
             }
             
-            IO.WINDOW_ON_FOCUSED = false;
+            IO.WINDOW_ON_FOCUSED.fired = false;
             if (IO.WINDOW_FOCUSED_CHANGE != null)
             {
-                IO.WINDOW_FOCUSED    = IO.WINDOW_FOCUSED_CHANGE;
-                IO.WINDOW_ON_FOCUSED = true;
+                IO.WINDOW_FOCUSED          = IO.WINDOW_FOCUSED_CHANGE;
+                IO.WINDOW_ON_FOCUSED.fired = true;
                 
                 IO.WINDOW_FOCUSED_CHANGE = null;
             }
             
-            IO.WINDOW_ON_MINIMIZED = false;
+            IO.WINDOW_ON_MINIMIZED.fired = false;
             if (IO.WINDOW_MINIMIZED_CHANGE != null)
             {
-                IO.WINDOW_MINIMIZED    = IO.WINDOW_MINIMIZED_CHANGE;
-                IO.WINDOW_ON_MINIMIZED = true;
+                IO.WINDOW_MINIMIZED          = IO.WINDOW_MINIMIZED_CHANGE;
+                IO.WINDOW_ON_MINIMIZED.fired = true;
                 
                 IO.WINDOW_MINIMIZED_CHANGE = null;
             }
             
-            IO.WINDOW_ON_MAXIMIZED = false;
+            IO.WINDOW_ON_MAXIMIZED.fired = false;
             if (IO.WINDOW_MAXIMIZED_CHANGE != null)
             {
-                IO.WINDOW_MAXIMIZED    = IO.WINDOW_MAXIMIZED_CHANGE;
-                IO.WINDOW_ON_MAXIMIZED = true;
+                IO.WINDOW_MAXIMIZED          = IO.WINDOW_MAXIMIZED_CHANGE;
+                IO.WINDOW_ON_MAXIMIZED.fired = true;
                 
                 IO.WINDOW_MAXIMIZED_CHANGE = null;
             }
             
-            IO.WINDOW_ON_POS = false;
+            IO.WINDOW_ON_POS.fired = false;
             if (IO.WINDOW_POS_CHANGE != null)
             {
                 IO.WINDOW_POS.set(IO.WINDOW_POS_CHANGE);
-                IO.WINDOW_ON_POS = true;
+                IO.WINDOW_ON_POS.fired = true;
                 
                 IO.WINDOW_POS_CHANGE = null;
             }
             
-            IO.WINDOW_ON_SIZE = false;
+            IO.WINDOW_ON_SIZE.fired = false;
             if (IO.WINDOW_SIZE_CHANGE != null)
             {
                 IO.WINDOW_SIZE.set(IO.WINDOW_SIZE_CHANGE);
-                IO.WINDOW_ON_SIZE = true;
+                IO.WINDOW_ON_SIZE.fired = true;
                 
                 IO.WINDOW_SIZE_CHANGE = null;
             }
             
-            IO.WINDOW_ON_CONTENT_SCALE = false;
+            IO.WINDOW_ON_CONTENT_SCALE.fired = false;
             if (IO.WINDOW_CONTENT_SCALE_CHANGE != null)
             {
                 IO.WINDOW_CONTENT_SCALE.set(IO.WINDOW_CONTENT_SCALE_CHANGE);
-                IO.WINDOW_ON_CONTENT_SCALE = true;
+                IO.WINDOW_ON_CONTENT_SCALE.fired = true;
                 
                 IO.WINDOW_CONTENT_SCALE_CHANGE = null;
             }
             
-            IO.WINDOW_ON_FRAMEBUFFER_SIZE = false;
+            IO.WINDOW_ON_FRAMEBUFFER_SIZE.fired = false;
             if (IO.WINDOW_FRAMEBUFFER_SIZE_CHANGE != null)
             {
                 IO.WINDOW_FRAMEBUFFER_SIZE.set(IO.WINDOW_FRAMEBUFFER_SIZE_CHANGE);
-                IO.WINDOW_ON_FRAMEBUFFER_SIZE = true;
+                IO.WINDOW_ON_FRAMEBUFFER_SIZE.fired = true;
                 
                 IO.WINDOW_FRAMEBUFFER_SIZE_CHANGE = null;
             }
             
-            IO.WINDOW_ON_REFRESH = false;
+            IO.WINDOW_ON_REFRESH.fired = false;
             if (IO.WINDOW_REFRESH_REQUESTED)
             {
-                IO.WINDOW_ON_REFRESH = true;
+                IO.WINDOW_ON_REFRESH.fired = true;
                 
                 IO.WINDOW_REFRESH_REQUESTED = false;
             }
             
-            IO.WINDOW_ON_DROPPED = false;
+            IO.WINDOW_ON_DROPPED.fired = false;
             if (IO.WINDOW_DROPPED_CHANGE != null)
             {
                 IO.WINDOW_DROPPED.clear();
                 while (IO.WINDOW_DROPPED_CHANGE.hasRemaining()) IO.WINDOW_DROPPED.add(MemoryUtil.memUTF8(IO.WINDOW_DROPPED_CHANGE.get()));
+                IO.WINDOW_ON_DROPPED.fired = true;
                 
                 IO.WINDOW_DROPPED_CHANGE = null;
             }
@@ -248,34 +248,35 @@ public class IO
         
         // ---------- Mouse ---------- //
         {
-            IO.MOUSE_ON_ENTERED = false;
+            IO.MOUSE_ON_ENTERED.fired = false;
             if (IO.MOUSE_ENTERED_CHANGE != null)
             {
-                IO.MOUSE_ENTERED    = IO.MOUSE_ENTERED_CHANGE;
-                IO.MOUSE_ON_ENTERED = true;
+                IO.MOUSE_ENTERED          = IO.MOUSE_ENTERED_CHANGE;
+                IO.MOUSE_ON_ENTERED.fired = true;
                 
                 if (IO.MOUSE_ENTERED) IO.MOUSE_POS_CHANGE = new Vector2d(IO.MOUSE_POS.x, IO.MOUSE_POS.y);
                 
                 IO.MOUSE_ENTERED_CHANGE = null;
             }
             
-            IO.MOUSE_ON_POS = false;
+            IO.MOUSE_ON_POS.fired = false;
             IO.MOUSE_POS_DELTA.set(0);
             if (IO.MOUSE_POS_CHANGE != null)
             {
                 IO.MOUSE_POS_DELTA.set(IO.MOUSE_POS_CHANGE.x(), IO.MOUSE_POS_CHANGE.y()).sub(IO.MOUSE_POS);
                 IO.MOUSE_POS.set(IO.MOUSE_POS_CHANGE.x(), IO.MOUSE_POS_CHANGE.y());
-                IO.MOUSE_ON_POS = true;
+                IO.MOUSE_ON_POS.fired = true;
                 
                 IO.MOUSE_POS_CHANGE = null;
             }
             
-            IO.MOUSE_ON_SCROLL = false;
+            IO.MOUSE_ON_SCROLL.fired = false;
             IO.MOUSE_SCROLL.set(0);
             if (IO.MOUSE_SCROLL_CHANGE != null)
             {
+                System.out.println("Scroll");
                 IO.MOUSE_SCROLL.set(IO.MOUSE_SCROLL_CHANGE.x(), IO.MOUSE_SCROLL_CHANGE.y());
-                IO.MOUSE_ON_SCROLL = true;
+                IO.MOUSE_ON_SCROLL.fired = true;
                 
                 IO.MOUSE_SCROLL_CHANGE = null;
             }
@@ -333,18 +334,23 @@ public class IO
                     }
                 }
             }
+            IO.MOUSE_ON_BUTTON_DOWN.fired     = !IO.MOUSE_BUTTON_DOWN.isEmpty();
+            IO.MOUSE_ON_BUTTON_UP.fired       = !IO.MOUSE_BUTTON_UP.isEmpty();
+            IO.MOUSE_ON_BUTTON_REPEATED.fired = !IO.MOUSE_BUTTON_REPEATED.isEmpty();
+            IO.MOUSE_ON_BUTTON_HELD.fired     = !IO.MOUSE_BUTTON_HELD.isEmpty();
+            IO.MOUSE_ON_BUTTON_DRAGGED.fired  = !IO.MOUSE_BUTTON_DRAGGED.isEmpty();
         }
         
         // ---------- Keyboard ---------- //
         {
-            IO.KEYBOARD_ON_TYPED = false;
+            IO.KEYBOARD_ON_TYPED.fired = false;
             IO.KEYBOARD_TYPED.setLength(0);
             
             Integer keyTyped;
             while ((keyTyped = IO.KEYBOARD_TYPED_CHANGES.poll()) != null)
             {
                 IO.KEYBOARD_TYPED.appendCodePoint(keyTyped);
-                IO.KEYBOARD_ON_TYPED = true;
+                IO.KEYBOARD_ON_TYPED.fired = true;
             }
             
             IO.KEYBOARD_KEY_DOWN.clear();
@@ -385,6 +391,10 @@ public class IO
                     IO.KEYBOARD_KEY_HELD.add(key);
                 }
             }
+            IO.KEYBOARD_ON_KEY_DOWN.fired     = !IO.KEYBOARD_KEY_DOWN.isEmpty();
+            IO.KEYBOARD_ON_KEY_UP.fired       = !IO.KEYBOARD_KEY_UP.isEmpty();
+            IO.KEYBOARD_ON_KEY_REPEATED.fired = !IO.KEYBOARD_KEY_REPEATED.isEmpty();
+            IO.KEYBOARD_ON_KEY_HELD.fired     = !IO.KEYBOARD_KEY_HELD.isEmpty();
         }
     }
     
@@ -456,45 +466,45 @@ public class IO
     
     static long WINDOW_HANDLE = MemoryUtil.NULL;
     
-    static boolean WINDOW_CLOSE_REQUESTED = false;
-    static boolean WINDOW_ON_CLOSE        = false;
+    static       boolean WINDOW_CLOSE_REQUESTED = false;
+    static final Event   WINDOW_ON_CLOSE        = new Event();
     
     static           boolean WINDOW_FOCUSED;
     static @Nullable Boolean WINDOW_FOCUSED_CHANGE = null;
-    static           boolean WINDOW_ON_FOCUSED     = false;
+    static final     Event   WINDOW_ON_FOCUSED     = new Event();
     
     static           boolean WINDOW_MINIMIZED;
     static @Nullable Boolean WINDOW_MINIMIZED_CHANGE = null;
-    static           boolean WINDOW_ON_MINIMIZED     = false;
+    static final     Event   WINDOW_ON_MINIMIZED     = new Event();
     
     static           boolean WINDOW_MAXIMIZED;
     static @Nullable Boolean WINDOW_MAXIMIZED_CHANGE = null;
-    static           boolean WINDOW_ON_MAXIMIZED     = false;
+    static final     Event   WINDOW_ON_MAXIMIZED     = new Event();
     
-    static final @NotNull Vector2i WINDOW_POS        = new Vector2i();
-    static @Nullable      Vector2i WINDOW_POS_CHANGE = null;
-    static                boolean  WINDOW_ON_POS     = false;
+    static final     Vector2i WINDOW_POS        = new Vector2i();
+    static @Nullable Vector2i WINDOW_POS_CHANGE = null;
+    static final     Event    WINDOW_ON_POS     = new Event();
     
-    static final @NotNull Vector2i WINDOW_SIZE        = new Vector2i();
-    static @Nullable      Vector2i WINDOW_SIZE_CHANGE = null;
-    static                boolean  WINDOW_ON_SIZE     = false;
+    static final     Vector2i WINDOW_SIZE        = new Vector2i();
+    static @Nullable Vector2i WINDOW_SIZE_CHANGE = null;
+    static final     Event    WINDOW_ON_SIZE     = new Event();
     
-    static final @NotNull Vector2d WINDOW_CONTENT_SCALE        = new Vector2d();
-    static @Nullable      Vector2d WINDOW_CONTENT_SCALE_CHANGE = null;
-    static                boolean  WINDOW_ON_CONTENT_SCALE     = false;
+    static final     Vector2d WINDOW_CONTENT_SCALE        = new Vector2d();
+    static @Nullable Vector2d WINDOW_CONTENT_SCALE_CHANGE = null;
+    static final     Event    WINDOW_ON_CONTENT_SCALE     = new Event();
     
-    static final @NotNull Vector2i WINDOW_FRAMEBUFFER_SIZE        = new Vector2i();
-    static @Nullable      Vector2i WINDOW_FRAMEBUFFER_SIZE_CHANGE = null;
-    static                boolean  WINDOW_ON_FRAMEBUFFER_SIZE     = false;
+    static final     Vector2i WINDOW_FRAMEBUFFER_SIZE        = new Vector2i();
+    static @Nullable Vector2i WINDOW_FRAMEBUFFER_SIZE_CHANGE = null;
+    static final     Event    WINDOW_ON_FRAMEBUFFER_SIZE     = new Event();
     
-    static boolean WINDOW_REFRESH_REQUESTED = false;
-    static boolean WINDOW_ON_REFRESH        = false;
+    static       boolean WINDOW_REFRESH_REQUESTED = false;
+    static final Event   WINDOW_ON_REFRESH        = new Event();
     
-    static final @NotNull List<@NotNull String> WINDOW_DROPPED        = new LinkedList<>();
-    static @Nullable      PointerBuffer         WINDOW_DROPPED_CHANGE = null;
-    static                boolean               WINDOW_ON_DROPPED     = false;
+    static final     List<@NotNull String> WINDOW_DROPPED        = new LinkedList<>();
+    static @Nullable PointerBuffer         WINDOW_DROPPED_CHANGE = null;
+    static final     Event                 WINDOW_ON_DROPPED     = new Event();
     
-    public static boolean windowOnClose()
+    public static @NotNull Event windowOnClose()
     {
         return IO.WINDOW_ON_CLOSE;
     }
@@ -504,7 +514,7 @@ public class IO
         return IO.WINDOW_FOCUSED;
     }
     
-    public static boolean windowOnFocused()
+    public static @NotNull Event windowOnFocused()
     {
         return IO.WINDOW_ON_FOCUSED;
     }
@@ -514,7 +524,7 @@ public class IO
         return IO.WINDOW_MINIMIZED;
     }
     
-    public static boolean windowOnMinimized()
+    public static @NotNull Event windowOnMinimized()
     {
         return IO.WINDOW_ON_MINIMIZED;
     }
@@ -524,7 +534,7 @@ public class IO
         return IO.WINDOW_MAXIMIZED;
     }
     
-    public static boolean windowOnMaximized()
+    public static @NotNull Event windowOnMaximized()
     {
         return IO.WINDOW_ON_MAXIMIZED;
     }
@@ -534,7 +544,7 @@ public class IO
         return IO.WINDOW_POS;
     }
     
-    public static boolean windowOnPosChange()
+    public static @NotNull Event windowOnPosChange()
     {
         return IO.WINDOW_ON_POS;
     }
@@ -544,7 +554,7 @@ public class IO
         return IO.WINDOW_SIZE;
     }
     
-    public static boolean windowOnSizeChange()
+    public static @NotNull Event windowOnSizeChange()
     {
         return IO.WINDOW_ON_SIZE;
     }
@@ -554,7 +564,7 @@ public class IO
         return IO.WINDOW_CONTENT_SCALE;
     }
     
-    public static boolean windowOnContentScaleChange()
+    public static @NotNull Event windowOnContentScaleChange()
     {
         return IO.WINDOW_ON_CONTENT_SCALE;
     }
@@ -564,12 +574,12 @@ public class IO
         return IO.WINDOW_FRAMEBUFFER_SIZE;
     }
     
-    public static boolean windowOnFramebufferSizeChange()
+    public static @NotNull Event windowOnFramebufferSizeChange()
     {
         return IO.WINDOW_ON_FRAMEBUFFER_SIZE;
     }
     
-    public static boolean windowOnRefresh()
+    public static @NotNull Event windowOnRefresh()
     {
         return IO.WINDOW_ON_REFRESH;
     }
@@ -579,7 +589,7 @@ public class IO
         return Collections.unmodifiableList(IO.WINDOW_DROPPED);
     }
     
-    public static boolean windowOnDropped()
+    public static @NotNull Event windowOnDropped()
     {
         return IO.WINDOW_ON_DROPPED;
     }
@@ -697,33 +707,42 @@ public class IO
     
     static           boolean MOUSE_ENTERED        = false;
     static @Nullable Boolean MOUSE_ENTERED_CHANGE = null;
-    static           boolean MOUSE_ON_ENTERED     = false;
+    static final     Event   MOUSE_ON_ENTERED     = new Event();
     
-    static final @NotNull Vector2d  MOUSE_POS        = new Vector2d();
-    static @Nullable      Vector2dc MOUSE_POS_CHANGE = null;
-    static                boolean   MOUSE_ON_POS     = false;
+    static final     Vector2d  MOUSE_POS        = new Vector2d();
+    static @Nullable Vector2dc MOUSE_POS_CHANGE = null;
+    static final     Event     MOUSE_ON_POS     = new Event();
     
-    static final @NotNull Vector2d MOUSE_POS_DELTA = new Vector2d();
+    static final Vector2d MOUSE_POS_DELTA = new Vector2d();
     
-    static final @NotNull Vector2d  MOUSE_SCROLL        = new Vector2d();
-    static @Nullable      Vector2dc MOUSE_SCROLL_CHANGE = null;
-    static                boolean   MOUSE_ON_SCROLL     = false;
+    static final     Vector2d  MOUSE_SCROLL        = new Vector2d();
+    static @Nullable Vector2dc MOUSE_SCROLL_CHANGE = null;
+    static final     Event     MOUSE_ON_SCROLL     = new Event();
     
-    static final @NotNull Map<@NotNull Integer, @NotNull Button>     MOUSE_BUTTON_MAP    = new HashMap<>();
-    static final @NotNull Map<@NotNull Button, @NotNull ButtonInput> MOUSE_BUTTON_STATES = new EnumMap<>(Button.class);
+    static final Map<Integer, Button>     MOUSE_BUTTON_MAP    = new HashMap<>();
+    static final Map<Button, ButtonInput> MOUSE_BUTTON_STATES = new EnumMap<>(Button.class);
     
-    static @NotNull EnumSet<@NotNull Button> MOUSE_BUTTON_DOWN     = EnumSet.noneOf(Button.class);
-    static @NotNull EnumSet<@NotNull Button> MOUSE_BUTTON_UP       = EnumSet.noneOf(Button.class);
-    static @NotNull EnumSet<@NotNull Button> MOUSE_BUTTON_REPEATED = EnumSet.noneOf(Button.class);
-    static @NotNull EnumSet<@NotNull Button> MOUSE_BUTTON_HELD     = EnumSet.noneOf(Button.class);
-    static @NotNull EnumSet<@NotNull Button> MOUSE_BUTTON_DRAGGED  = EnumSet.noneOf(Button.class);
+    static final EnumSet<Button> MOUSE_BUTTON_DOWN    = EnumSet.noneOf(Button.class);
+    static final Event           MOUSE_ON_BUTTON_DOWN = new Event();
+    
+    static final EnumSet<Button> MOUSE_BUTTON_UP    = EnumSet.noneOf(Button.class);
+    static final Event           MOUSE_ON_BUTTON_UP = new Event();
+    
+    static final EnumSet<Button> MOUSE_BUTTON_REPEATED    = EnumSet.noneOf(Button.class);
+    static final Event           MOUSE_ON_BUTTON_REPEATED = new Event();
+    
+    static final EnumSet<Button> MOUSE_BUTTON_HELD    = EnumSet.noneOf(Button.class);
+    static final Event           MOUSE_ON_BUTTON_HELD = new Event();
+    
+    static final EnumSet<Button> MOUSE_BUTTON_DRAGGED    = EnumSet.noneOf(Button.class);
+    static final Event           MOUSE_ON_BUTTON_DRAGGED = new Event();
     
     public static boolean mouseEntered()
     {
         return IO.MOUSE_ENTERED;
     }
     
-    public static boolean mouseOnEntered()
+    public static @NotNull Event mouseOnEntered()
     {
         return IO.MOUSE_ON_ENTERED;
     }
@@ -738,7 +757,7 @@ public class IO
         return IO.MOUSE_POS_DELTA;
     }
     
-    public static boolean mouseOnPosChange()
+    public static @NotNull Event mouseOnPosChange()
     {
         return IO.MOUSE_ON_POS;
     }
@@ -748,7 +767,7 @@ public class IO
         return IO.MOUSE_SCROLL;
     }
     
-    public static boolean mouseOnScrollChange()
+    public static @NotNull Event mouseOnScrollChange()
     {
         return IO.MOUSE_ON_SCROLL;
     }
@@ -768,9 +787,9 @@ public class IO
         return IO.MOUSE_BUTTON_STATES.get(button).downCount;
     }
     
-    public static boolean mouseOnButtonDown()
+    public static @NotNull Event mouseOnButtonDown()
     {
-        return !IO.MOUSE_BUTTON_DOWN.isEmpty();
+        return IO.MOUSE_ON_BUTTON_DOWN;
     }
     
     public static boolean mouseButtonUp(@NotNull Button button)
@@ -783,9 +802,9 @@ public class IO
         return Collections.unmodifiableSet(IO.MOUSE_BUTTON_UP);
     }
     
-    public static boolean mouseOnButtonUp()
+    public static @NotNull Event mouseOnButtonUp()
     {
-        return !IO.MOUSE_BUTTON_UP.isEmpty();
+        return IO.MOUSE_ON_BUTTON_UP;
     }
     
     public static boolean mouseButtonRepeated(@NotNull Button button)
@@ -798,9 +817,9 @@ public class IO
         return Collections.unmodifiableSet(IO.MOUSE_BUTTON_REPEATED);
     }
     
-    public static boolean mouseOnButtonRepeated()
+    public static @NotNull Event mouseOnButtonRepeated()
     {
-        return !IO.MOUSE_BUTTON_REPEATED.isEmpty();
+        return IO.MOUSE_ON_BUTTON_REPEATED;
     }
     
     public static boolean mouseButtonHeld(@NotNull Button button)
@@ -813,9 +832,9 @@ public class IO
         return Collections.unmodifiableSet(IO.MOUSE_BUTTON_HELD);
     }
     
-    public static boolean mouseOnButtonHeld()
+    public static @NotNull Event mouseOnButtonHeld()
     {
-        return !IO.MOUSE_BUTTON_HELD.isEmpty();
+        return IO.MOUSE_ON_BUTTON_HELD;
     }
     
     public static boolean mouseButtonDragged(@NotNull Button button)
@@ -828,9 +847,9 @@ public class IO
         return Collections.unmodifiableSet(IO.MOUSE_BUTTON_DRAGGED);
     }
     
-    public static boolean mouseOnButtonDragged()
+    public static @NotNull Event mouseOnButtonDragged()
     {
-        return !IO.MOUSE_BUTTON_DRAGGED.isEmpty();
+        return IO.MOUSE_ON_BUTTON_DRAGGED;
     }
     
     // -------------------- Mouse Functions -------------------- //
@@ -990,24 +1009,31 @@ public class IO
     
     // -------------------- Keyboard State -------------------- //
     
-    static final @NotNull StringBuffer            KEYBOARD_TYPED         = new StringBuffer();
-    static final @NotNull Queue<@NotNull Integer> KEYBOARD_TYPED_CHANGES = new ConcurrentLinkedQueue<>();
-    static                boolean                 KEYBOARD_ON_TYPED      = false;
+    static final StringBuffer   KEYBOARD_TYPED         = new StringBuffer();
+    static final Queue<Integer> KEYBOARD_TYPED_CHANGES = new ConcurrentLinkedQueue<>();
+    static final Event          KEYBOARD_ON_TYPED      = new Event();
     
-    static final @NotNull Map<@NotNull Integer, @NotNull Key> KEYBOARD_KEY_MAP    = new HashMap<>();
-    static final @NotNull Map<@NotNull Key, @NotNull Input>   KEYBOARD_KEY_STATES = new EnumMap<>(Key.class);
+    static final Map<Integer, Key> KEYBOARD_KEY_MAP    = new HashMap<>();
+    static final Map<Key, Input>   KEYBOARD_KEY_STATES = new EnumMap<>(Key.class);
     
-    static final @NotNull EnumSet<@NotNull Key> KEYBOARD_KEY_DOWN     = EnumSet.noneOf(Key.class);
-    static final @NotNull EnumSet<@NotNull Key> KEYBOARD_KEY_UP       = EnumSet.noneOf(Key.class);
-    static final @NotNull EnumSet<@NotNull Key> KEYBOARD_KEY_REPEATED = EnumSet.noneOf(Key.class);
-    static final @NotNull EnumSet<@NotNull Key> KEYBOARD_KEY_HELD     = EnumSet.noneOf(Key.class);
+    static final EnumSet<@NotNull Key> KEYBOARD_KEY_DOWN    = EnumSet.noneOf(Key.class);
+    static final Event                 KEYBOARD_ON_KEY_DOWN = new Event();
+    
+    static final EnumSet<@NotNull Key> KEYBOARD_KEY_UP    = EnumSet.noneOf(Key.class);
+    static final Event                 KEYBOARD_ON_KEY_UP = new Event();
+    
+    static final EnumSet<@NotNull Key> KEYBOARD_KEY_REPEATED    = EnumSet.noneOf(Key.class);
+    static final Event                 KEYBOARD_ON_KEY_REPEATED = new Event();
+    
+    static final EnumSet<@NotNull Key> KEYBOARD_KEY_HELD    = EnumSet.noneOf(Key.class);
+    static final Event                 KEYBOARD_ON_KEY_HELD = new Event();
     
     public static @NotNull String keyboardTyped()
     {
         return IO.KEYBOARD_TYPED.toString();
     }
     
-    public static boolean keyboardOnTyped()
+    public static @NotNull Event keyboardOnTyped()
     {
         return IO.KEYBOARD_ON_TYPED;
     }
@@ -1027,9 +1053,9 @@ public class IO
         return IO.KEYBOARD_KEY_STATES.get(key).downCount;
     }
     
-    public static boolean keyboardOnKeyDown()
+    public static @NotNull Event keyboardOnKeyDown()
     {
-        return !IO.KEYBOARD_KEY_DOWN.isEmpty();
+        return IO.KEYBOARD_ON_KEY_DOWN;
     }
     
     public static boolean keyboardKeyUp(@NotNull Key key)
@@ -1042,9 +1068,9 @@ public class IO
         return Collections.unmodifiableSet(IO.KEYBOARD_KEY_UP);
     }
     
-    public static boolean keyboardOnKeyUp()
+    public static @NotNull Event keyboardOnKeyUp()
     {
-        return !IO.KEYBOARD_KEY_UP.isEmpty();
+        return IO.KEYBOARD_ON_KEY_UP;
     }
     
     public static boolean keyboardKeyRepeated(@NotNull Key key)
@@ -1057,9 +1083,9 @@ public class IO
         return Collections.unmodifiableSet(IO.KEYBOARD_KEY_REPEATED);
     }
     
-    public static boolean keyboardOnKeyRepeated()
+    public static @NotNull Event keyboardOnKeyRepeated()
     {
-        return !IO.KEYBOARD_KEY_REPEATED.isEmpty();
+        return IO.KEYBOARD_ON_KEY_REPEATED;
     }
     
     public static boolean keyboardKeyHeld(@NotNull Key key)
@@ -1072,9 +1098,9 @@ public class IO
         return Collections.unmodifiableSet(IO.KEYBOARD_KEY_HELD);
     }
     
-    public static boolean keyboardOnKeyHeld()
+    public static @NotNull Event keyboardOnKeyHeld()
     {
-        return !IO.KEYBOARD_KEY_HELD.isEmpty();
+        return IO.KEYBOARD_ON_KEY_HELD;
     }
     
     // -------------------- Keyboard Functions -------------------- //
@@ -1182,5 +1208,28 @@ public class IO
     {
         boolean dragging = false;
         final Vector2d downPos = new Vector2d();
+    }
+    
+    public static final class Event
+    {
+        private boolean fired    = false;
+        private boolean consumed = false;
+        
+        private Event() {}
+        
+        public boolean fired()
+        {
+            return this.fired;
+        }
+        
+        public void consume()
+        {
+            this.consumed = true;
+        }
+        
+        public boolean consumed()
+        {
+            return this.consumed;
+        }
     }
 }

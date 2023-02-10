@@ -57,11 +57,6 @@ public abstract class Engine
         Engine.shouldRenderThreadRun = false;
     }
     
-    public static void abortStop()
-    {
-        Engine.shouldRenderThreadRun = true;
-    }
-    
     private static void setupEngine()
     {
         Engine.shouldMainThreadRun   = true;
@@ -167,6 +162,8 @@ public abstract class Engine
         double deltaTimeD = deltaTime / 1_000_000_000D;
         
         Engine.instance.update(frame, timeD, deltaTimeD);
+        
+        if (IO.windowOnClose().fired() && !IO.windowOnClose().consumed()) stop();
     }
     
     private static void drawRenderThread(int frame, long time, long deltaTime)
