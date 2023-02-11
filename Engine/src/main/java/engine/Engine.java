@@ -68,7 +68,7 @@ public abstract class Engine
         
         IO.setup(Engine.instance.size, "Engine - " + Engine.instance.name);
         
-        //GL.setup(); // TODO
+        Renderer.setup();
         
         Engine.LOGGER.debug("Instance Setup");
         Engine.instance.setup();
@@ -103,7 +103,7 @@ public abstract class Engine
         Engine.LOGGER.debug("Instance Destroy");
         Engine.instance.destroy();
         
-        //GL.destroy(); // TODO
+        Renderer.destroy();
         
         IO.destroy();
     }
