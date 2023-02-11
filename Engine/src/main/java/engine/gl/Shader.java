@@ -1,7 +1,7 @@
 package engine.gl;
 
 import org.jetbrains.annotations.NotNull;
-import org.lwjgl.opengl.GL40;
+import org.lwjgl.opengl.GL44;
 import engine.util.Logger;
 
 import java.io.IOException;
@@ -97,19 +97,19 @@ public class Shader
     
     private Shader(@NotNull Type type, @NotNull String code)
     {
-        this.id   = GL40.glCreateShader(type.ref);
+        this.id   = GL44.glCreateShader(type.ref);
         this.type = type;
         
-        GL40.glShaderSource(this.id, code);
-        GL40.glCompileShader(this.id);
+        GL44.glShaderSource(this.id, code);
+        GL44.glCompileShader(this.id);
         
-        if (GL40.glGetShaderi(this.id, GL40.GL_COMPILE_STATUS) == GL40.GL_TRUE)
+        if (GL44.glGetShaderi(this.id, GL44.GL_COMPILE_STATUS) == GL44.GL_TRUE)
         {
             Shader.LOGGER.debug("Created", this);
         }
         else
         {
-            throw new IllegalStateException("Failed to Compile: " + this + '\n' + GL40.glGetShaderInfoLog(this.id));
+            throw new IllegalStateException("Failed to Compile: " + this + '\n' + GL44.glGetShaderInfoLog(this.id));
         }
     }
     
@@ -156,7 +156,7 @@ public class Shader
     {
         Shader.LOGGER.debug("Deleting", this);
         
-        GL40.glDeleteShader(this.id);
+        GL44.glDeleteShader(this.id);
         
         this.id = 0;
     }
@@ -165,12 +165,12 @@ public class Shader
     
     public enum Type
     {
-        VERTEX(GL40.GL_VERTEX_SHADER, Pattern.compile(".*\\.(?:vert|vs)")),
-        GEOMETRY(GL40.GL_GEOMETRY_SHADER, Pattern.compile(".*\\.(?:geom|gs)")),
-        FRAGMENT(GL40.GL_FRAGMENT_SHADER, Pattern.compile(".*\\.(?:frag|fs)")),
-        //COMPUTE(GL43.GL_COMPUTE_SHADER, Pattern.compile(".*\\.(?:comp|cs)")),  // TODO - OpenGL 4.3
-        TESS_CONTROL(GL40.GL_TESS_CONTROL_SHADER, Pattern.compile(".*\\.(?:tesc|tc)")),
-        TESS_EVALUATION(GL40.GL_TESS_EVALUATION_SHADER, Pattern.compile(".*\\.(?:tese|te)")),
+        VERTEX(GL44.GL_VERTEX_SHADER, Pattern.compile(".*\\.(?:vert|vs)")),
+        GEOMETRY(GL44.GL_GEOMETRY_SHADER, Pattern.compile(".*\\.(?:geom|gs)")),
+        FRAGMENT(GL44.GL_FRAGMENT_SHADER, Pattern.compile(".*\\.(?:frag|fs)")),
+        COMPUTE(GL44.GL_COMPUTE_SHADER, Pattern.compile(".*\\.(?:comp|cs)")),
+        TESS_CONTROL(GL44.GL_TESS_CONTROL_SHADER, Pattern.compile(".*\\.(?:tesc|tc)")),
+        TESS_EVALUATION(GL44.GL_TESS_EVALUATION_SHADER, Pattern.compile(".*\\.(?:tese|te)")),
         ;
         
         public final  int     ref;

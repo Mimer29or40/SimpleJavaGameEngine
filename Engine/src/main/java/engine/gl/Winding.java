@@ -1,11 +1,11 @@
 package engine.gl;
 
-import org.lwjgl.opengl.GL40;
+import org.lwjgl.opengl.GL44;
 
 public enum Winding
 {
-    CCW(GL40.GL_CCW),
-    CW(GL40.GL_CW),
+    CCW(GL44.GL_CCW),
+    CW(GL44.GL_CW),
     ;
     
     public static final Winding DEFAULT = CCW;

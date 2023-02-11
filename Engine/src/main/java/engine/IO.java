@@ -44,8 +44,7 @@ public class IO
             
             glfwGetVersion(major, minor, rev);
             
-            IO.LOGGER.debug("GLFW Version %s.%s.%s", major.get(), minor.get(), rev.get());
-            IO.LOGGER.debug("GLFW Full Version '%s'", glfwGetVersionString());
+            IO.LOGGER.debug("GLFW Version: %s.%s.%s", major.get(), minor.get(), rev.get());
         }
         
         if (!glfwInit()) throw new IllegalStateException("Unable to initialize GLFW");
@@ -57,7 +56,7 @@ public class IO
             glfwDefaultWindowHints();
             
             glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-            glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+            glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
             
             glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
             glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
