@@ -91,6 +91,8 @@ public class Texture2D extends Texture
     {
         stateTexture(this);
         
+        Texture2D.LOGGER.trace("Loading data@%08X for %s", data, this);
+        
         GL40.glTexImage2D(this.type, 0, this.format.internalFormat, this.width, this.height, 0, this.format.format, GL40.GL_UNSIGNED_BYTE, data);
         
         try (MemoryStack stack = MemoryStack.stackPush())
@@ -117,6 +119,8 @@ public class Texture2D extends Texture
     {
         stateTexture(this);
         
+        Texture2D.LOGGER.trace("Getting Pixel Data for %s", this);
+        
         ColorBuffer pixels = ColorBuffer.malloc(this.format, this.width * this.height);
         
         GL40.glGetTexImage(this.type, 0, this.format.format, GL40.GL_UNSIGNED_BYTE, pixels.address());
@@ -131,11 +135,15 @@ public class Texture2D extends Texture
      */
     public void update(@NotNull ColorBuffer data, int x, int y, int width, int height)
     {
+        stateTexture(this);
+        
         if (this.format != data.format)
         {
             Texture2D.LOGGER.warning("Data format (%s) does not match texture (%s)", data.format, this);
             return;
         }
+    
+        Texture2D.LOGGER.trace("Updating Pixel Data for %s", this);
         
         long pixels = MemoryUtil.memAddressSafe(data);
         

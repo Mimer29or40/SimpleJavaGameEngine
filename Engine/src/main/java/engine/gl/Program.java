@@ -110,6 +110,8 @@ public class Program
         
         for (Shader shader : shaders)
         {
+            Program.LOGGER.trace("Attaching %s to %s", shader, this);
+            
             GL44.glAttachShader(this.id, shader.id);
             this.shaders.add(shader);
         }

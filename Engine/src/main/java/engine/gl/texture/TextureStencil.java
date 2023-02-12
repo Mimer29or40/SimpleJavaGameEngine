@@ -14,7 +14,7 @@ public class TextureStencil extends Texture2D
     
     // -------------------- Instance -------------------- //
     
-    protected TextureStencil(int width, int height)
+    public TextureStencil(int width, int height)
     {
         super(ColorFormat.RED, width, height);
     }
@@ -26,6 +26,8 @@ public class TextureStencil extends Texture2D
     protected void load(long data)
     {
         stateTexture(this);
+    
+        TextureStencil.LOGGER.trace("Loading data@%08X for %s", data, this);
         
         // TODO - Verify
         GL40.glTexImage2D(this.type, 0, GL40.GL_STENCIL_INDEX8, this.width, this.height, 0, GL40.GL_STENCIL_INDEX, GL40.GL_UNSIGNED_BYTE, data);
@@ -43,6 +45,8 @@ public class TextureStencil extends Texture2D
     public @NotNull ColorBuffer getPixelData()
     {
         stateTexture(this);
+    
+        TextureStencil.LOGGER.trace("Getting Pixel Data for %s", this);
         
         ColorBuffer pixels = ColorBuffer.malloc(this.format, this.width * this.height);
         

@@ -146,6 +146,8 @@ public abstract class Texture
     {
         stateTexture(this);
         
+        Texture.LOGGER.trace("Setting Texture Wrap: s=%s t=%s r=%s", s, t, r);
+        
         GL46.glTexParameteri(this.type, GL40.GL_TEXTURE_WRAP_S, s.ref);
         GL46.glTexParameteri(this.type, GL40.GL_TEXTURE_WRAP_T, t.ref);
         GL46.glTexParameteri(this.type, GL40.GL_TEXTURE_WRAP_R, r.ref);
@@ -155,12 +157,16 @@ public abstract class Texture
     {
         stateTexture(this);
         
+        Texture.LOGGER.trace("Setting Texture Wrap: s=%s", s);
+        
         GL40.glTexParameteri(this.type, GL40.GL_TEXTURE_WRAP_S, s.ref);
     }
     
     public void wrapT(@NotNull Texture.Wrap t)
     {
         stateTexture(this);
+        
+        Texture.LOGGER.trace("Setting Texture Wrap: t=%s", t);
         
         GL40.glTexParameteri(this.type, GL40.GL_TEXTURE_WRAP_S, t.ref);
     }
@@ -169,12 +175,16 @@ public abstract class Texture
     {
         stateTexture(this);
         
+        Texture.LOGGER.trace("Setting Texture Wrap: r=%s", r);
+        
         GL40.glTexParameteri(this.type, GL40.GL_TEXTURE_WRAP_S, r.ref);
     }
     
     public void filter(@NotNull Filter min, @NotNull Filter mag)
     {
         stateTexture(this);
+        
+        Texture.LOGGER.trace("Setting Texture Filter: min=%s mag=%s", min, mag);
         
         GL40.glTexParameteri(this.type, GL40.GL_TEXTURE_MIN_FILTER, min.ref);
         GL40.glTexParameteri(this.type, GL40.GL_TEXTURE_MAG_FILTER, mag.ref);
@@ -184,12 +194,16 @@ public abstract class Texture
     {
         stateTexture(this);
         
+        Texture.LOGGER.trace("Setting Texture Filter: min=%s", min);
+        
         GL40.glTexParameteri(this.type, GL40.GL_TEXTURE_MIN_FILTER, min.ref);
     }
     
     public void filterMag(@NotNull Filter mag)
     {
         stateTexture(this);
+        
+        Texture.LOGGER.trace("Setting Texture Filter: mag=%s", mag);
         
         GL40.glTexParameteri(this.type, GL40.GL_TEXTURE_MAG_FILTER, mag.ref);
     }

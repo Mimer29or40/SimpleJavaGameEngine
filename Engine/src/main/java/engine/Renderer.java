@@ -10,6 +10,7 @@ import engine.util.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.*;
+import org.lwjgl.opengl.GL40;
 import org.lwjgl.opengl.GL44;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
@@ -25,10 +26,11 @@ public class Renderer
     
     private static final ScissorMode scissorModeCustom = new ScissorMode(0, 0, Integer.MAX_VALUE, Integer.MAX_VALUE);
     
-    static Shader  defaultVertexShader;
-    static Shader  defaultFragmentShader;
-    static Program defaultProgram;
-    static Texture defaultTexture;
+    static Shader      defaultVertexShader;
+    static Shader      defaultFragmentShader;
+    static Program     defaultProgram;
+    static Texture     defaultTexture;
+    static Framebuffer defaultFramebuffer;
     
     static void setup()
     {
@@ -59,8 +61,8 @@ public class Renderer
         Renderer.cullFace[index] = null;
         Renderer.winding[index]  = null;
         
-        Renderer.program[index] = null;
-        //Renderer.framebuffer[index] = null;
+        Renderer.program[index]     = null;
+        Renderer.framebuffer[index] = null;
         
         // TODO - http://www.reedbeta.com/blog/quadrilateral-interpolation-part-1/
         // TODO - http://www.reedbeta.com/blog/quadrilateral-interpolation-part-2/
@@ -95,12 +97,14 @@ public class Renderer
         Renderer.defaultFragmentShader = new Shader(Shader.Type.FRAGMENT, frag);
         
         Renderer.defaultProgram = Program.builder().shader(Renderer.defaultVertexShader).shader(Renderer.defaultFragmentShader).build();
-    
+        
         try (MemoryStack stack = MemoryStack.stackPush())
         {
             ColorBuffer data = ColorBuffer.malloc(ColorFormat.RGBA, 1, stack);
             Renderer.defaultTexture = new Texture2D(data.put(0, 255, 255, 255, 255), 1, 1);
         }
+        
+        Renderer.defaultFramebuffer = Framebuffer.NULL; // TODO
         
         stateDefault();
         clearScreenBuffers();
@@ -115,7 +119,7 @@ public class Renderer
         
         Renderer.defaultProgram.delete();
         Renderer.defaultProgram = null;
-    
+        
         Renderer.defaultFragmentShader.delete();
         Renderer.defaultFragmentShader = null;
         Renderer.defaultVertexShader.delete();
@@ -148,8 +152,8 @@ public class Renderer
     static final CullFace[] cullFace = new CullFace[Renderer.STACK_SIZE];
     static final Winding[]  winding  = new Winding[Renderer.STACK_SIZE];
     
-    static final Program[] program = new Program[Renderer.STACK_SIZE];
-    //static final Framebuffer[] framebuffer  = new Framebuffer[Renderer.STACK_SIZE];  // TODO
+    static final Program[]     program     = new Program[Renderer.STACK_SIZE];
+    static final Framebuffer[] framebuffer = new Framebuffer[Renderer.STACK_SIZE];
     
     static final Matrix4d[] projection = new Matrix4d[Renderer.STACK_SIZE];
     static final Matrix4d[] view       = new Matrix4d[Renderer.STACK_SIZE];
@@ -212,7 +216,7 @@ public class Renderer
         stateWinding(Winding.DEFAULT);
         
         stateProgram(Renderer.defaultProgram);
-        //Renderer.framebuffer[Renderer.stackIndex];  // TODO
+        stateFramebuffer(Renderer.defaultFramebuffer);
         stateTexture(Renderer.defaultTexture);
         
         stateProjection().identity();
@@ -258,8 +262,8 @@ public class Renderer
         Renderer.cullFace[nextIdx] = Renderer.cullFace[idx];
         Renderer.winding[nextIdx]  = Renderer.winding[idx];
         
-        Renderer.program[nextIdx] = Renderer.program[idx];
-        //Renderer.framebuffer[nextIdx] = Renderer.framebuffer[idx];  // TODO
+        Renderer.program[nextIdx]     = Renderer.program[idx];
+        Renderer.framebuffer[nextIdx] = Renderer.framebuffer[idx];
         
         Renderer.projection[nextIdx].set(Renderer.projection[idx]);
         Renderer.view[nextIdx].set(Renderer.view[idx]);
@@ -303,7 +307,7 @@ public class Renderer
         stateWinding(Renderer.winding[prevIdx]);
         
         stateProgram(Renderer.program[prevIdx]);
-        //stateFramebuffer(Renderer.framebuffer[prevIdx]);  // TODO
+        stateFramebuffer(Renderer.framebuffer[prevIdx]);
         
         // Nn need to set matrix or color stack
         
@@ -312,10 +316,10 @@ public class Renderer
     
     public static void stateDepthClamp(boolean depthClamp)
     {
-        Renderer.LOGGER.trace("Setting Depth Clamp Flag:", depthClamp);
-        
         if (Renderer.depthClamp[Renderer.stackIndex] != depthClamp)
         {
+            Renderer.LOGGER.trace("Setting Depth Clamp Flag:", depthClamp);
+            
             Renderer.depthClamp[Renderer.stackIndex] = depthClamp;
             
             if (depthClamp)
@@ -331,10 +335,10 @@ public class Renderer
     
     public static void stateLineSmooth(boolean lineSmooth)
     {
-        Renderer.LOGGER.trace("Setting Line Smooth Flag:", lineSmooth);
-        
         if (Renderer.lineSmooth[Renderer.stackIndex] != lineSmooth)
         {
+            Renderer.LOGGER.trace("Setting Line Smooth Flag:", lineSmooth);
+            
             Renderer.lineSmooth[Renderer.stackIndex] = lineSmooth;
             
             if (lineSmooth)
@@ -350,10 +354,10 @@ public class Renderer
     
     public static void stateTextureCubeMapSeamless(boolean textureCubeMapSeamless)
     {
-        Renderer.LOGGER.trace("Setting Texture Cube Map Seamless Flag:", textureCubeMapSeamless);
-        
         if (Renderer.textureCubeMapSeamless[Renderer.stackIndex] != textureCubeMapSeamless)
         {
+            Renderer.LOGGER.trace("Setting Texture Cube Map Seamless Flag:", textureCubeMapSeamless);
+            
             Renderer.textureCubeMapSeamless[Renderer.stackIndex] = textureCubeMapSeamless;
             
             if (textureCubeMapSeamless)
@@ -369,10 +373,10 @@ public class Renderer
     
     public static void stateWireframe(boolean wireframe)
     {
-        Renderer.LOGGER.trace("Setting Wireframe Flag:", wireframe);
-        
         if (Renderer.wireframe[Renderer.stackIndex] != wireframe)
         {
+            Renderer.LOGGER.trace("Setting Wireframe Flag:", wireframe);
+            
             Renderer.wireframe[Renderer.stackIndex] = wireframe;
             
             GL44.glPolygonMode(GL44.GL_FRONT_AND_BACK, wireframe ? GL44.GL_LINE : GL44.GL_FILL);
@@ -383,10 +387,10 @@ public class Renderer
     {
         if (mode == null) mode = BlendMode.DEFAULT;
         
-        Renderer.LOGGER.trace("Setting Blend Mode:", mode);
-        
         if (Renderer.blendMode[Renderer.stackIndex] != mode)
         {
+            Renderer.LOGGER.trace("Setting Blend Mode:", mode);
+            
             Renderer.blendMode[Renderer.stackIndex] = mode;
             
             if (mode == BlendMode.NONE)
@@ -406,10 +410,10 @@ public class Renderer
     {
         if (mode == null) mode = DepthMode.DEFAULT;
         
-        Renderer.LOGGER.trace("Setting Depth Mode:", mode);
-        
         if (Renderer.depthMode[Renderer.stackIndex] != mode)
         {
+            Renderer.LOGGER.trace("Setting Depth Mode:", mode);
+            
             Renderer.depthMode[Renderer.stackIndex] = mode;
             
             if (mode == DepthMode.NONE)
@@ -428,10 +432,10 @@ public class Renderer
     {
         if (mode == null) mode = StencilMode.DEFAULT;
         
-        Renderer.LOGGER.trace("Setting Stencil Mode:", mode);
-        
         if (Renderer.stencilMode[Renderer.stackIndex] != mode)
         {
+            Renderer.LOGGER.trace("Setting Stencil Mode:", mode);
+            
             Renderer.stencilMode[Renderer.stackIndex] = mode;
             
             if (mode == StencilMode.NONE)
@@ -451,10 +455,10 @@ public class Renderer
     {
         if (mode == null) mode = ScissorMode.DEFAULT;
         
-        Renderer.LOGGER.trace("Setting ScissorMode:", mode);
-        
         if (Renderer.scissorMode[Renderer.stackIndex] != mode)
         {
+            Renderer.LOGGER.trace("Setting ScissorMode:", mode);
+            
             Renderer.scissorMode[Renderer.stackIndex] = mode;
             
             if (mode == ScissorMode.NONE)
@@ -481,11 +485,11 @@ public class Renderer
     
     public static void stateColorMask(boolean r, boolean g, boolean b, boolean a)
     {
-        Renderer.LOGGER.trace("Setting Color Mask: r=%s g=%s b=%s a=%s", r, g, b, a);
-        
         boolean[] colorMask = Renderer.colorMask[Renderer.stackIndex];
         if (Boolean.compare(colorMask[0], r) != 0 || Boolean.compare(colorMask[1], g) != 0 || Boolean.compare(colorMask[2], b) != 0 || Boolean.compare(colorMask[3], a) != 0)
         {
+            Renderer.LOGGER.trace("Setting Color Mask: r=%s g=%s b=%s a=%s", r, g, b, a);
+            
             colorMask[0] = r;
             colorMask[1] = g;
             colorMask[2] = b;
@@ -497,10 +501,10 @@ public class Renderer
     
     public static void stateDepthMask(boolean flag)
     {
-        Renderer.LOGGER.trace("Setting Depth Mask:", flag);
-        
         if (Renderer.depthMask[Renderer.stackIndex] != flag)
         {
+            Renderer.LOGGER.trace("Setting Depth Mask:", flag);
+            
             Renderer.depthMask[Renderer.stackIndex] = flag;
             
             GL44.glDepthMask(flag);
@@ -509,10 +513,10 @@ public class Renderer
     
     public static void stateStencilMask(int mask)
     {
-        Renderer.LOGGER.trace("Setting Stencil Mask: 0x%02X", mask);
-        
         if (Renderer.stencilMask[Renderer.stackIndex] != mask)
         {
+            Renderer.LOGGER.trace("Setting Stencil Mask: 0x%02X", mask);
+            
             Renderer.stencilMask[Renderer.stackIndex] = mask;
             
             GL44.glStencilMask(mask);
@@ -521,11 +525,11 @@ public class Renderer
     
     public static void stateClearColor(double r, double g, double b, double a)
     {
-        Renderer.LOGGER.trace("Setting Clear Color: (%.3f, %.3f, %.3f, %.3f)", r, g, b, a);
-        
         double[] clearColor = Renderer.clearColor[Renderer.stackIndex];
         if (Double.compare(clearColor[0], r) != 0 || Double.compare(clearColor[1], g) != 0 || Double.compare(clearColor[2], b) != 0 || Double.compare(clearColor[3], a) != 0)
         {
+            Renderer.LOGGER.trace("Setting Clear Color: (%.3f, %.3f, %.3f, %.3f)", r, g, b, a);
+            
             clearColor[0] = r;
             clearColor[1] = g;
             clearColor[2] = b;
@@ -537,10 +541,10 @@ public class Renderer
     
     public static void stateClearDepth(double depth)
     {
-        Renderer.LOGGER.trace("Setting Clear Depth: %.3f", depth);
-        
         if (Double.compare(Renderer.clearDepth[Renderer.stackIndex], depth) != 0)
         {
+            Renderer.LOGGER.trace("Setting Clear Depth: %.3f", depth);
+            
             Renderer.clearDepth[Renderer.stackIndex] = depth;
             
             GL44.glClearDepth(depth);
@@ -549,10 +553,10 @@ public class Renderer
     
     public static void stateClearStencil(int stencil)
     {
-        Renderer.LOGGER.trace("Setting Clear Stencil: 0x%02X", stencil);
-        
         if (Renderer.clearStencil[Renderer.stackIndex] != stencil)
         {
+            Renderer.LOGGER.trace("Setting Clear Stencil: 0x%02X", stencil);
+            
             Renderer.clearStencil[Renderer.stackIndex] = stencil;
             
             GL44.glClearStencil(stencil);
@@ -563,10 +567,10 @@ public class Renderer
     {
         if (cullFace == null) cullFace = CullFace.DEFAULT;
         
-        Renderer.LOGGER.trace("Setting Cull Face:", cullFace);
-        
         if (Renderer.cullFace[Renderer.stackIndex] != cullFace)
         {
+            Renderer.LOGGER.trace("Setting Cull Face:", cullFace);
+            
             Renderer.cullFace[Renderer.stackIndex] = cullFace;
             
             if (cullFace == CullFace.NONE)
@@ -585,10 +589,10 @@ public class Renderer
     {
         if (winding == null) winding = Winding.DEFAULT;
         
-        Renderer.LOGGER.trace("Setting Winding:", winding);
-        
         if (Renderer.winding[Renderer.stackIndex] != winding)
         {
+            Renderer.LOGGER.trace("Setting Winding:", winding);
+            
             Renderer.winding[Renderer.stackIndex] = winding;
             
             GL44.glFrontFace(winding.ref);
@@ -597,23 +601,33 @@ public class Renderer
     
     public static void stateProgram(@NotNull Program program)
     {
-        Renderer.LOGGER.trace("Setting Program:", program);
-        
         if (Renderer.program[Renderer.stackIndex] != program)
         {
+            Renderer.LOGGER.trace("Setting Program:", program);
+            
             Renderer.program[Renderer.stackIndex] = program;
             
             GL44.glUseProgram(program.id());
         }
     }
     
-    //public static @NotNull Framebuffer framebuffer()  // TODO
-    //{
-    //    return Renderer.framebuffer[Renderer.stackIndex];
-    //}
+    public static void stateFramebuffer(@NotNull Framebuffer framebuffer)
+    {
+        if (Renderer.framebuffer[Renderer.stackIndex] != framebuffer)
+        {
+            Renderer.LOGGER.trace("Setting Framebuffer:", framebuffer);
+            
+            Renderer.framebuffer[Renderer.stackIndex] = framebuffer;
+            
+            GL44.glBindFramebuffer(GL40.GL_FRAMEBUFFER, framebuffer.id());
+            GL44.glViewport(0, 0, framebuffer.width(), framebuffer.height());
+        }
+    }
     
     public static void stateTexture(@NotNull Texture texture, int index)  // TODO
     {
+        // TODO - Texture Pushing and popping
+        // TODO - Separate Active Texture and bind texture
         Renderer.LOGGER.trace("Binding %s to index=%s", texture, index);
         
         GL44.glActiveTexture(GL44.GL_TEXTURE0 + index);
@@ -1123,19 +1137,6 @@ public class Renderer
     //    Renderer.LOGGER.trace("Binding", vertexArray);
     //
     //    GL44.glBindVertexArray(vertexArray.id);
-    //}
-    
-    //public static void bind(@NotNull Framebuffer framebuffer)  // TODO
-    //{
-    //    Renderer.LOGGER.trace("Binding Framebuffer:", framebuffer);
-    //
-    //    if (Renderer.framebuffer != framebuffer)
-    //    {
-    //        Renderer.framebuffer = framebuffer;
-    //
-    //        GL44.glBindFramebuffer(GL44.GL_FRAMEBUFFER, framebuffer.id());
-    //        GL44.glViewport(0, 0, framebuffer.width(), framebuffer.height());
-    //    }
     //}
     
     private Renderer() {}

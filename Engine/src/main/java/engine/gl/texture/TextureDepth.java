@@ -26,6 +26,8 @@ public class TextureDepth extends Texture2D
     {
         stateTexture(this);
         
+        TextureDepth.LOGGER.trace("Loading data@%08X for %s", data, this);
+        
         // TODO - Verify
         GL40.glTexImage2D(this.type, 0, GL40.GL_DEPTH_COMPONENT24, this.width, this.height, 0, GL40.GL_DEPTH_COMPONENT, GL40.GL_UNSIGNED_BYTE, data);
         
@@ -42,6 +44,8 @@ public class TextureDepth extends Texture2D
     public @NotNull ColorBuffer getPixelData()
     {
         stateTexture(this);
+        
+        TextureDepth.LOGGER.trace("Getting Pixel Data for %s", this);
         
         ColorBuffer pixels = ColorBuffer.malloc(this.format, this.width * this.height);
         

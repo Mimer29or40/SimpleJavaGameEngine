@@ -26,6 +26,8 @@ public class TextureDepthStencil extends Texture2D
     {
         stateTexture(this);
         
+        TextureDepthStencil.LOGGER.trace("Loading data@%08X for %s", data, this);
+        
         GL40.glTexImage2D(this.type, 0, GL40.GL_DEPTH24_STENCIL8, width, height, 0, GL40.GL_DEPTH_STENCIL, GL40.GL_UNSIGNED_INT_24_8, data);
         
         // Default Texture Parameters
@@ -41,6 +43,8 @@ public class TextureDepthStencil extends Texture2D
     public @NotNull ColorBuffer getPixelData()
     {
         stateTexture(this);
+        
+        TextureDepthStencil.LOGGER.trace("Getting Pixel Data for %s", this);
         
         ColorBuffer pixels = ColorBuffer.malloc(this.format, this.width * this.height);
         

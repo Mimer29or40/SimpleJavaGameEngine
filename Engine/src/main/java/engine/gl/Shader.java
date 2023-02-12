@@ -77,6 +77,8 @@ public class Shader
     
     private void compile(@NotNull String code)
     {
+        Shader.LOGGER.trace("Compiling %s:%n%s", this, code);
+        
         GL44.glShaderSource(this.id, code);
         GL44.glCompileShader(this.id);
         

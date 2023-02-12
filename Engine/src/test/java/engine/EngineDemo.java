@@ -35,7 +35,7 @@ public class EngineDemo extends Engine
     
     public static void main(String[] args)
     {
-        Logger.LEVEL = Logger.Level.DEBUG;
+        Logger.LEVEL = Logger.Level.TRACE;
         
         Engine instance = new EngineDemo();
         start(instance);
