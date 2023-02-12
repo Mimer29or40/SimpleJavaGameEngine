@@ -7,8 +7,12 @@ import engine.color.Colorc;
 import engine.gl.*;
 import engine.gl.buffer.Buffer;
 import engine.gl.buffer.BufferArray;
+import engine.gl.buffer.BufferUsage;
 import engine.gl.texture.Texture;
 import engine.gl.texture.Texture2D;
+import engine.gl.vertex.Attribute;
+import engine.gl.vertex.VertexArray;
+import engine.util.IOUtil;
 import engine.util.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,6 +25,7 @@ import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 import java.util.Arrays;
 
 public class Renderer
@@ -31,22 +36,30 @@ public class Renderer
     
     private static final ScissorMode scissorModeCustom = new ScissorMode(0, 0, Integer.MAX_VALUE, Integer.MAX_VALUE);
     
-    static Shader      defaultVertexShader;
-    static Shader      defaultFragmentShader;
-    static Program     defaultProgram;
-    static Texture     defaultTexture;
-    static Framebuffer defaultFramebuffer;
-    
     static void setup()
     {
         Renderer.LOGGER.debug("Setup");
         Renderer.LOGGER.debug("OpenGL Version:", GL44.glGetString(GL44.GL_VERSION));
         
+        Renderer.activeTexture = -1;
+        Renderer.program       = null;
+        Renderer.framebuffer   = null;
+        Arrays.fill(Renderer.textures, null);
+        Renderer.buffer      = null;
+        Renderer.vertexArray = null;
+        
+        bind(Program.NULL);
+        bind(Framebuffer.NULL);
+        activeTexture(0);
+        bind(Texture2D.NULL);
+        bind(BufferArray.NULL);
+        bind(VertexArray.NULL);
+        
         final int index = Renderer.stackIndex;
         
-        Renderer.depthClamp[index]             = GL44.glIsEnabled(GL44.GL_DEPTH_CLAMP);
-        Renderer.lineSmooth[index]             = GL44.glIsEnabled(GL44.GL_LINE_SMOOTH);
-        Renderer.textureCubeMapSeamless[index] = GL44.glIsEnabled(GL44.GL_TEXTURE_CUBE_MAP_SEAMLESS);
+        Renderer.depthClamp[index]             = false;
+        Renderer.lineSmooth[index]             = true;
+        Renderer.textureCubeMapSeamless[index] = false;
         
         Renderer.wireframe[index] = GL44.glGetInteger(GL44.GL_FRONT_AND_BACK) == GL44.GL_FILL;
         
@@ -66,49 +79,10 @@ public class Renderer
         Renderer.cullFace[index] = null;
         Renderer.winding[index]  = null;
         
-        Renderer.activeTexture = -1;
-        Renderer.program       = null;
-        Renderer.framebuffer   = null;
-        Arrays.fill(Renderer.textures, null);
-        Renderer.buffer = null;
-    
-        bind(Program.NULL);
-        bind(Framebuffer.NULL);
-        activeTexture(0);
-        bind(Texture2D.NULL);
-        bind(BufferArray.NULL);
+        stateDefault();
         
-        // TODO - http://www.reedbeta.com/blog/quadrilateral-interpolation-part-1/
-        // TODO - http://www.reedbeta.com/blog/quadrilateral-interpolation-part-2/
-        String vert = """
-                      #version 330
-                      in vec3 POSITION;
-                      in vec3 TEXCOORD;
-                      in vec4 COLOR;
-                      out vec3 fragTexCoord;
-                      out vec4 fragColor;
-                      uniform mat4 MATRIX_MVP;
-                      void main()
-                      {
-                          gl_Position = MATRIX_MVP * vec4(POSITION, 1.0);
-                          fragTexCoord = TEXCOORD;
-                          fragColor = COLOR;
-                      }
-                      """;
-        String frag = """
-                      #version 330
-                      in vec3 fragTexCoord;
-                      in vec4 fragColor;
-                      out vec4 finalColor;
-                      uniform sampler2D texture0;
-                      void main()
-                      {
-                          vec4 texelColor = textureProj(texture0, fragTexCoord);
-                          finalColor = texelColor * fragColor;
-                      }
-                      """;
-        Renderer.defaultVertexShader   = new Shader(Shader.Type.VERTEX, vert);
-        Renderer.defaultFragmentShader = new Shader(Shader.Type.FRAGMENT, frag);
+        Renderer.defaultVertexShader   = new Shader(Shader.Type.VERTEX, IOUtil.getPath("shader/default.vert"));
+        Renderer.defaultFragmentShader = new Shader(Shader.Type.FRAGMENT, IOUtil.getPath("shader/default.frag"));
         
         Renderer.defaultProgram = Program.builder().shader(Renderer.defaultVertexShader).shader(Renderer.defaultFragmentShader).build();
         
@@ -120,13 +94,37 @@ public class Renderer
         
         Renderer.defaultFramebuffer = Framebuffer.NULL; // TODO
         
-        stateDefault();
+        int elementsCount = 8192;
+        int vertexCount   = elementsCount * 4; // 4 vertices per quad
+        
+        IntBuffer indices = MemoryUtil.memCallocInt(elementsCount * 6); // 6 indices per quad
+        for (int i = 0; i < elementsCount; ++i)
+        {
+            indices.put(4 * i);
+            indices.put(4 * i + 1);
+            indices.put(4 * i + 2);
+            indices.put(4 * i);
+            indices.put(4 * i + 2);
+            indices.put(4 * i + 3);
+        }
+        
+        Renderer.defaultVertexArray = VertexArray.builder()
+                                                 .buffer(BufferUsage.DYNAMIC_DRAW, vertexCount, new Attribute(GLType.FLOAT, 3, false))
+                                                 .buffer(BufferUsage.DYNAMIC_DRAW, vertexCount, new Attribute(GLType.FLOAT, 3, false))
+                                                 .buffer(BufferUsage.DYNAMIC_DRAW, vertexCount, new Attribute(GLType.FLOAT, 3, false))
+                                                 .buffer(BufferUsage.DYNAMIC_DRAW, vertexCount, new Attribute(GLType.FLOAT, 3, false))
+                                                 .buffer(BufferUsage.DYNAMIC_DRAW, vertexCount, new Attribute(GLType.UNSIGNED_BYTE, 4, true))
+                                                 .buffer(BufferUsage.DYNAMIC_DRAW, vertexCount, new Attribute(GLType.FLOAT, 3, false))
+                                                 .indexBuffer(BufferUsage.STATIC_DRAW, indices.clear())
+                                                 .build();
+        MemoryUtil.memFree(indices);
         
         bind(Renderer.defaultProgram);
         bind(Renderer.defaultFramebuffer);
         activeTexture(0);
         bind(Renderer.defaultTexture);
         bind(BufferArray.NULL);
+        bind(Renderer.defaultVertexArray);
         
         clearScreenBuffers();
     }
@@ -134,6 +132,12 @@ public class Renderer
     static void destroy()
     {
         Renderer.LOGGER.debug("Destroy");
+        
+        Renderer.defaultVertexArray.delete();
+        Renderer.defaultVertexArray = null;
+        
+        Renderer.defaultFramebuffer.delete();
+        Renderer.defaultFramebuffer = null;
         
         Renderer.defaultTexture.delete();
         Renderer.defaultTexture = null;
@@ -146,6 +150,25 @@ public class Renderer
         Renderer.defaultVertexShader.delete();
         Renderer.defaultVertexShader = null;
     }
+    
+    // -------------------- Default Objects -------------------- //
+    
+    static Shader      defaultVertexShader;
+    static Shader      defaultFragmentShader;
+    static Program     defaultProgram;
+    static Texture     defaultTexture;
+    static Framebuffer defaultFramebuffer;
+    static VertexArray defaultVertexArray;
+    
+    // -------------------- Binding State -------------------- //
+    
+    static int activeTexture;
+    
+    static       Program     program;
+    static       Framebuffer framebuffer;
+    static final Texture[]   textures = new Texture[32];
+    static       Buffer      buffer;
+    static       VertexArray vertexArray;
     
     // -------------------- Stack State -------------------- //
     
@@ -186,14 +209,7 @@ public class Renderer
     //static final String[]    textureNames;
     //static final GLTexture[] textureActive;
     
-    // -------------------- Non-Stack State -------------------- //
-    
-    static int activeTexture;
-    
-    static       Program     program;
-    static       Framebuffer framebuffer;
-    static final Texture[]   textures = new Texture[32];
-    static       Buffer      buffer;
+    // -------------------- Utility -------------------- //
     
     static final Matrix4d mvp = new Matrix4d();
     
@@ -616,7 +632,42 @@ public class Renderer
         }
     }
     
-    // -------------------- Non-Stack State Functions -------------------- //
+    public static @NotNull Matrix4d stateProjection()
+    {
+        return Renderer.projection[Renderer.stackIndex];
+    }
+    
+    public static @NotNull Matrix4d stateView()
+    {
+        return Renderer.view[Renderer.stackIndex];
+    }
+    
+    public static @NotNull Matrix4d stateModel()
+    {
+        return Renderer.model[Renderer.stackIndex];
+    }
+    
+    public static @NotNull Matrix4d stateNormal()
+    {
+        return Renderer.normal[Renderer.stackIndex];
+    }
+    
+    public static @NotNull Color stateDiffuse()
+    {
+        return Renderer.diffuse[Renderer.stackIndex];
+    }
+    
+    public static @NotNull Color stateSpecular()
+    {
+        return Renderer.specular[Renderer.stackIndex];
+    }
+    
+    public static @NotNull Color stateAmbient()
+    {
+        return Renderer.ambient[Renderer.stackIndex];
+    }
+    
+    // -------------------- Binding State -------------------- //
     
     public static void bind(@NotNull Program program)
     {
@@ -679,46 +730,16 @@ public class Renderer
         }
     }
     
-    //public static void bind(@NotNull VertexArray vertexArray)  // TODO
-    //{
-    //    Renderer.LOGGER.trace("Binding", vertexArray);
-    //
-    //    GL44.glBindVertexArray(vertexArray.id);
-    //}
-    
-    public static @NotNull Matrix4d stateProjection()
+    public static void bind(@NotNull VertexArray vertexArray)
     {
-        return Renderer.projection[Renderer.stackIndex];
-    }
-    
-    public static @NotNull Matrix4d stateView()
-    {
-        return Renderer.view[Renderer.stackIndex];
-    }
-    
-    public static @NotNull Matrix4d stateModel()
-    {
-        return Renderer.model[Renderer.stackIndex];
-    }
-    
-    public static @NotNull Matrix4d stateNormal()
-    {
-        return Renderer.normal[Renderer.stackIndex];
-    }
-    
-    public static @NotNull Color stateDiffuse()
-    {
-        return Renderer.diffuse[Renderer.stackIndex];
-    }
-    
-    public static @NotNull Color stateSpecular()
-    {
-        return Renderer.specular[Renderer.stackIndex];
-    }
-    
-    public static @NotNull Color stateAmbient()
-    {
-        return Renderer.ambient[Renderer.stackIndex];
+        if (Renderer.vertexArray != vertexArray)
+        {
+            Renderer.LOGGER.trace("Binding:", vertexArray);
+            
+            Renderer.vertexArray = vertexArray;
+            
+            GL44.glBindVertexArray(vertexArray.id());
+        }
     }
     
     // -------------------- Attribute -------------------- //

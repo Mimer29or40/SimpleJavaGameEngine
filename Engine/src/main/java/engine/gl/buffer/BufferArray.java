@@ -23,20 +23,20 @@ public class BufferArray extends Buffer
     
     private BufferArray()
     {
-        super(0, GL40.GL_ARRAY_BUFFER, Usage.STATIC_READ, 0);
+        super(0, GL40.GL_ARRAY_BUFFER, BufferUsage.STATIC_READ, 0);
     }
     
-    public BufferArray(@NotNull Usage usage, long size)
+    public BufferArray(@NotNull BufferUsage usage, long size)
     {
         super(GL40.GL_ARRAY_BUFFER, usage, MemoryUtil.NULL, size);
     }
     
-    public BufferArray(@NotNull Usage usage, @NotNull java.nio.Buffer data)
+    public BufferArray(@NotNull BufferUsage usage, @NotNull java.nio.Buffer data)
     {
         super(GL40.GL_ARRAY_BUFFER, usage, MemoryUtil.memAddress(data), Integer.toUnsignedLong(data.remaining() * MemUtil.elementSize(data)));
     }
     
-    public BufferArray(@NotNull Usage usage, @NotNull CustomBuffer<?> data)
+    public BufferArray(@NotNull BufferUsage usage, @NotNull CustomBuffer<?> data)
     {
         super(GL40.GL_ARRAY_BUFFER, usage, MemoryUtil.memAddress(data), Integer.toUnsignedLong(data.remaining() * data.sizeof()));
     }
@@ -57,7 +57,7 @@ public class BufferArray extends Buffer
         }
         
         @Override
-        public @Nullable ByteBuffer map(@NotNull Access access)
+        public @Nullable ByteBuffer map(@NotNull BufferAccess access)
         {
             BufferArray.LOGGER.warning("Cannot call %s.map", this);
             return null;

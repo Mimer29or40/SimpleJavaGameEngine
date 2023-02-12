@@ -90,7 +90,7 @@ public class Texture2D extends Texture
     {
         bind(this);
         
-        Texture2D.LOGGER.trace("Loading data@%08X for %s", data, this);
+        Texture2D.LOGGER.trace("Loading texture data");
         
         GL40.glTexImage2D(this.type, 0, this.format.internalFormat, this.width, this.height, 0, this.format.format, GL40.GL_UNSIGNED_BYTE, data);
         
@@ -118,7 +118,7 @@ public class Texture2D extends Texture
     {
         bind(this);
         
-        Texture2D.LOGGER.trace("Getting Pixel Data for %s", this);
+        Texture2D.LOGGER.trace("Getting Pixel Data");
         
         ColorBuffer pixels = ColorBuffer.malloc(this.format, this.width * this.height);
         
@@ -142,7 +142,7 @@ public class Texture2D extends Texture
             return;
         }
         
-        Texture2D.LOGGER.trace("Updating Pixel Data for %s", this);
+        Texture2D.LOGGER.trace("Updating Pixel Data");
         
         long pixels = MemoryUtil.memAddressSafe(data);
         

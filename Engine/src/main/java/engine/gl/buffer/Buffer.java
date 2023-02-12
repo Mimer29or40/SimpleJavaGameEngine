@@ -18,60 +18,18 @@ public abstract class Buffer
 {
     private static final Logger LOGGER = Logger.getLogger();
     
-    // -------------------- Static -------------------- //
-    
-    static void setup()
-    {
-        Buffer.LOGGER.debug("Setup");
-        
-        bind(BufferArray.NULL);
-        //bind(GLBufferAtomicCounter.NULL);  // TODO
-        //bind(GLBufferCopyRead.NULL);  // TODO
-        //bind(GLBufferCopyWrite.NULL);  // TODO
-        //bind(GLBufferDispatchIndirect.NULL);  // TODO
-        //bind(GLBufferDrawIndirect.NULL);  // TODO
-        bind(BufferElementArray.NULL);
-        //bind(GLBufferPixelPack.NULL);  // TODO
-        //bind(GLBufferPixelUnpack.NULL);  // TODO
-        //bind(GLBufferQuery.NULL);  // TODO
-        //bind(GLBufferShaderStorage.NULL);  // TODO
-        //bind(GLBufferTexture.NULL);  // TODO
-        //bind(GLBufferTransformFeedback.NULL);  // TODO
-        bind(BufferUniform.NULL);
-    }
-    
-    static void destroy()
-    {
-        Buffer.LOGGER.debug("Destroy");
-        
-        bind(BufferArray.NULL);
-        //bind(GLBufferAtomicCounter.NULL);  // TODO
-        //bind(GLBufferCopyRead.NULL);  // TODO
-        //bind(GLBufferCopyWrite.NULL);  // TODO
-        //bind(GLBufferDispatchIndirect.NULL);  // TODO
-        //bind(GLBufferDrawIndirect.NULL);  // TODO
-        bind(BufferElementArray.NULL);
-        //bind(GLBufferPixelPack.NULL);  // TODO
-        //bind(GLBufferPixelUnpack.NULL);  // TODO
-        //bind(GLBufferQuery.NULL);  // TODO
-        //bind(GLBufferShaderStorage.NULL);  // TODO
-        //bind(GLBufferTexture.NULL);  // TODO
-        //bind(GLBufferTransformFeedback.NULL);  // TODO
-        bind(BufferUniform.NULL);
-    }
-    
     // -------------------- Instance -------------------- //
     
     protected int id;
     
-    public final int   type;
-    public final Usage usage;
+    public final int         type;
+    public final BufferUsage usage;
     
     protected long size;
     
     protected ByteBuffer mapped;
     
-    protected Buffer(int id, int type, @NotNull Usage usage, long size)
+    protected Buffer(int id, int type, @NotNull BufferUsage usage, long size)
     {
         this.id = id;
         
@@ -81,12 +39,13 @@ public abstract class Buffer
         this.size = size;
     }
     
-    protected Buffer(int type, @NotNull Usage usage, long address, long size)
+    protected Buffer(int type, @NotNull BufferUsage usage, long address, long size)
     {
         this(GL40.glGenBuffers(), type, usage, size);
         
         bind(this);
-        
+    
+        Buffer.LOGGER.trace("Uploaded Data with usage:", usage);
         GL40.nglBufferData(this.type, this.size, address, usage.ref);
         
         Buffer.LOGGER.debug("Created", this);
@@ -146,7 +105,7 @@ public abstract class Buffer
         this.size = 0;
     }
     
-    public @Nullable ByteBuffer map(@NotNull Access access)
+    public @Nullable ByteBuffer map(@NotNull BufferAccess access)
     {
         bind(this);
         
@@ -397,44 +356,6 @@ public abstract class Buffer
         try (MemoryStack stack = MemoryStack.stackPush())
         {
             return set(0, stack.doubles(data));
-        }
-    }
-    
-    // -------------------- Sub-Classes -------------------- //
-    
-    public enum Usage
-    {
-        STREAM_DRAW(GL40.GL_STREAM_DRAW),
-        STREAM_READ(GL40.GL_STREAM_READ),
-        STREAM_COPY(GL40.GL_STREAM_COPY),
-        STATIC_DRAW(GL40.GL_STATIC_DRAW),
-        STATIC_READ(GL40.GL_STATIC_READ),
-        STATIC_COPY(GL40.GL_STATIC_COPY),
-        DYNAMIC_DRAW(GL40.GL_DYNAMIC_DRAW),
-        DYNAMIC_READ(GL40.GL_DYNAMIC_READ),
-        DYNAMIC_COPY(GL40.GL_DYNAMIC_COPY),
-        ;
-        
-        public final int ref;
-        
-        Usage(int ref)
-        {
-            this.ref = ref;
-        }
-    }
-    
-    public enum Access
-    {
-        READ_ONLY(GL40.GL_READ_ONLY),
-        WRITE_ONLY(GL40.GL_WRITE_ONLY),
-        READ_WRITE(GL40.GL_READ_WRITE),
-        ;
-        
-        public final int ref;
-        
-        Access(int ref)
-        {
-            this.ref = ref;
         }
     }
 }

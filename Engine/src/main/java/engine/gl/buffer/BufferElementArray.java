@@ -26,26 +26,26 @@ public class BufferElementArray extends Buffer
     
     private BufferElementArray()
     {
-        super(0, GL40.GL_ELEMENT_ARRAY_BUFFER, Usage.STATIC_READ, 0);
+        super(0, GL40.GL_ELEMENT_ARRAY_BUFFER, BufferUsage.STATIC_READ, 0);
         
         this.indexType = GLType.UNSIGNED_INT;
     }
     
-    public BufferElementArray(@NotNull Usage usage, int indexCount, @NotNull GLType indexType)
+    public BufferElementArray(@NotNull BufferUsage usage, int indexCount, @NotNull GLType indexType)
     {
         super(GL40.GL_ELEMENT_ARRAY_BUFFER, usage, MemoryUtil.NULL, Integer.toUnsignedLong(indexCount * indexType.bytes));
         
         this.indexType = indexType;
     }
     
-    public BufferElementArray(@NotNull Usage usage, @NotNull java.nio.Buffer data, @NotNull GLType indexType)
+    public BufferElementArray(@NotNull BufferUsage usage, @NotNull java.nio.Buffer data, @NotNull GLType indexType)
     {
         super(GL40.GL_ELEMENT_ARRAY_BUFFER, usage, MemoryUtil.memAddress(data), Integer.toUnsignedLong(data.remaining() * MemUtil.elementSize(data)));
         
         this.indexType = indexType;
     }
     
-    public BufferElementArray(@NotNull Usage usage, @NotNull CustomBuffer<?> data, @NotNull GLType indexType)
+    public BufferElementArray(@NotNull BufferUsage usage, @NotNull CustomBuffer<?> data, @NotNull GLType indexType)
     {
         super(GL40.GL_ELEMENT_ARRAY_BUFFER, usage, MemoryUtil.memAddress(data), Integer.toUnsignedLong(data.remaining() * data.sizeof()));
         
@@ -76,7 +76,7 @@ public class BufferElementArray extends Buffer
         }
         
         @Override
-        public @Nullable ByteBuffer map(@NotNull Access access)
+        public @Nullable ByteBuffer map(@NotNull BufferAccess access)
         {
             BufferElementArray.LOGGER.warning("Cannot call %s.map", this);
             return null;
