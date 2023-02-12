@@ -110,13 +110,19 @@ public abstract class Engine
     
     private static void renderThread()
     {
-        int updateFreq = -1;
-        int drawFreq   = -1;
-        
         long currentTime = Engine.nanoseconds();
         
-        Engine.updateTimeLast = currentTime;
-        Engine.drawTimeLast   = currentTime;
+        int  updateFrame    = 0;
+        int  updateFreq     = -1;
+        long updateFreqInv  = 0L;
+        long updateTimeLast = currentTime;
+        long updateTimeDelta;
+        
+        int  drawFrame    = 0;
+        int  drawFreq     = -1;
+        long drawFreqInv  = 0L;
+        long drawTimeLast = currentTime;
+        long drawTimeDelta;
         
         try
         {
@@ -126,32 +132,36 @@ public abstract class Engine
             {
                 if (updateFreq != Engine.instance.updateFreq)
                 {
-                    updateFreq           = Math.max(0, Engine.instance.updateFreq);
-                    Engine.updateFreqInv = updateFreq > 0 ? 1_000_000_000L / (long) updateFreq : 0L;
+                    updateFreq    = Math.max(0, Engine.instance.updateFreq);
+                    updateFreqInv = updateFreq > 0 ? 1_000_000_000L / (long) updateFreq : 0L;
+                    
+                    Engine.instance.updateFreq = updateFreq;
                 }
                 
-                currentTime            = Engine.nanoseconds();
-                Engine.updateTimeDelta = currentTime - Engine.updateTimeLast;
-                if (Engine.updateTimeDelta >= Engine.updateFreqInv)
+                currentTime     = Engine.nanoseconds();
+                updateTimeDelta = currentTime - updateTimeLast;
+                if (updateTimeDelta >= updateFreqInv)
                 {
-                    Engine.updateTimeLast = currentTime;
+                    updateTimeLast = currentTime;
                     
-                    updateRenderThread(Engine.updateFrame++, currentTime, Engine.updateTimeDelta);
+                    updateRenderThread(updateFrame++, currentTime, updateTimeDelta);
                 }
                 
                 if (drawFreq != Engine.instance.drawFreq)
                 {
-                    drawFreq           = Math.max(0, Engine.instance.drawFreq);
-                    Engine.drawFreqInv = drawFreq > 0 ? 1_000_000_000L / (long) drawFreq : 0L;
+                    drawFreq    = Math.max(0, Engine.instance.drawFreq);
+                    drawFreqInv = drawFreq > 0 ? 1_000_000_000L / (long) drawFreq : 0L;
+                    
+                    Engine.instance.drawFreq = drawFreq;
                 }
                 
-                currentTime          = Engine.nanoseconds();
-                Engine.drawTimeDelta = currentTime - Engine.drawTimeLast;
-                if (Engine.drawTimeDelta >= Engine.drawFreqInv)
+                currentTime   = Engine.nanoseconds();
+                drawTimeDelta = currentTime - drawTimeLast;
+                if (drawTimeDelta >= drawFreqInv)
                 {
-                    Engine.drawTimeLast = currentTime;
+                    drawTimeLast = currentTime;
                     
-                    drawRenderThread(Engine.drawFrame++, currentTime, Engine.drawTimeDelta);
+                    drawRenderThread(drawFrame++, currentTime, drawTimeDelta);
                 }
                 
                 Thread.yield();
@@ -194,16 +204,6 @@ public abstract class Engine
     // -------------------- Time -------------------- //
     
     private static long start;
-    
-    private static int  updateFrame     = 0;
-    private static long updateFreqInv   = 0L;
-    private static long updateTimeDelta = 0L;
-    private static long updateTimeLast  = 0L;
-    
-    private static int  drawFrame     = 0;
-    private static long drawFreqInv   = 0L;
-    private static long drawTimeDelta = 0L;
-    private static long drawTimeLast  = 0L;
     
     public static double seconds()
     {
