@@ -6,7 +6,7 @@ import engine.util.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.opengl.GL40;
 
-import static engine.Renderer.stateTexture;
+import static engine.Renderer.bind;
 
 public class TextureDepth extends Texture2D
 {
@@ -24,7 +24,7 @@ public class TextureDepth extends Texture2D
     @Override
     protected void load(long data)
     {
-        stateTexture(this);
+        bind(this);
         
         TextureDepth.LOGGER.trace("Loading data@%08X for %s", data, this);
         
@@ -43,7 +43,7 @@ public class TextureDepth extends Texture2D
     @Override
     public @NotNull ColorBuffer getPixelData()
     {
-        stateTexture(this);
+        bind(this);
         
         TextureDepth.LOGGER.trace("Getting Pixel Data for %s", this);
         

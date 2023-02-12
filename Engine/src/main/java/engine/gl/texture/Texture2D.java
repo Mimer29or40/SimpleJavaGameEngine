@@ -3,7 +3,6 @@ package engine.gl.texture;
 import engine.Image;
 import engine.color.ColorBuffer;
 import engine.color.ColorFormat;
-import engine.gl.Texture;
 import engine.util.Logger;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -11,7 +10,7 @@ import org.lwjgl.opengl.GL40;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
-import static engine.Renderer.stateTexture;
+import static engine.Renderer.bind;
 
 public class Texture2D extends Texture
 {
@@ -89,7 +88,7 @@ public class Texture2D extends Texture
     
     protected void load(long data)
     {
-        stateTexture(this);
+        bind(this);
         
         Texture2D.LOGGER.trace("Loading data@%08X for %s", data, this);
         
@@ -117,7 +116,7 @@ public class Texture2D extends Texture
     @Override
     public @NotNull ColorBuffer getPixelData()
     {
-        stateTexture(this);
+        bind(this);
         
         Texture2D.LOGGER.trace("Getting Pixel Data for %s", this);
         
@@ -135,14 +134,14 @@ public class Texture2D extends Texture
      */
     public void update(@NotNull ColorBuffer data, int x, int y, int width, int height)
     {
-        stateTexture(this);
+        bind(this);
         
         if (this.format != data.format)
         {
             Texture2D.LOGGER.warning("Data format (%s) does not match texture (%s)", data.format, this);
             return;
         }
-    
+        
         Texture2D.LOGGER.trace("Updating Pixel Data for %s", this);
         
         long pixels = MemoryUtil.memAddressSafe(data);
@@ -177,7 +176,7 @@ public class Texture2D extends Texture
     {
         // NOTE: NPOT textures support check inside function
         // On WebGL (OpenGL ES 2.0) NPOT textures support is limited
-        stateTexture(this);
+        bind(this);
         
         // Check if texture is power-of-two (POT)
         if (this.width > 0 && (this.width & this.width - 1) == 0 && this.height > 0 && (this.height & this.height - 1) == 0)

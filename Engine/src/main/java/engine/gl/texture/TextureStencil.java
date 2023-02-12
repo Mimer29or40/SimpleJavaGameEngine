@@ -6,7 +6,7 @@ import engine.util.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.opengl.GL40;
 
-import static engine.Renderer.stateTexture;
+import static engine.Renderer.bind;
 
 public class TextureStencil extends Texture2D
 {
@@ -25,8 +25,8 @@ public class TextureStencil extends Texture2D
     @Override
     protected void load(long data)
     {
-        stateTexture(this);
-    
+        bind(this);
+        
         TextureStencil.LOGGER.trace("Loading data@%08X for %s", data, this);
         
         // TODO - Verify
@@ -44,8 +44,8 @@ public class TextureStencil extends Texture2D
     @Override
     public @NotNull ColorBuffer getPixelData()
     {
-        stateTexture(this);
-    
+        bind(this);
+        
         TextureStencil.LOGGER.trace("Getting Pixel Data for %s", this);
         
         ColorBuffer pixels = ColorBuffer.malloc(this.format, this.width * this.height);

@@ -62,14 +62,14 @@ public interface Colorc
         double r = rf();
         double g = gf();
         double b = bf();
-    
+        
         double min = Math.min(Math.min(r, g), b);
         double max = Math.max(Math.max(r, g), b);
-    
+        
         double delta = max - min;
-    
+        
         result.z = max; // Value
-    
+        
         if (max > 0.0)
         {
             // NOTE: If max is 0, this divide would cause a crash
@@ -82,7 +82,7 @@ public interface Colorc
             result.y = 0.0;
             return result;
         }
-    
+        
         // NOTE: Comparing float values could not work properly
         if (r >= max)
         {
@@ -96,11 +96,11 @@ public interface Colorc
         {
             result.x = 4.0 + (r - g) / delta; // Between magenta & cyan
         }
-    
+        
         result.x *= 60.0; // Convert to degrees
-    
+        
         if (result.x < 0.0) result.x += 360.0;
-    
+        
         return result;
     }
     

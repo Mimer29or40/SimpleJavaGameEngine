@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Objects;
 
 import static engine.IO.windowSize;
-import static engine.Renderer.stateFramebuffer;
+import static engine.Renderer.bind;
 
 public class Framebuffer
 {
@@ -71,7 +71,7 @@ public class Framebuffer
         this.width  = width;
         this.height = height;
         
-        stateFramebuffer(this);
+        bind(this);
         
         this._colorAttachments = new ArrayList<>(colors);
         this.colorAttachments  = Collections.unmodifiableList(this._colorAttachments);

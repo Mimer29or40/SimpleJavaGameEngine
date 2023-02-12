@@ -1,8 +1,7 @@
-package engine.gl;
+package engine.gl.texture;
 
 import engine.color.ColorBuffer;
 import engine.color.ColorFormat;
-import engine.gl.texture.Texture2D;
 import engine.util.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.opengl.GL40;
@@ -10,47 +9,11 @@ import org.lwjgl.opengl.GL46;
 
 import java.util.Objects;
 
-import static engine.Renderer.stateTexture;
+import static engine.Renderer.bind;
 
 public abstract class Texture
 {
     private static final Logger LOGGER = Logger.getLogger();
-    
-    // -------------------- Static -------------------- //
-    
-    static void setup()
-    {
-        Texture.LOGGER.debug("Setup");
-        
-        //GLState.bind(GLTexture1D.NULL, 0);  // TOD0
-        stateTexture(Texture2D.NULL, 0);
-        //GLState.bind(GLTexture3D.NULL, 0);  //  TODO
-        //GLState.bind(GLTexture1DArray.NULL, 0);  //  TODO
-        //GLState.bind(GLTexture2DArray.NULL, 0);  //  TODO
-        //GLState.bind(GLTextureRectangle.NULL, 0);  //  TODO
-        //GLState.bind(GLTextureCubeMap.NULL, 0);  //  TODO
-        //GLState.bind(GLTextureCubeMapArray.NULL, 0);  // TODO - OpenGL 4.0
-        //GLState.bind(GLTextureBuffer.NULL, 0);  //  TODO
-        //GLState.bind(GLTexture2DMultisample.NULL, 0);  //  TODO
-        //GLState.bind(GLTexture2DMultisampleArray.NULL, 0);  //  TODO
-    }
-    
-    static void destroy()
-    {
-        Texture.LOGGER.debug("Destroy");
-        
-        //stateTexture(GLTexture1D.NULL, 0);  // TOD0
-        stateTexture(Texture2D.NULL, 0);
-        //stateTexture(GLTexture3D.NULL, 0);  //  TODO
-        //stateTexture(GLTexture1DArray.NULL, 0);  //  TODO
-        //stateTexture(GLTexture2DArray.NULL, 0);  //  TODO
-        //stateTexture(GLTextureRectangle.NULL, 0);  //  TODO
-        //stateTexture(GLTextureCubeMap.NULL, 0);  //  TODO
-        //stateTexture(GLTextureCubeMapArray.NULL, 0);  // TODO - OpenGL 4.0
-        //stateTexture(GLTextureBuffer.NULL, 0);  //  TODO
-        //stateTexture(GLTexture2DMultisample.NULL, 0);  //  TODO
-        //stateTexture(GLTexture2DMultisampleArray.NULL, 0);  //  TODO
-    }
     
     // -------------------- Instance -------------------- //
     
@@ -144,7 +107,7 @@ public abstract class Texture
     
     public void wrap(@NotNull Texture.Wrap s, @NotNull Texture.Wrap t, @NotNull Texture.Wrap r)
     {
-        stateTexture(this);
+        bind(this);
         
         Texture.LOGGER.trace("Setting Texture Wrap: s=%s t=%s r=%s", s, t, r);
         
@@ -155,7 +118,7 @@ public abstract class Texture
     
     public void wrapS(@NotNull Texture.Wrap s)
     {
-        stateTexture(this);
+        bind(this);
         
         Texture.LOGGER.trace("Setting Texture Wrap: s=%s", s);
         
@@ -164,7 +127,7 @@ public abstract class Texture
     
     public void wrapT(@NotNull Texture.Wrap t)
     {
-        stateTexture(this);
+        bind(this);
         
         Texture.LOGGER.trace("Setting Texture Wrap: t=%s", t);
         
@@ -173,7 +136,7 @@ public abstract class Texture
     
     public void wrapR(@NotNull Texture.Wrap r)
     {
-        stateTexture(this);
+        bind(this);
         
         Texture.LOGGER.trace("Setting Texture Wrap: r=%s", r);
         
@@ -182,7 +145,7 @@ public abstract class Texture
     
     public void filter(@NotNull Filter min, @NotNull Filter mag)
     {
-        stateTexture(this);
+        bind(this);
         
         Texture.LOGGER.trace("Setting Texture Filter: min=%s mag=%s", min, mag);
         
@@ -192,7 +155,7 @@ public abstract class Texture
     
     public void filterMin(@NotNull Filter min)
     {
-        stateTexture(this);
+        bind(this);
         
         Texture.LOGGER.trace("Setting Texture Filter: min=%s", min);
         
@@ -201,7 +164,7 @@ public abstract class Texture
     
     public void filterMag(@NotNull Filter mag)
     {
-        stateTexture(this);
+        bind(this);
         
         Texture.LOGGER.trace("Setting Texture Filter: mag=%s", mag);
         

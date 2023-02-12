@@ -5,10 +5,14 @@ import engine.color.ColorBuffer;
 import engine.color.ColorFormat;
 import engine.color.Colorc;
 import engine.gl.*;
+import engine.gl.buffer.Buffer;
+import engine.gl.buffer.BufferArray;
+import engine.gl.texture.Texture;
 import engine.gl.texture.Texture2D;
 import engine.util.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Range;
 import org.joml.*;
 import org.lwjgl.opengl.GL40;
 import org.lwjgl.opengl.GL44;
@@ -17,6 +21,7 @@ import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
+import java.util.Arrays;
 
 public class Renderer
 {
@@ -61,8 +66,17 @@ public class Renderer
         Renderer.cullFace[index] = null;
         Renderer.winding[index]  = null;
         
-        Renderer.program[index]     = null;
-        Renderer.framebuffer[index] = null;
+        Renderer.activeTexture = -1;
+        Renderer.program       = null;
+        Renderer.framebuffer   = null;
+        Arrays.fill(Renderer.textures, null);
+        Renderer.buffer = null;
+    
+        bind(Program.NULL);
+        bind(Framebuffer.NULL);
+        activeTexture(0);
+        bind(Texture2D.NULL);
+        bind(BufferArray.NULL);
         
         // TODO - http://www.reedbeta.com/blog/quadrilateral-interpolation-part-1/
         // TODO - http://www.reedbeta.com/blog/quadrilateral-interpolation-part-2/
@@ -107,6 +121,13 @@ public class Renderer
         Renderer.defaultFramebuffer = Framebuffer.NULL; // TODO
         
         stateDefault();
+        
+        bind(Renderer.defaultProgram);
+        bind(Renderer.defaultFramebuffer);
+        activeTexture(0);
+        bind(Renderer.defaultTexture);
+        bind(BufferArray.NULL);
+        
         clearScreenBuffers();
     }
     
@@ -126,7 +147,7 @@ public class Renderer
         Renderer.defaultVertexShader = null;
     }
     
-    // -------------------- State -------------------- //
+    // -------------------- Stack State -------------------- //
     
     static int stackIndex;
     
@@ -152,9 +173,6 @@ public class Renderer
     static final CullFace[] cullFace = new CullFace[Renderer.STACK_SIZE];
     static final Winding[]  winding  = new Winding[Renderer.STACK_SIZE];
     
-    static final Program[]     program     = new Program[Renderer.STACK_SIZE];
-    static final Framebuffer[] framebuffer = new Framebuffer[Renderer.STACK_SIZE];
-    
     static final Matrix4d[] projection = new Matrix4d[Renderer.STACK_SIZE];
     static final Matrix4d[] view       = new Matrix4d[Renderer.STACK_SIZE];
     static final Matrix4d[] model      = new Matrix4d[Renderer.STACK_SIZE];
@@ -167,6 +185,15 @@ public class Renderer
     //static       int         textureIndex;
     //static final String[]    textureNames;
     //static final GLTexture[] textureActive;
+    
+    // -------------------- Non-Stack State -------------------- //
+    
+    static int activeTexture;
+    
+    static       Program     program;
+    static       Framebuffer framebuffer;
+    static final Texture[]   textures = new Texture[32];
+    static       Buffer      buffer;
     
     static final Matrix4d mvp = new Matrix4d();
     
@@ -189,7 +216,7 @@ public class Renderer
         }
     }
     
-    // -------------------- State Functions -------------------- //
+    // -------------------- Stack State Functions -------------------- //
     
     public static void stateDefault()
     {
@@ -214,10 +241,6 @@ public class Renderer
         
         stateCullFace(CullFace.DEFAULT);
         stateWinding(Winding.DEFAULT);
-        
-        stateProgram(Renderer.defaultProgram);
-        stateFramebuffer(Renderer.defaultFramebuffer);
-        stateTexture(Renderer.defaultTexture);
         
         stateProjection().identity();
         stateView().identity();
@@ -262,9 +285,6 @@ public class Renderer
         Renderer.cullFace[nextIdx] = Renderer.cullFace[idx];
         Renderer.winding[nextIdx]  = Renderer.winding[idx];
         
-        Renderer.program[nextIdx]     = Renderer.program[idx];
-        Renderer.framebuffer[nextIdx] = Renderer.framebuffer[idx];
-        
         Renderer.projection[nextIdx].set(Renderer.projection[idx]);
         Renderer.view[nextIdx].set(Renderer.view[idx]);
         Renderer.model[nextIdx].set(Renderer.model[idx]);
@@ -305,9 +325,6 @@ public class Renderer
         
         stateCullFace(Renderer.cullFace[prevIdx]);
         stateWinding(Renderer.winding[prevIdx]);
-        
-        stateProgram(Renderer.program[prevIdx]);
-        stateFramebuffer(Renderer.framebuffer[prevIdx]);
         
         // Nn need to set matrix or color stack
         
@@ -599,45 +616,75 @@ public class Renderer
         }
     }
     
-    public static void stateProgram(@NotNull Program program)
+    // -------------------- Non-Stack State Functions -------------------- //
+    
+    public static void bind(@NotNull Program program)
     {
-        if (Renderer.program[Renderer.stackIndex] != program)
+        if (Renderer.program != program)
         {
-            Renderer.LOGGER.trace("Setting Program:", program);
+            Renderer.LOGGER.trace("Binding:", program);
             
-            Renderer.program[Renderer.stackIndex] = program;
+            Renderer.program = program;
             
             GL44.glUseProgram(program.id());
         }
     }
     
-    public static void stateFramebuffer(@NotNull Framebuffer framebuffer)
+    public static void bind(@NotNull Framebuffer framebuffer)
     {
-        if (Renderer.framebuffer[Renderer.stackIndex] != framebuffer)
+        if (Renderer.framebuffer != framebuffer)
         {
-            Renderer.LOGGER.trace("Setting Framebuffer:", framebuffer);
+            Renderer.LOGGER.trace("Binding:", framebuffer);
             
-            Renderer.framebuffer[Renderer.stackIndex] = framebuffer;
+            Renderer.framebuffer = framebuffer;
             
             GL44.glBindFramebuffer(GL40.GL_FRAMEBUFFER, framebuffer.id());
             GL44.glViewport(0, 0, framebuffer.width(), framebuffer.height());
         }
     }
     
-    public static void stateTexture(@NotNull Texture texture, int index)  // TODO
+    public static void activeTexture(@Range(from = 0, to = 31) int index)
     {
-        // TODO - Texture Pushing and popping
-        // TODO - Separate Active Texture and bind texture
-        Renderer.LOGGER.trace("Binding %s to index=%s", texture, index);
-        
-        GL44.glActiveTexture(GL44.GL_TEXTURE0 + index);
-        GL44.glBindTexture(texture.type, texture.id());
+        if (Renderer.activeTexture != index)
+        {
+            Renderer.LOGGER.trace("Setting Active Texture:", index);
+            
+            Renderer.activeTexture = index;
+            
+            GL44.glActiveTexture(GL44.GL_TEXTURE0 + index);
+        }
     }
     
-    public static void stateTexture(@NotNull Texture texture)  // TODO
+    public static void bind(@NotNull Texture texture)
     {
-        stateTexture(texture, 0);
+        if (Renderer.textures[Renderer.activeTexture] != texture)
+        {
+            Renderer.LOGGER.trace("Binding: %s to index=%s", texture, Renderer.activeTexture);
+            
+            Renderer.textures[Renderer.activeTexture] = texture;
+            
+            GL44.glBindTexture(texture.type, texture.id());
+        }
     }
+    
+    public static void bind(@NotNull Buffer buffer)
+    {
+        if (Renderer.buffer != buffer)
+        {
+            Renderer.LOGGER.trace("Binding:", buffer);
+            
+            Renderer.buffer = buffer;
+            
+            GL44.glBindBuffer(buffer.type, buffer.id());
+        }
+    }
+    
+    //public static void bind(@NotNull VertexArray vertexArray)  // TODO
+    //{
+    //    Renderer.LOGGER.trace("Binding", vertexArray);
+    //
+    //    GL44.glBindVertexArray(vertexArray.id);
+    //}
     
     public static @NotNull Matrix4d stateProjection()
     {
@@ -680,48 +727,42 @@ public class Renderer
     {
         Renderer.LOGGER.trace("attributeShort(%s, %s)", name, value);
         
-        Program program = Renderer.program[Renderer.stackIndex];
-        GL44.glVertexAttrib1s(program.getUniform(name), value);
+        GL44.glVertexAttrib1s(Renderer.program.getUniform(name), value);
     }
     
     public static void attributeInt(@NotNull String name, int value)
     {
         Renderer.LOGGER.trace("attributeInt(%s, %s)", name, value);
         
-        Program program = Renderer.program[Renderer.stackIndex];
-        GL44.glVertexAttribI1i(program.getUniform(name), value);
+        GL44.glVertexAttribI1i(Renderer.program.getUniform(name), value);
     }
     
     public static void attributeUInt(@NotNull String name, long value)
     {
         Renderer.LOGGER.trace("attributeUInt(%s, %s)", name, value);
         
-        Program program = Renderer.program[Renderer.stackIndex];
-        GL44.glVertexAttribI1ui(program.getUniform(name), (int) (value & 0xFFFFFFFFL));
+        GL44.glVertexAttribI1ui(Renderer.program.getUniform(name), (int) (value & 0xFFFFFFFFL));
     }
     
     public static void attributeFloat(@NotNull String name, double value)
     {
         Renderer.LOGGER.trace("attributeFloat(%s, %s)", name, value);
         
-        Program program = Renderer.program[Renderer.stackIndex];
-        GL44.glVertexAttrib1f(program.getUniform(name), (float) value);
+        GL44.glVertexAttrib1f(Renderer.program.getUniform(name), (float) value);
     }
     
     public static void attributeShort2(@NotNull String name, short x, short y)
     {
         Renderer.LOGGER.trace("attributeShort2(%s, %s, %s)", name, x, y);
         
-        Program program = Renderer.program[Renderer.stackIndex];
-        GL44.glVertexAttrib2s(program.getUniform(name), x, y);
+        GL44.glVertexAttrib2s(Renderer.program.getUniform(name), x, y);
     }
     
     public static void attributeInt2(@NotNull String name, int x, int y)
     {
         Renderer.LOGGER.trace("attributeInt2(%s, %s, %s)", name, x, y);
         
-        Program program = Renderer.program[Renderer.stackIndex];
-        GL44.glVertexAttribI2i(program.getUniform(name), x, y);
+        GL44.glVertexAttribI2i(Renderer.program.getUniform(name), x, y);
     }
     
     public static void attributeInt2(@NotNull String name, @NotNull Vector2ic vec)
@@ -733,8 +774,7 @@ public class Renderer
     {
         Renderer.LOGGER.trace("attributeUInt2(%s, %s, %s)", name, x, y);
         
-        Program program = Renderer.program[Renderer.stackIndex];
-        GL44.glVertexAttribI2ui(program.getUniform(name), (int) (x & 0xFFFFFFFFL), (int) (y & 0xFFFFFFFFL));
+        GL44.glVertexAttribI2ui(Renderer.program.getUniform(name), (int) (x & 0xFFFFFFFFL), (int) (y & 0xFFFFFFFFL));
     }
     
     public static void attributeUInt2(@NotNull String name, @NotNull Vector2ic vec)
@@ -746,8 +786,7 @@ public class Renderer
     {
         Renderer.LOGGER.trace("attributeFloat2(%s, %s, %s)", name, x, y);
         
-        Program program = Renderer.program[Renderer.stackIndex];
-        GL44.glVertexAttrib2f(program.getUniform(name), (float) x, (float) y);
+        GL44.glVertexAttrib2f(Renderer.program.getUniform(name), (float) x, (float) y);
     }
     
     public static void attributeFloat2(@NotNull String name, @NotNull Vector2dc vec)
@@ -759,16 +798,14 @@ public class Renderer
     {
         Renderer.LOGGER.trace("attributeShort3(%s, %s, %s, %s)", name, x, y, z);
         
-        Program program = Renderer.program[Renderer.stackIndex];
-        GL44.glVertexAttrib3s(program.getUniform(name), x, y, z);
+        GL44.glVertexAttrib3s(Renderer.program.getUniform(name), x, y, z);
     }
     
     public static void attributeInt3(@NotNull String name, int x, int y, int z)
     {
         Renderer.LOGGER.trace("attributeInt3(%s, %s, %s, %s)", name, x, y, z);
         
-        Program program = Renderer.program[Renderer.stackIndex];
-        GL44.glVertexAttribI3i(program.getUniform(name), x, y, z);
+        GL44.glVertexAttribI3i(Renderer.program.getUniform(name), x, y, z);
     }
     
     public static void attributeInt3(@NotNull String name, @NotNull Vector3ic vec)
@@ -780,8 +817,7 @@ public class Renderer
     {
         Renderer.LOGGER.trace("attributeUInt3(%s, %s, %s, %s)", name, x, y, z);
         
-        Program program = Renderer.program[Renderer.stackIndex];
-        GL44.glVertexAttribI3ui(program.getUniform(name), (int) (x & 0xFFFFFFFFL), (int) (y & 0xFFFFFFFFL), (int) (z & 0xFFFFFFFFL));
+        GL44.glVertexAttribI3ui(Renderer.program.getUniform(name), (int) (x & 0xFFFFFFFFL), (int) (y & 0xFFFFFFFFL), (int) (z & 0xFFFFFFFFL));
     }
     
     public static void attributeUInt3(@NotNull String name, @NotNull Vector3ic vec)
@@ -793,8 +829,7 @@ public class Renderer
     {
         Renderer.LOGGER.trace("attributeFloat3(%s, %s, %s, %s)", name, x, y, z);
         
-        Program program = Renderer.program[Renderer.stackIndex];
-        GL44.glVertexAttrib3f(program.getUniform(name), (float) x, (float) y, (float) z);
+        GL44.glVertexAttrib3f(Renderer.program.getUniform(name), (float) x, (float) y, (float) z);
     }
     
     public static void attributeFloat3(@NotNull String name, @NotNull Vector3dc vec)
@@ -806,16 +841,14 @@ public class Renderer
     {
         Renderer.LOGGER.trace("attributeShort4(%s, %s, %s, %s, %s)", name, x, y, z, w);
         
-        Program program = Renderer.program[Renderer.stackIndex];
-        GL44.glVertexAttrib4s(program.getUniform(name), x, y, z, w);
+        GL44.glVertexAttrib4s(Renderer.program.getUniform(name), x, y, z, w);
     }
     
     public static void attributeInt4(@NotNull String name, int x, int y, int z, int w)
     {
         Renderer.LOGGER.trace("attributeInt4(%s, %s, %s, %s, %s)", name, x, y, z, w);
         
-        Program program = Renderer.program[Renderer.stackIndex];
-        GL44.glVertexAttribI4i(program.getUniform(name), x, y, z, w);
+        GL44.glVertexAttribI4i(Renderer.program.getUniform(name), x, y, z, w);
     }
     
     public static void attributeInt4(@NotNull String name, @NotNull Vector4ic vec)
@@ -827,8 +860,7 @@ public class Renderer
     {
         Renderer.LOGGER.trace("attributeUInt4(%s, %s, %s, %s, %s)", name, x, y, z, w);
         
-        Program program = Renderer.program[Renderer.stackIndex];
-        GL44.glVertexAttribI4ui(program.getUniform(name), (int) (x & 0xFFFFFFFFL), (int) (y & 0xFFFFFFFFL), (int) (z & 0xFFFFFFFFL), (int) (w & 0xFFFFFFFFL));
+        GL44.glVertexAttribI4ui(Renderer.program.getUniform(name), (int) (x & 0xFFFFFFFFL), (int) (y & 0xFFFFFFFFL), (int) (z & 0xFFFFFFFFL), (int) (w & 0xFFFFFFFFL));
     }
     
     public static void attributeUInt4(@NotNull String name, @NotNull Vector4ic vec)
@@ -840,8 +872,7 @@ public class Renderer
     {
         Renderer.LOGGER.trace("attributeFloat4(%s, %s, %s, %s, %s)", name, x, y, z, w);
         
-        Program program = Renderer.program[Renderer.stackIndex];
-        GL44.glVertexAttrib4f(program.getUniform(name), (float) x, (float) y, (float) z, (float) w);
+        GL44.glVertexAttrib4f(Renderer.program.getUniform(name), (float) x, (float) y, (float) z, (float) w);
     }
     
     public static void attributeFloat4(@NotNull String name, @NotNull Vector4dc vec)
@@ -853,8 +884,7 @@ public class Renderer
     {
         Renderer.LOGGER.trace("attributeNormalizedUByte4(%s, %s, %s, %s, %s)", name, x, y, z, w);
         
-        Program program = Renderer.program[Renderer.stackIndex];
-        GL44.glVertexAttrib4Nub(program.getUniform(name), (byte) (x & 0xFF), (byte) (y & 0xFF), (byte) (z & 0xFF), (byte) (w & 0xFF));
+        GL44.glVertexAttrib4Nub(Renderer.program.getUniform(name), (byte) (x & 0xFF), (byte) (y & 0xFF), (byte) (z & 0xFF), (byte) (w & 0xFF));
     }
     
     // -------------------- Uniform -------------------- //
@@ -863,48 +893,42 @@ public class Renderer
     {
         Renderer.LOGGER.trace("uniformBool(%s, %s)", name, value);
         
-        Program program = Renderer.program[Renderer.stackIndex];
-        GL44.glUniform1i(program.getUniform(name), value ? 1 : 0);
+        GL44.glUniform1i(Renderer.program.getUniform(name), value ? 1 : 0);
     }
     
     public static void uniformInt(@NotNull String name, int value)
     {
         Renderer.LOGGER.trace("uniformInt(%s, %s)", name, value);
         
-        Program program = Renderer.program[Renderer.stackIndex];
-        GL44.glUniform1i(program.getUniform(name), value);
+        GL44.glUniform1i(Renderer.program.getUniform(name), value);
     }
     
     public static void uniformUInt(@NotNull String name, long value)
     {
         Renderer.LOGGER.trace("uniformUInt(%s, %s)", name, value);
         
-        Program program = Renderer.program[Renderer.stackIndex];
-        GL44.glUniform1ui(program.getUniform(name), (int) (value & 0xFFFFFFFFL));
+        GL44.glUniform1ui(Renderer.program.getUniform(name), (int) (value & 0xFFFFFFFFL));
     }
     
     public static void uniformFloat(@NotNull String name, double value)
     {
         Renderer.LOGGER.trace("uniformFloat(%s, %s)", name, value);
         
-        Program program = Renderer.program[Renderer.stackIndex];
-        GL44.glUniform1f(program.getUniform(name), (float) value);
+        GL44.glUniform1f(Renderer.program.getUniform(name), (float) value);
     }
     
     public static void uniformBool2(@NotNull String name, boolean x, boolean y)
     {
         Renderer.LOGGER.trace("uniformBool2(%s, %s, %s)", name, x, y);
         
-        Program program = Renderer.program[Renderer.stackIndex];
-        GL44.glUniform2i(program.getUniform(name), x ? 1 : 0, y ? 1 : 0);
+        GL44.glUniform2i(Renderer.program.getUniform(name), x ? 1 : 0, y ? 1 : 0);
     }
     
     public static void uniformInt2(@NotNull String name, int x, int y)
     {
         Renderer.LOGGER.trace("uniformInt2(%s, %s, %s)", name, x, y);
         
-        Program program = Renderer.program[Renderer.stackIndex];
-        GL44.glUniform2i(program.getUniform(name), x, y);
+        GL44.glUniform2i(Renderer.program.getUniform(name), x, y);
     }
     
     public static void uniformInt2(@NotNull String name, @NotNull Vector2ic vec)
@@ -916,8 +940,7 @@ public class Renderer
     {
         Renderer.LOGGER.trace("uniformUInt2(%s, %s, %s)", name, x, y);
         
-        Program program = Renderer.program[Renderer.stackIndex];
-        GL44.glUniform2ui(program.getUniform(name), (int) (x & 0xFFFFFFFFL), (int) (y & 0xFFFFFFFFL));
+        GL44.glUniform2ui(Renderer.program.getUniform(name), (int) (x & 0xFFFFFFFFL), (int) (y & 0xFFFFFFFFL));
     }
     
     public static void uniformUInt2(@NotNull String name, @NotNull Vector2ic vec)
@@ -929,8 +952,7 @@ public class Renderer
     {
         Renderer.LOGGER.trace("uniformFloat2(%s, %s, %s)", name, x, y);
         
-        Program program = Renderer.program[Renderer.stackIndex];
-        GL44.glUniform2f(program.getUniform(name), (float) x, (float) y);
+        GL44.glUniform2f(Renderer.program.getUniform(name), (float) x, (float) y);
     }
     
     public static void uniformFloat2(@NotNull String name, @NotNull Vector2dc vec)
@@ -942,16 +964,14 @@ public class Renderer
     {
         Renderer.LOGGER.trace("uniformBool3(%s, %s, %s, %s)", name, x, y, z);
         
-        Program program = Renderer.program[Renderer.stackIndex];
-        GL44.glUniform3i(program.getUniform(name), x ? 1 : 0, y ? 1 : 0, z ? 1 : 0);
+        GL44.glUniform3i(Renderer.program.getUniform(name), x ? 1 : 0, y ? 1 : 0, z ? 1 : 0);
     }
     
     public static void uniformInt3(@NotNull String name, int x, int y, int z)
     {
         Renderer.LOGGER.trace("uniformInt3(%s, %s, %s, %s)", name, x, y, z);
         
-        Program program = Renderer.program[Renderer.stackIndex];
-        GL44.glUniform3i(program.getUniform(name), x, y, z);
+        GL44.glUniform3i(Renderer.program.getUniform(name), x, y, z);
     }
     
     public static void uniformInt3(@NotNull String name, @NotNull Vector3ic vec)
@@ -963,8 +983,7 @@ public class Renderer
     {
         Renderer.LOGGER.trace("uniformUInt3(%s, %s, %s, %s)", name, x, y, z);
         
-        Program program = Renderer.program[Renderer.stackIndex];
-        GL44.glUniform3ui(program.getUniform(name), (int) (x & 0xFFFFFFFFL), (int) (y & 0xFFFFFFFFL), (int) (z & 0xFFFFFFFFL));
+        GL44.glUniform3ui(Renderer.program.getUniform(name), (int) (x & 0xFFFFFFFFL), (int) (y & 0xFFFFFFFFL), (int) (z & 0xFFFFFFFFL));
     }
     
     public static void uniformUInt3(@NotNull String name, @NotNull Vector3ic vec)
@@ -976,8 +995,7 @@ public class Renderer
     {
         Renderer.LOGGER.trace("uniformFloat3(%s, %s, %s, %s)", name, x, y, z);
         
-        Program program = Renderer.program[Renderer.stackIndex];
-        GL44.glUniform3f(program.getUniform(name), (float) x, (float) y, (float) z);
+        GL44.glUniform3f(Renderer.program.getUniform(name), (float) x, (float) y, (float) z);
     }
     
     public static void uniformFloat3(@NotNull String name, @NotNull Vector3dc vec)
@@ -989,16 +1007,14 @@ public class Renderer
     {
         Renderer.LOGGER.trace("uniformBool3(%s, %s, %s, %s, %s)", name, x, y, z, w);
         
-        Program program = Renderer.program[Renderer.stackIndex];
-        GL44.glUniform4i(program.getUniform(name), x ? 1 : 0, y ? 1 : 0, z ? 1 : 0, w ? 1 : 0);
+        GL44.glUniform4i(Renderer.program.getUniform(name), x ? 1 : 0, y ? 1 : 0, z ? 1 : 0, w ? 1 : 0);
     }
     
     public static void uniformInt4(@NotNull String name, int x, int y, int z, int w)
     {
         Renderer.LOGGER.trace("uniformInt4(%s, %s, %s, %s, %s)", name, x, y, z, w);
         
-        Program program = Renderer.program[Renderer.stackIndex];
-        GL44.glUniform4i(program.getUniform(name), x, y, z, w);
+        GL44.glUniform4i(Renderer.program.getUniform(name), x, y, z, w);
     }
     
     public static void uniformInt4(@NotNull String name, @NotNull Vector4ic vec)
@@ -1010,8 +1026,7 @@ public class Renderer
     {
         Renderer.LOGGER.trace("uniformUInt4(%s, %s, %s, %s, %s)", name, x, y, z, w);
         
-        Program program = Renderer.program[Renderer.stackIndex];
-        GL44.glUniform4ui(program.getUniform(name), (int) (x & 0xFFFFFFFFL), (int) (y & 0xFFFFFFFFL), (int) (z & 0xFFFFFFFFL), (int) (w & 0xFFFFFFFFL));
+        GL44.glUniform4ui(Renderer.program.getUniform(name), (int) (x & 0xFFFFFFFFL), (int) (y & 0xFFFFFFFFL), (int) (z & 0xFFFFFFFFL), (int) (w & 0xFFFFFFFFL));
     }
     
     public static void uniformUInt4(@NotNull String name, @NotNull Vector4ic vec)
@@ -1023,8 +1038,7 @@ public class Renderer
     {
         Renderer.LOGGER.trace("uniformFloat4(%s, %s, %s, %s, %s)", name, x, y, z, w);
         
-        Program program = Renderer.program[Renderer.stackIndex];
-        GL44.glUniform4f(program.getUniform(name), (float) x, (float) y, (float) z, (float) w);
+        GL44.glUniform4f(Renderer.program.getUniform(name), (float) x, (float) y, (float) z, (float) w);
     }
     
     public static void uniformFloat4(@NotNull String name, @NotNull Vector4dc vec)
@@ -1038,9 +1052,8 @@ public class Renderer
         
         try (MemoryStack stack = MemoryStack.stackPush())
         {
-            Program     program = Renderer.program[Renderer.stackIndex];
-            FloatBuffer buffer  = stack.floats((float) mat.m00(), (float) mat.m01(), (float) mat.m10(), (float) mat.m11());
-            GL44.glUniformMatrix2fv(program.getUniform(name), transpose, buffer);
+            FloatBuffer buffer = stack.floats((float) mat.m00(), (float) mat.m01(), (float) mat.m10(), (float) mat.m11());
+            GL44.glUniformMatrix2fv(Renderer.program.getUniform(name), transpose, buffer);
         }
     }
     
@@ -1050,8 +1063,7 @@ public class Renderer
         
         try (MemoryStack stack = MemoryStack.stackPush())
         {
-            Program program = Renderer.program[Renderer.stackIndex];
-            GL44.glUniformMatrix3fv(program.getUniform(name), transpose, mat.get(stack.mallocFloat(9)));
+            GL44.glUniformMatrix3fv(Renderer.program.getUniform(name), transpose, mat.get(stack.mallocFloat(9)));
         }
     }
     
@@ -1061,8 +1073,7 @@ public class Renderer
         
         try (MemoryStack stack = MemoryStack.stackPush())
         {
-            Program program = Renderer.program[Renderer.stackIndex];
-            GL44.glUniformMatrix4fv(program.getUniform(name), transpose, mat.get(stack.mallocFloat(16)));
+            GL44.glUniformMatrix4fv(Renderer.program.getUniform(name), transpose, mat.get(stack.mallocFloat(16)));
         }
     }
     
@@ -1070,8 +1081,7 @@ public class Renderer
     {
         Renderer.LOGGER.trace("uniformColor(%s, %s", name, color);
         
-        Program program = Renderer.program[Renderer.stackIndex];
-        GL44.glUniform4f(program.getUniform(name), color.rf(), color.gf(), color.bf(), color.af());
+        GL44.glUniform4f(Renderer.program.getUniform(name), color.rf(), color.gf(), color.bf(), color.af());
     }
     
     // -------------------- Functions -------------------- //
@@ -1124,20 +1134,6 @@ public class Renderer
     {
         return readBuffer(GL44.GL_BACK, x, y, width, height, format);
     }
-    
-    //public static void bind(@NotNull Buffer buffer)  // TODO
-    //{
-    //    Renderer.LOGGER.trace("Binding", buffer);
-    //
-    //    GL44.glBindBuffer(buffer.type, buffer.id);
-    //}
-    
-    //public static void bind(@NotNull VertexArray vertexArray)  // TODO
-    //{
-    //    Renderer.LOGGER.trace("Binding", vertexArray);
-    //
-    //    GL44.glBindVertexArray(vertexArray.id);
-    //}
     
     private Renderer() {}
 }
