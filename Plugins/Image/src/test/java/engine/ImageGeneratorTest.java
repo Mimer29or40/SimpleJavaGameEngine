@@ -41,7 +41,7 @@ class ImageGeneratorTest
     {
         if (this.image == null || this.fileName == null) return;
         
-        this.image.save(ImageGeneratorTest.outputDir.resolve(this.fileName).toString());
+        this.image.save(ImageGeneratorTest.outputDir.resolve(this.fileName));
         this.image.delete();
     }
     

@@ -65,7 +65,7 @@ class MutableImageTest
             }
         }
         
-        this.image.save(MutableImageTest.outputDir.resolve("Image.png").toString());
+        this.image.save(MutableImageTest.outputDir.resolve("Image.png"));
     }
     
     @AfterEach
@@ -87,13 +87,13 @@ class MutableImageTest
         Assertions.assertEquals(ColorFormat.RED_ALPHA, image.format());
         image.delete();
         
-        image = new MutableImage(IOUtil.getPath("image/TestImage.png").toString());
+        image = new MutableImage(IOUtil.getPath("image/TestImage.png"));
         Assertions.assertNotNull(image.data());
         Assertions.assertEquals(1000, image.width());
         Assertions.assertEquals(1000, image.height());
         Assertions.assertEquals(ColorFormat.RGBA, image.format());
         
-        image = new MutableImage("invalid/path/to/image.png");
+        image = new MutableImage(IOUtil.getPath("invalid/path/to/image.png"));
         Assertions.assertNull(image.data());
         Assertions.assertEquals(0, image.width());
         Assertions.assertEquals(0, image.height());
@@ -114,7 +114,7 @@ class MutableImageTest
         Assertions.assertEquals(height, this.image.height());
         Assertions.assertEquals(ColorFormat.RED_ALPHA, this.image.format());
         
-        this.image.save(MutableImageTest.outputDir.resolve("Image-Reformat.png").toString());
+        this.image.save(MutableImageTest.outputDir.resolve("Image-Reformat.png"));
     }
     
     @ParameterizedTest
@@ -133,7 +133,7 @@ class MutableImageTest
         Assertions.assertEquals(height, this.image.height());
         
         String mod = smaller ? "Smaller" : "Larger";
-        this.image.save(MutableImageTest.outputDir.resolve("Image-Resize-" + mod + ".png").toString());
+        this.image.save(MutableImageTest.outputDir.resolve("Image-Resize-" + mod + ".png"));
     }
     
     @ParameterizedTest
@@ -152,7 +152,7 @@ class MutableImageTest
         Assertions.assertEquals(height, this.image.height());
         
         String mod = smaller ? "Smaller" : "Larger";
-        this.image.save(MutableImageTest.outputDir.resolve("Image-ResizeNN-" + mod + ".png").toString());
+        this.image.save(MutableImageTest.outputDir.resolve("Image-ResizeNN-" + mod + ".png"));
     }
     
     @Test
@@ -166,7 +166,7 @@ class MutableImageTest
         Assertions.assertEquals(1024, this.image.height());
         Assertions.assertEquals(ColorFormat.RGBA, this.image.format());
         
-        this.image.save(MutableImageTest.outputDir.resolve("Image-ToPOT.png").toString());
+        this.image.save(MutableImageTest.outputDir.resolve("Image-ToPOT.png"));
     }
     
     @Test
@@ -185,7 +185,7 @@ class MutableImageTest
         Assertions.assertEquals(50, this.image.height());
         Assertions.assertEquals(format, this.image.format());
         
-        this.image.save(MutableImageTest.outputDir.resolve("Image-Crop.png").toString());
+        this.image.save(MutableImageTest.outputDir.resolve("Image-Crop.png"));
     }
     
     @ParameterizedTest
@@ -207,7 +207,7 @@ class MutableImageTest
         Assertions.assertEquals(width, this.image.width());
         Assertions.assertEquals(height, this.image.height());
         
-        this.image.save(MutableImageTest.outputDir.resolve(String.format("quantize-%04X.png", value)).toString());
+        this.image.save(MutableImageTest.outputDir.resolve(String.format("quantize-%04X.png", value)));
     }
     
     @ParameterizedTest
@@ -224,7 +224,7 @@ class MutableImageTest
         Assertions.assertEquals(width, this.image.width());
         Assertions.assertEquals(height, this.image.height());
         
-        this.image.save(MutableImageTest.outputDir.resolve(String.format("neuQuantize-%s.png", value)).toString());
+        this.image.save(MutableImageTest.outputDir.resolve(String.format("neuQuantize-%s.png", value)));
     }
     
     @ParameterizedTest
@@ -246,7 +246,7 @@ class MutableImageTest
         Assertions.assertEquals(width, this.image.width());
         Assertions.assertEquals(height, this.image.height());
         
-        this.image.save(MutableImageTest.outputDir.resolve(String.format("dither-%04X.png", value)).toString());
+        this.image.save(MutableImageTest.outputDir.resolve(String.format("dither-%04X.png", value)));
     }
     
     @Test
@@ -262,7 +262,7 @@ class MutableImageTest
         Assertions.assertEquals(height, this.image.height());
         Assertions.assertEquals(format, this.image.format());
         
-        this.image.save(MutableImageTest.outputDir.resolve("flipV.png").toString());
+        this.image.save(MutableImageTest.outputDir.resolve("flipV.png"));
     }
     
     @Test
@@ -278,7 +278,7 @@ class MutableImageTest
         Assertions.assertEquals(height, this.image.height());
         Assertions.assertEquals(format, this.image.format());
         
-        this.image.save(MutableImageTest.outputDir.resolve("flipH.png").toString());
+        this.image.save(MutableImageTest.outputDir.resolve("flipH.png"));
     }
     
     @Test
@@ -294,7 +294,7 @@ class MutableImageTest
         Assertions.assertEquals(height, this.image.height());
         Assertions.assertEquals(format, this.image.format());
         
-        this.image.save(MutableImageTest.outputDir.resolve("rotateCW.png").toString());
+        this.image.save(MutableImageTest.outputDir.resolve("rotateCW.png"));
     }
     
     @Test
@@ -310,7 +310,7 @@ class MutableImageTest
         Assertions.assertEquals(height, this.image.height());
         Assertions.assertEquals(format, this.image.format());
         
-        this.image.save(MutableImageTest.outputDir.resolve("rotateCCW.png").toString());
+        this.image.save(MutableImageTest.outputDir.resolve("rotateCCW.png"));
     }
     
     @Test
@@ -326,7 +326,7 @@ class MutableImageTest
         Assertions.assertEquals(height, this.image.height());
         Assertions.assertEquals(format, this.image.format());
         
-        this.image.save(MutableImageTest.outputDir.resolve("colorTint.png").toString());
+        this.image.save(MutableImageTest.outputDir.resolve("colorTint.png"));
     }
     
     @Test
@@ -342,7 +342,7 @@ class MutableImageTest
         Assertions.assertEquals(height, this.image.height());
         Assertions.assertEquals(format, this.image.format());
         
-        this.image.save(MutableImageTest.outputDir.resolve("colorGrayscale.png").toString());
+        this.image.save(MutableImageTest.outputDir.resolve("colorGrayscale.png"));
     }
     
     @ParameterizedTest
@@ -359,7 +359,7 @@ class MutableImageTest
         Assertions.assertEquals(height, this.image.height());
         Assertions.assertEquals(format, this.image.format());
         
-        this.image.save(MutableImageTest.outputDir.resolve(String.format("colorBrightness-%s.png", value)).toString());
+        this.image.save(MutableImageTest.outputDir.resolve(String.format("colorBrightness-%s.png", value)));
     }
     
     @ParameterizedTest
@@ -376,7 +376,7 @@ class MutableImageTest
         Assertions.assertEquals(height, this.image.height());
         Assertions.assertEquals(format, this.image.format());
         
-        this.image.save(MutableImageTest.outputDir.resolve(String.format("colorContrast-%s.png", value)).toString());
+        this.image.save(MutableImageTest.outputDir.resolve(String.format("colorContrast-%s.png", value)));
     }
     
     @ParameterizedTest
@@ -393,7 +393,7 @@ class MutableImageTest
         Assertions.assertEquals(height, this.image.height());
         Assertions.assertEquals(format, this.image.format());
         
-        this.image.save(MutableImageTest.outputDir.resolve(String.format("colorGamma-%s.png", value)).toString());
+        this.image.save(MutableImageTest.outputDir.resolve(String.format("colorGamma-%s.png", value)));
     }
     
     @Test
@@ -409,7 +409,7 @@ class MutableImageTest
         Assertions.assertEquals(height, this.image.height());
         Assertions.assertEquals(format, this.image.format());
         
-        this.image.save(MutableImageTest.outputDir.resolve("colorInvert.png").toString());
+        this.image.save(MutableImageTest.outputDir.resolve("colorInvert.png"));
     }
     
     @ParameterizedTest
@@ -426,7 +426,7 @@ class MutableImageTest
         Assertions.assertEquals(height, this.image.height());
         Assertions.assertEquals(format, this.image.format());
         
-        this.image.save(MutableImageTest.outputDir.resolve(String.format("colorBrighter-%s.png", value)).toString());
+        this.image.save(MutableImageTest.outputDir.resolve(String.format("colorBrighter-%s.png", value)));
     }
     
     @ParameterizedTest
@@ -443,7 +443,7 @@ class MutableImageTest
         Assertions.assertEquals(height, this.image.height());
         Assertions.assertEquals(format, this.image.format());
         
-        this.image.save(MutableImageTest.outputDir.resolve(String.format("colorDarker-%s.png", value)).toString());
+        this.image.save(MutableImageTest.outputDir.resolve(String.format("colorDarker-%s.png", value)));
     }
     
     @ParameterizedTest
@@ -460,7 +460,7 @@ class MutableImageTest
         Assertions.assertEquals(height, this.image.height());
         Assertions.assertEquals(format, this.image.format());
         
-        this.image.save(MutableImageTest.outputDir.resolve(String.format("colorReplace-%s.png", value)).toString());
+        this.image.save(MutableImageTest.outputDir.resolve(String.format("colorReplace-%s.png", value)));
     }
     
     @ParameterizedTest
@@ -477,7 +477,7 @@ class MutableImageTest
         Assertions.assertEquals(height, this.image.height());
         Assertions.assertEquals(format, this.image.format());
         
-        this.image.save(MutableImageTest.outputDir.resolve(String.format("alphaClear-%s.png", value)).toString());
+        this.image.save(MutableImageTest.outputDir.resolve(String.format("alphaClear-%s.png", value)));
     }
     
     @ParameterizedTest
@@ -502,7 +502,7 @@ class MutableImageTest
         Assertions.assertEquals(height, this.image.height());
         Assertions.assertEquals(format, this.image.format());
         
-        this.image.save(MutableImageTest.outputDir.resolve(String.format("alphaMask%s.png", invert ? "-Inverted" : "")).toString());
+        this.image.save(MutableImageTest.outputDir.resolve(String.format("alphaMask%s.png", invert ? "-Inverted" : "")));
     }
     
     @Test
@@ -518,6 +518,6 @@ class MutableImageTest
         Assertions.assertEquals(height, this.image.height());
         Assertions.assertEquals(format, this.image.format());
         
-        this.image.save(MutableImageTest.outputDir.resolve("alphaPreMultiply.png").toString());
+        this.image.save(MutableImageTest.outputDir.resolve("alphaPreMultiply.png"));
     }
 }

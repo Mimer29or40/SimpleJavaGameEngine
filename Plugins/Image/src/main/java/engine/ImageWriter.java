@@ -15,9 +15,9 @@ public class ImageWriter
 {
     private static final Logger LOGGER = Logger.getLogger();
     
-    public static boolean write(@NotNull Image image, @NotNull String filePath) throws IOException
+    public static boolean write(@NotNull Image image, @NotNull Path filePath) throws IOException
     {
-        String extension = IOUtil.getExtension(filePath);
+        String extension = IOUtil.getExtension(filePath.toString());
         
         return switch (extension)
                 {
@@ -30,7 +30,7 @@ public class ImageWriter
                 };
     }
     
-    public static boolean writePNG(@NotNull Image image, @NotNull String filePath)
+    public static boolean writePNG(@NotNull Image image, @NotNull Path filePath)
     {
         ImageWriter.LOGGER.trace("writePNG(%s, %s)", image, filePath);
         
@@ -39,10 +39,10 @@ public class ImageWriter
         int channels = image.format().sizeof;
         int stride   = image.width * channels;
         
-        return stbi_write_png(filePath, image.width, image.height, channels, buffer, stride);
+        return stbi_write_png(filePath.toString(), image.width, image.height, channels, buffer, stride);
     }
     
-    public static boolean writeBMP(@NotNull Image image, @NotNull String filePath)
+    public static boolean writeBMP(@NotNull Image image, @NotNull Path filePath)
     {
         ImageWriter.LOGGER.trace("writeBMP(%s, %s)", image, filePath);
         
@@ -50,10 +50,10 @@ public class ImageWriter
         
         int channels = image.format().sizeof;
         
-        return stbi_write_bmp(filePath, image.width, image.height, channels, buffer);
+        return stbi_write_bmp(filePath.toString(), image.width, image.height, channels, buffer);
     }
     
-    public static boolean writeTGA(@NotNull Image image, @NotNull String filePath)
+    public static boolean writeTGA(@NotNull Image image, @NotNull Path filePath)
     {
         ImageWriter.LOGGER.trace("writeTGA(%s, %s)", image, filePath);
         
@@ -61,10 +61,10 @@ public class ImageWriter
         
         int channels = image.format().sizeof;
         
-        return stbi_write_tga(filePath, image.width, image.height, channels, buffer);
+        return stbi_write_tga(filePath.toString(), image.width, image.height, channels, buffer);
     }
     
-    public static boolean writeJPEG(@NotNull Image image, @NotNull String filePath)
+    public static boolean writeJPEG(@NotNull Image image, @NotNull Path filePath)
     {
         ImageWriter.LOGGER.trace("writeJPEG(%s, %s)", image, filePath);
         
@@ -72,10 +72,10 @@ public class ImageWriter
         
         int channels = image.format().sizeof;
         
-        return stbi_write_jpg(filePath, image.width, image.height, channels, buffer, 90);
+        return stbi_write_jpg(filePath.toString(), image.width, image.height, channels, buffer, 90);
     }
     
-    public static boolean writeRAW(@NotNull Image image, @NotNull String filePath)
+    public static boolean writeRAW(@NotNull Image image, @NotNull Path filePath)
     {
         ImageWriter.LOGGER.trace("writeRAW(%s, %s)", image, filePath);
         
@@ -86,7 +86,7 @@ public class ImageWriter
         
         int[] bytesWritten = new int[1];
         
-        boolean success = IOUtil.writeToFile(Path.of(filePath), buffer, bytesWritten);
+        boolean success = IOUtil.writeToFile(filePath, buffer, bytesWritten);
         
         return success && bytesWritten[0] == sizeof;
     }

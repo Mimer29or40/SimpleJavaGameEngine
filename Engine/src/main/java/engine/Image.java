@@ -11,6 +11,7 @@ import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
+import java.nio.file.Path;
 
 import static org.lwjgl.stb.STBImage.stbi_load;
 import static org.lwjgl.stb.STBImageWrite.stbi_write_png;
@@ -48,7 +49,7 @@ public class Image
         this.height = height;
     }
     
-    public Image(@NotNull String filePath)
+    public Image(@NotNull Path filePath)
     {
         try (MemoryStack stack = MemoryStack.stackPush())
         {
@@ -56,7 +57,7 @@ public class Image
             IntBuffer height   = stack.mallocInt(1);
             IntBuffer channels = stack.mallocInt(1);
             
-            ByteBuffer container = stbi_load(filePath, width, height, channels, 0);
+            ByteBuffer container = stbi_load(filePath.toString(), width, height, channels, 0);
             
             if (container == null)
             {
@@ -115,7 +116,7 @@ public class Image
         return new Image(this.data.copy(), this.width, this.height);
     }
     
-    public boolean save(@NotNull String filePath)
+    public boolean save(@NotNull Path filePath)
     {
         Image.LOGGER.trace("Saving %s to \"%s\"", this, filePath);
         
@@ -124,7 +125,7 @@ public class Image
         int channels = this.data.format.sizeof;
         int stride   = this.width * channels;
         
-        return stbi_write_png(filePath, this.width, this.height, channels, buffer, stride);
+        return stbi_write_png(filePath.toString(), this.width, this.height, channels, buffer, stride);
     }
     
     @NotNull
@@ -190,7 +191,7 @@ public class Image
         }
         
         @Override
-        public boolean save(@NotNull String filePath)
+        public boolean save(@NotNull Path filePath)
         {
             Image.LOGGER.warning("Cannot call %s.save(String)", this);
             return false;

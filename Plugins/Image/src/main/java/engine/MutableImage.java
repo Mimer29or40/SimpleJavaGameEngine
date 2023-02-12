@@ -9,6 +9,7 @@ import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
+import java.nio.file.Path;
 import java.util.Arrays;
 
 import static org.lwjgl.stb.STBImageResize.stbir_resize_uint8;
@@ -27,7 +28,7 @@ public class MutableImage extends Image
         super(format, width, height);
     }
     
-    public MutableImage(@NotNull String filePath)
+    public MutableImage(@NotNull Path filePath)
     {
         super(filePath);
     }

@@ -39,29 +39,29 @@ class ImageWriterTest
         boolean result;
         
         filePath = ImageWriterTest.outputDir.resolve("Image.png");
-        result   = ImageWriter.write(ImageWriterTest.image, filePath.toString());
+        result   = ImageWriter.write(ImageWriterTest.image, filePath);
         Assertions.assertTrue(result);
         
         filePath = ImageWriterTest.outputDir.resolve("Image.bmp");
-        result   = ImageWriter.write(ImageWriterTest.image, filePath.toString());
+        result   = ImageWriter.write(ImageWriterTest.image, filePath);
         Assertions.assertTrue(result);
         
         filePath = ImageWriterTest.outputDir.resolve("Image.tga");
-        result   = ImageWriter.write(ImageWriterTest.image, filePath.toString());
+        result   = ImageWriter.write(ImageWriterTest.image, filePath);
         Assertions.assertTrue(result);
         
         filePath = ImageWriterTest.outputDir.resolve("Image.jpg");
-        result   = ImageWriter.write(ImageWriterTest.image, filePath.toString());
+        result   = ImageWriter.write(ImageWriterTest.image, filePath);
         Assertions.assertTrue(result);
         
         filePath = ImageWriterTest.outputDir.resolve("Image.jpeg");
-        result   = ImageWriter.write(ImageWriterTest.image, filePath.toString());
+        result   = ImageWriter.write(ImageWriterTest.image, filePath);
         Assertions.assertTrue(result);
         
         filePath = ImageWriterTest.outputDir.resolve("Image.raw");
-        result   = ImageWriter.write(ImageWriterTest.image, filePath.toString());
+        result   = ImageWriter.write(ImageWriterTest.image, filePath);
         Assertions.assertTrue(result);
         
-        Assertions.assertThrows(IOException.class, () -> ImageWriter.write(ImageWriterTest.image, ImageWriterTest.outputDir.resolve("Image").toString()));
+        Assertions.assertThrows(IOException.class, () -> ImageWriter.write(ImageWriterTest.image, ImageWriterTest.outputDir.resolve("Image")));
     }
 }

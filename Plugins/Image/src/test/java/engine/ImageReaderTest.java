@@ -33,63 +33,63 @@ class ImageReaderTest
         Image image;
         
         filePath = IOUtil.getPath("image/Test.png");
-        image    = ImageReader.read(filePath.toString());
+        image    = ImageReader.read(filePath);
         Assertions.assertNotNull(image.data);
         Assertions.assertEquals(128, image.width);
         Assertions.assertEquals(128, image.height);
         Assertions.assertEquals(ColorFormat.RGBA, image.format());
         
         filePath = IOUtil.getPath("image/Test.bmp");
-        image    = ImageReader.read(filePath.toString());
+        image    = ImageReader.read(filePath);
         Assertions.assertNotNull(image.data);
         Assertions.assertEquals(128, image.width);
         Assertions.assertEquals(128, image.height);
         Assertions.assertEquals(ColorFormat.RGBA, image.format());
         
         filePath = IOUtil.getPath("image/Test.tga");
-        image    = ImageReader.read(filePath.toString());
+        image    = ImageReader.read(filePath);
         Assertions.assertNotNull(image.data);
         Assertions.assertEquals(128, image.width);
         Assertions.assertEquals(128, image.height);
         Assertions.assertEquals(ColorFormat.RGBA, image.format());
         
         filePath = IOUtil.getPath("image/Test.jpg");
-        image    = ImageReader.read(filePath.toString());
+        image    = ImageReader.read(filePath);
         Assertions.assertNotNull(image.data);
         Assertions.assertEquals(128, image.width);
         Assertions.assertEquals(128, image.height);
         Assertions.assertEquals(ColorFormat.RGB, image.format());
         
         filePath = IOUtil.getPath("image/Test.jpeg");
-        image    = ImageReader.read(filePath.toString());
+        image    = ImageReader.read(filePath);
         Assertions.assertNotNull(image.data);
         Assertions.assertEquals(128, image.width);
         Assertions.assertEquals(128, image.height);
         Assertions.assertEquals(ColorFormat.RGB, image.format());
         
         filePath = IOUtil.getPath("image/Test.gif");
-        image    = ImageReader.read(filePath.toString());
+        image    = ImageReader.read(filePath);
         Assertions.assertNotNull(image.data);
         Assertions.assertEquals(128, image.width);
         Assertions.assertEquals(128, image.height);
         Assertions.assertEquals(ColorFormat.RGBA, image.format());
         
         filePath = IOUtil.getPath("image/Test.psd");
-        image    = ImageReader.read(filePath.toString());
+        image    = ImageReader.read(filePath);
         Assertions.assertNotNull(image.data);
         Assertions.assertEquals(128, image.width);
         Assertions.assertEquals(128, image.height);
         Assertions.assertEquals(ColorFormat.RGBA, image.format());
         
         filePath = IOUtil.getPath("image/Test.pnm");
-        image    = ImageReader.read(filePath.toString());
+        image    = ImageReader.read(filePath);
         Assertions.assertNotNull(image.data);
         Assertions.assertEquals(128, image.width);
         Assertions.assertEquals(128, image.height);
         Assertions.assertEquals(ColorFormat.RGB, image.format());
         
         filePath = IOUtil.getPath("image/Test.hdr");
-        image    = ImageReader.read(filePath.toString());
+        image    = ImageReader.read(filePath);
         Assertions.assertNotNull(image.data);
         Assertions.assertEquals(128, image.width);
         Assertions.assertEquals(128, image.height);

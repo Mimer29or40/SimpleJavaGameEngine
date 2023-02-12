@@ -95,14 +95,14 @@ class ImageTest
         Assertions.assertEquals(ColorFormat.RED_ALPHA, image.format());
         image.delete();
         
-        image = new Image(IOUtil.getPath("image/TestImage.png").toString());
+        image = new Image(IOUtil.getPath("image/TestImage.png"));
         Assertions.assertNotNull(image.data());
         Assertions.assertEquals(1000, image.width());
         Assertions.assertEquals(1000, image.height());
         Assertions.assertEquals(ColorFormat.RGBA, image.format());
         image.delete();
         
-        image = new Image("invalid/path/to/image.png");
+        image = new Image(IOUtil.getPath("invalid/path/to/image.png"));
         Assertions.assertNull(image.data());
         Assertions.assertEquals(0, image.width());
         Assertions.assertEquals(0, image.height());
@@ -137,7 +137,7 @@ class ImageTest
     void save()
     {
         Path    filePath = ImageTest.outputDir.resolve("Image.png");
-        boolean result   = this.image.save(filePath.toString());
+        boolean result   = this.image.save(filePath);
         Assertions.assertTrue(result);
         Assertions.assertTrue(filePath.toFile().exists());
     }

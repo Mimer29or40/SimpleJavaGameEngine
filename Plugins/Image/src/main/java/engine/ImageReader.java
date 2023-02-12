@@ -10,6 +10,7 @@ import org.lwjgl.system.MemoryStack;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
+import java.nio.file.Path;
 
 import static org.lwjgl.stb.STBImage.stbi_load;
 
@@ -17,9 +18,9 @@ public class ImageReader
 {
     private static final Logger LOGGER = Logger.getLogger();
     
-    public static @NotNull Image read(@NotNull String filePath) throws IOException
+    public static @NotNull Image read(@NotNull Path filePath) throws IOException
     {
-        String extension = IOUtil.getExtension(filePath);
+        String extension = IOUtil.getExtension(filePath.toString());
         
         return switch (extension)
                 {
@@ -38,7 +39,7 @@ public class ImageReader
                 };
     }
     
-    private static @NotNull Image readSTB(@NotNull String filePath) throws IOException
+    private static @NotNull Image readSTB(@NotNull Path filePath) throws IOException
     {
         try (MemoryStack stack = MemoryStack.stackPush())
         {
@@ -46,7 +47,7 @@ public class ImageReader
             IntBuffer height   = stack.mallocInt(1);
             IntBuffer channels = stack.mallocInt(1);
         
-            ByteBuffer container = stbi_load(filePath, width, height, channels, 0);
+            ByteBuffer container = stbi_load(filePath.toString(), width, height, channels, 0);
         
             if (container == null) throw new IOException("Unable to load Image: " + filePath);
         
@@ -57,70 +58,70 @@ public class ImageReader
         }
     }
     
-    public static @NotNull Image readPNG(@NotNull String filePath) throws IOException
+    public static @NotNull Image readPNG(@NotNull Path filePath) throws IOException
     {
         ImageReader.LOGGER.trace("readPNG(%s)", filePath);
         
         return readSTB(filePath);
     }
     
-    public static @NotNull Image readBMP(@NotNull String filePath) throws IOException
+    public static @NotNull Image readBMP(@NotNull Path filePath) throws IOException
     {
         ImageReader.LOGGER.trace("readBMP(%s)", filePath);
         
         return readSTB(filePath);
     }
     
-    public static @NotNull Image readTGA(@NotNull String filePath) throws IOException
+    public static @NotNull Image readTGA(@NotNull Path filePath) throws IOException
     {
         ImageReader.LOGGER.trace("readTGA(%s)", filePath);
         
         return readSTB(filePath);
     }
     
-    public static @NotNull Image readJPEG(@NotNull String filePath) throws IOException
+    public static @NotNull Image readJPEG(@NotNull Path filePath) throws IOException
     {
         ImageReader.LOGGER.trace("readJPEG(%s)", filePath);
         
         return readSTB(filePath);
     }
     
-    public static @NotNull Image readGIF(@NotNull String filePath) throws IOException
+    public static @NotNull Image readGIF(@NotNull Path filePath) throws IOException
     {
         ImageReader.LOGGER.trace("readGIF(%s)", filePath);
         
         return readSTB(filePath);
     }
     
-    public static @NotNull Image readPIC(@NotNull String filePath) throws IOException
+    public static @NotNull Image readPIC(@NotNull Path filePath) throws IOException
     {
         ImageReader.LOGGER.trace("readPIC(%s)", filePath);
         
         return readSTB(filePath);
     }
     
-    public static @NotNull Image readPSD(@NotNull String filePath) throws IOException
+    public static @NotNull Image readPSD(@NotNull Path filePath) throws IOException
     {
         ImageReader.LOGGER.trace("readPSD(%s)", filePath);
         
         return readSTB(filePath);
     }
     
-    public static @NotNull Image readPNM(@NotNull String filePath) throws IOException
+    public static @NotNull Image readPNM(@NotNull Path filePath) throws IOException
     {
         ImageReader.LOGGER.trace("readPNM(%s)", filePath);
         
         return readSTB(filePath);
     }
     
-    public static @NotNull Image readPGM(@NotNull String filePath) throws IOException
+    public static @NotNull Image readPGM(@NotNull Path filePath) throws IOException
     {
         ImageReader.LOGGER.trace("readPGM(%s)", filePath);
         
         return readSTB(filePath);
     }
     
-    public static @NotNull Image readHDR(@NotNull String filePath) throws IOException
+    public static @NotNull Image readHDR(@NotNull Path filePath) throws IOException
     {
         ImageReader.LOGGER.trace("readHDR(%s)", filePath);
         
