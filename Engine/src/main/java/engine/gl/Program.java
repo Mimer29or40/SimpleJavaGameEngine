@@ -1,19 +1,14 @@
 package engine.gl;
 
-import engine.Renderer;
 import engine.util.Logger;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.joml.*;
 import org.lwjgl.opengl.GL44;
 import org.lwjgl.system.MemoryStack;
 
 import java.nio.IntBuffer;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.nio.file.Path;
+import java.util.*;
 
 public class Program
 {
@@ -88,11 +83,18 @@ public class Program
                                                             MAP_PREFILTER,
                                                             MAP_BRDF);
     
+    private static final Builder BUILDER = new Builder();
+    
+    public static @NotNull Builder builder()
+    {
+        return Program.BUILDER.reset();
+    }
+    
     // -------------------- Instance -------------------- //
     
     protected int id;
     
-    protected final Map<Shader.Type, Shader> shaders = new HashMap<>();
+    protected final List<Shader> shaders = new ArrayList<>();
     
     protected final Map<String, Integer> attributes = new HashMap<>();
     protected final Map<String, Integer> uniforms   = new HashMap<>();
@@ -102,24 +104,14 @@ public class Program
         this.id = 0;
     }
     
-    protected Program(@Nullable Shader vert, @Nullable Shader geom, @Nullable Shader frag)
+    private Program(@NotNull List<Shader> shaders)
     {
         this.id = GL44.glCreateProgram();
         
-        if (vert != null)
+        for (Shader shader : shaders)
         {
-            GL44.glAttachShader(this.id, vert.id());
-            this.shaders.put(vert.type, vert);
-        }
-        if (geom != null)
-        {
-            GL44.glAttachShader(this.id, geom.id());
-            this.shaders.put(geom.type, geom);
-        }
-        if (frag != null)
-        {
-            GL44.glAttachShader(this.id, frag.id());
-            this.shaders.put(frag.type, frag);
+            GL44.glAttachShader(this.id, shader.id);
+            this.shaders.add(shader);
         }
         
         // NOTE: Default attribute program locations must be bound before linking
@@ -195,11 +187,13 @@ public class Program
     
     // -------------------- Functions -------------------- //
     
+    // TODO - Compute Shader Functions
+    
     public void delete()
     {
         Program.LOGGER.debug("Deleting", this);
         
-        for (Shader shader : this.shaders.values()) GL44.glDetachShader(this.id, shader.id());
+        for (Shader shader : this.shaders) GL44.glDetachShader(this.id, shader.id());
         
         GL44.glDeleteProgram(this.id);
         
@@ -276,6 +270,38 @@ public class Program
         public int getUniform(@NotNull String uniform)
         {
             return -1;
+        }
+    }
+    
+    public static final class Builder
+    {
+        private final List<Shader> shaders = new ArrayList<>();
+        
+        private Builder reset()
+        {
+            this.shaders.clear();
+            return this;
+        }
+        
+        public @NotNull Builder shader(@NotNull Shader shader)
+        {
+            this.shaders.add(shader);
+            return this;
+        }
+        
+        public @NotNull Builder shader(@NotNull Shader.Type type, @NotNull Path filePath)
+        {
+            return shader(new Shader(type, filePath));
+        }
+        
+        public @NotNull Builder shader(@NotNull Shader.Type type, @NotNull String code)
+        {
+            return shader(new Shader(type, code));
+        }
+        
+        public @NotNull Program build()
+        {
+            return new Program(this.shaders);
         }
     }
 }

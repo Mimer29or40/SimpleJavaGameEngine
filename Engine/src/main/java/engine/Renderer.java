@@ -24,6 +24,10 @@ public class Renderer
     
     private static final ScissorMode scissorModeCustom = new ScissorMode(0, 0, Integer.MAX_VALUE, Integer.MAX_VALUE);
     
+    static Shader  defaultVertexShader;
+    static Shader  defaultFragmentShader;
+    static Program defaultProgram;
+    
     static void setup()
     {
         Renderer.LOGGER.debug("Setup");
@@ -31,8 +35,8 @@ public class Renderer
         
         final int index = Renderer.stackIndex;
         
-        Renderer.DEPTH_CLAMP[index]            = GL44.glIsEnabled(GL44.GL_DEPTH_CLAMP);
-        Renderer.LINE_SMOOTH[index]            = GL44.glIsEnabled(GL44.GL_LINE_SMOOTH);
+        Renderer.depthClamp[index]             = GL44.glIsEnabled(GL44.GL_DEPTH_CLAMP);
+        Renderer.lineSmooth[index]             = GL44.glIsEnabled(GL44.GL_LINE_SMOOTH);
         Renderer.textureCubeMapSeamless[index] = GL44.glIsEnabled(GL44.GL_TEXTURE_CUBE_MAP_SEAMLESS);
         
         Renderer.wireframe[index] = GL44.glGetInteger(GL44.GL_FRONT_AND_BACK) == GL44.GL_FILL;
@@ -56,6 +60,40 @@ public class Renderer
         Renderer.program[index] = null;
         //Renderer.framebuffer[index] = null;
         
+        // TODO - http://www.reedbeta.com/blog/quadrilateral-interpolation-part-1/
+        // TODO - http://www.reedbeta.com/blog/quadrilateral-interpolation-part-2/
+        String vert = """
+                      #version 330
+                      in vec3 POSITION;
+                      in vec3 TEXCOORD;
+                      in vec4 COLOR;
+                      out vec3 fragTexCoord;
+                      out vec4 fragColor;
+                      uniform mat4 MATRIX_MVP;
+                      void main()
+                      {
+                          gl_Position = MATRIX_MVP * vec4(POSITION, 1.0);
+                          fragTexCoord = TEXCOORD;
+                          fragColor = COLOR;
+                      }
+                      """;
+        String frag = """
+                      #version 330
+                      in vec3 fragTexCoord;
+                      in vec4 fragColor;
+                      out vec4 finalColor;
+                      uniform sampler2D texture0;
+                      void main()
+                      {
+                          vec4 texelColor = textureProj(texture0, fragTexCoord);
+                          finalColor = texelColor * fragColor;
+                      }
+                      """;
+        Renderer.defaultVertexShader   = new Shader(Shader.Type.VERTEX, vert);
+        Renderer.defaultFragmentShader = new Shader(Shader.Type.FRAGMENT, frag);
+        
+        Renderer.defaultProgram = Program.builder().shader(Renderer.defaultVertexShader).shader(Renderer.defaultFragmentShader).build();
+        
         stateDefault();
         clearScreenBuffers();
     }
@@ -63,14 +101,22 @@ public class Renderer
     static void destroy()
     {
         Renderer.LOGGER.debug("Destroy");
+        
+        Renderer.defaultProgram.delete();
+        Renderer.defaultProgram = null;
+    
+        Renderer.defaultFragmentShader.delete();
+        Renderer.defaultFragmentShader = null;
+        Renderer.defaultVertexShader.delete();
+        Renderer.defaultVertexShader = null;
     }
     
     // -------------------- State -------------------- //
     
     static int stackIndex;
     
-    static final boolean[] DEPTH_CLAMP            = new boolean[Renderer.STACK_SIZE];
-    static final boolean[] LINE_SMOOTH            = new boolean[Renderer.STACK_SIZE];
+    static final boolean[] depthClamp             = new boolean[Renderer.STACK_SIZE];
+    static final boolean[] lineSmooth             = new boolean[Renderer.STACK_SIZE];
     static final boolean[] textureCubeMapSeamless = new boolean[Renderer.STACK_SIZE];
     
     static final boolean[] wireframe = new boolean[Renderer.STACK_SIZE];
@@ -154,7 +200,7 @@ public class Renderer
         stateCullFace(CullFace.DEFAULT);
         stateWinding(Winding.DEFAULT);
         
-        stateProgram(Program.NULL);  // TODO - Set to Default Program
+        stateProgram(Renderer.defaultProgram);
         //Renderer.framebuffer[Renderer.stackIndex];  // TODO
         
         stateProjection().identity();
@@ -172,8 +218,8 @@ public class Renderer
         final int idx     = Renderer.stackIndex;
         final int nextIdx = idx + 1;
         
-        Renderer.DEPTH_CLAMP[nextIdx]            = Renderer.DEPTH_CLAMP[idx];
-        Renderer.LINE_SMOOTH[nextIdx]            = Renderer.LINE_SMOOTH[idx];
+        Renderer.depthClamp[nextIdx]             = Renderer.depthClamp[idx];
+        Renderer.lineSmooth[nextIdx]             = Renderer.lineSmooth[idx];
         Renderer.textureCubeMapSeamless[nextIdx] = Renderer.textureCubeMapSeamless[idx];
         
         Renderer.wireframe[nextIdx] = Renderer.wireframe[idx];
@@ -220,8 +266,8 @@ public class Renderer
         final int idx     = Renderer.stackIndex;
         final int prevIdx = idx - 1;
         
-        stateDepthClamp(Renderer.DEPTH_CLAMP[prevIdx]);
-        stateLineSmooth(Renderer.LINE_SMOOTH[prevIdx]);
+        stateDepthClamp(Renderer.depthClamp[prevIdx]);
+        stateLineSmooth(Renderer.lineSmooth[prevIdx]);
         stateTextureCubeMapSeamless(Renderer.textureCubeMapSeamless[prevIdx]);
         
         stateWireframe(Renderer.wireframe[prevIdx]);
@@ -256,9 +302,9 @@ public class Renderer
     {
         Renderer.LOGGER.trace("Setting Depth Clamp Flag:", depthClamp);
         
-        if (Renderer.DEPTH_CLAMP[Renderer.stackIndex] != depthClamp)
+        if (Renderer.depthClamp[Renderer.stackIndex] != depthClamp)
         {
-            Renderer.DEPTH_CLAMP[Renderer.stackIndex] = depthClamp;
+            Renderer.depthClamp[Renderer.stackIndex] = depthClamp;
             
             if (depthClamp)
             {
@@ -275,9 +321,9 @@ public class Renderer
     {
         Renderer.LOGGER.trace("Setting Line Smooth Flag:", lineSmooth);
         
-        if (Renderer.LINE_SMOOTH[Renderer.stackIndex] != lineSmooth)
+        if (Renderer.lineSmooth[Renderer.stackIndex] != lineSmooth)
         {
-            Renderer.LINE_SMOOTH[Renderer.stackIndex] = lineSmooth;
+            Renderer.lineSmooth[Renderer.stackIndex] = lineSmooth;
             
             if (lineSmooth)
             {
@@ -411,7 +457,7 @@ public class Renderer
         }
     }
     
-    public static void stateScissor(int x, int y, int width, int height)
+    public static void stateScissorMode(int x, int y, int width, int height)
     {
         Renderer.LOGGER.trace("Setting Custom Scissor: [%s, %s, %s, %s]", x, y, width, height);
         
@@ -767,7 +813,7 @@ public class Renderer
     public static void attributeNormalizedUByte4(@NotNull String name, int x, int y, int z, int w)
     {
         Renderer.LOGGER.trace("attributeNormalizedUByte4(%s, %s, %s, %s, %s)", name, x, y, z, w);
-    
+        
         Program program = Renderer.program[Renderer.stackIndex];
         GL44.glVertexAttrib4Nub(program.getUniform(name), (byte) (x & 0xFF), (byte) (y & 0xFF), (byte) (z & 0xFF), (byte) (w & 0xFF));
     }
