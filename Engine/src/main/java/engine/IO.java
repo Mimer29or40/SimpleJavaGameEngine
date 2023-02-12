@@ -52,349 +52,32 @@ public class IO
         callbacks.add(glfwSetErrorCallback(IO::errorCallback));
         
         // ---------- Window ---------- //
-        {
-            glfwDefaultWindowHints();
-            
-            glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-            glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
-            
-            glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-            glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
-            
-            IO.WINDOW_HANDLE = glfwCreateWindow(size.x(), size.y(), title, MemoryUtil.NULL, MemoryUtil.NULL);
-            if (IO.WINDOW_HANDLE == MemoryUtil.NULL) throw new RuntimeException("Could not create window.");
-            
-            IO.WINDOW_FOCUSED   = glfwGetWindowAttrib(IO.WINDOW_HANDLE, GLFW_FOCUSED) == GLFW_TRUE;
-            IO.WINDOW_MINIMIZED = glfwGetWindowAttrib(IO.WINDOW_HANDLE, GLFW_ICONIFIED) == GLFW_TRUE;
-            IO.WINDOW_MAXIMIZED = glfwGetWindowAttrib(IO.WINDOW_HANDLE, GLFW_MAXIMIZED) == GLFW_TRUE;
-            
-            try (MemoryStack stack = MemoryStack.stackPush())
-            {
-                IntBuffer x = stack.mallocInt(1);
-                IntBuffer y = stack.mallocInt(1);
-                
-                FloatBuffer xf = stack.mallocFloat(1);
-                FloatBuffer yf = stack.mallocFloat(1);
-                
-                glfwGetWindowPos(IO.WINDOW_HANDLE, x, y);
-                IO.WINDOW_POS.set(x.get(0), y.get(0));
-                
-                glfwGetWindowSize(IO.WINDOW_HANDLE, x, y);
-                IO.WINDOW_SIZE.set(x.get(0), y.get(0));
-                
-                glfwGetWindowContentScale(IO.WINDOW_HANDLE, xf, yf);
-                IO.WINDOW_CONTENT_SCALE.set(xf.get(0), yf.get(0));
-                
-                glfwGetFramebufferSize(IO.WINDOW_HANDLE, x, y);
-                IO.WINDOW_FRAMEBUFFER_SIZE.set(x.get(0), y.get(0));
-            }
-            
-            callbacks.add(glfwSetWindowCloseCallback(IO.WINDOW_HANDLE, IO::windowCloseCallback));
-            callbacks.add(glfwSetWindowFocusCallback(IO.WINDOW_HANDLE, IO::windowFocusCallback));
-            callbacks.add(glfwSetWindowIconifyCallback(IO.WINDOW_HANDLE, IO::windowIconifyCallback));
-            callbacks.add(glfwSetWindowMaximizeCallback(IO.WINDOW_HANDLE, IO::windowMaximizeCallback));
-            callbacks.add(glfwSetWindowPosCallback(IO.WINDOW_HANDLE, IO::windowPosCallback));
-            callbacks.add(glfwSetWindowSizeCallback(IO.WINDOW_HANDLE, IO::windowSizeCallback));
-            callbacks.add(glfwSetWindowContentScaleCallback(IO.WINDOW_HANDLE, IO::windowContentScaleCallback));
-            callbacks.add(glfwSetFramebufferSizeCallback(IO.WINDOW_HANDLE, IO::windowFramebufferSizeCallback));
-            callbacks.add(glfwSetWindowRefreshCallback(IO.WINDOW_HANDLE, IO::windowRefreshCallback));
-            callbacks.add(glfwSetDropCallback(IO.WINDOW_HANDLE, IO::windowDropCallback));
-        }
+        setupWindow(size, title, callbacks);
         
         // ---------- Mouse ---------- //
-        {
-            try (MemoryStack stack = MemoryStack.stackPush())
-            {
-                DoubleBuffer x = stack.mallocDouble(1);
-                DoubleBuffer y = stack.mallocDouble(1);
-                
-                glfwGetCursorPos(IO.WINDOW_HANDLE, x, y);
-                IO.MOUSE_POS.set(x.get(0), y.get(0));
-            }
-            
-            for (Button button : Button.values())
-            {
-                IO.MOUSE_BUTTON_MAP.put(button.ref, button);
-                IO.MOUSE_BUTTON_STATES.put(button, new ButtonInput());
-            }
-            
-            mouseShow();
-            mouseRawInput(true);
-            mouseSticky(false);
-            
-            callbacks.add(glfwSetCursorEnterCallback(IO.WINDOW_HANDLE, IO::mouseEnteredCallback));
-            callbacks.add(glfwSetCursorPosCallback(IO.WINDOW_HANDLE, IO::mousePosCallback));
-            callbacks.add(glfwSetScrollCallback(IO.WINDOW_HANDLE, IO::mouseScrollCallback));
-            callbacks.add(glfwSetMouseButtonCallback(IO.WINDOW_HANDLE, IO::mouseButtonCallback));
-        }
+        setupMouse(callbacks);
         
         // ---------- Keyboard ---------- //
-        {
-            for (Key key : Key.values())
-            {
-                IO.KEYBOARD_KEY_MAP.put(key.ref, key);
-                IO.KEYBOARD_KEY_STATES.put(key, new Input());
-            }
-            
-            keyboardSticky(false);
-            
-            callbacks.add(glfwSetCharCallback(IO.WINDOW_HANDLE, IO::keyboardCharCallback));
-            callbacks.add(glfwSetKeyCallback(IO.WINDOW_HANDLE, IO::keyboardKeyCallback));
-        }
+        setupKeyboard(callbacks);
         
         // ---------- Modifier ---------- //
-        modifierLockMods(false);
+        setupModifier();
         
         for (Callback callback : callbacks) if (callback != null) callback.free();
         
         IO.windowMakeCurrent();
     }
     
-    @SuppressWarnings("unused")
-    static void update(long time, long deltaTime)
+    static void update(long time)
     {
         // ---------- Window ---------- //
-        {
-            IO.WINDOW_ON_CLOSE.fired = false;
-            if (IO.WINDOW_CLOSE_REQUESTED)
-            {
-                IO.WINDOW_ON_CLOSE.fired = true;
-                
-                IO.WINDOW_CLOSE_REQUESTED = false;
-            }
-            
-            IO.WINDOW_ON_FOCUSED.fired = false;
-            if (IO.WINDOW_FOCUSED_CHANGE != null)
-            {
-                IO.WINDOW_FOCUSED          = IO.WINDOW_FOCUSED_CHANGE;
-                IO.WINDOW_ON_FOCUSED.fired = true;
-                
-                IO.WINDOW_FOCUSED_CHANGE = null;
-            }
-            
-            IO.WINDOW_ON_MINIMIZED.fired = false;
-            if (IO.WINDOW_MINIMIZED_CHANGE != null)
-            {
-                IO.WINDOW_MINIMIZED          = IO.WINDOW_MINIMIZED_CHANGE;
-                IO.WINDOW_ON_MINIMIZED.fired = true;
-                
-                IO.WINDOW_MINIMIZED_CHANGE = null;
-            }
-            
-            IO.WINDOW_ON_MAXIMIZED.fired = false;
-            if (IO.WINDOW_MAXIMIZED_CHANGE != null)
-            {
-                IO.WINDOW_MAXIMIZED          = IO.WINDOW_MAXIMIZED_CHANGE;
-                IO.WINDOW_ON_MAXIMIZED.fired = true;
-                
-                IO.WINDOW_MAXIMIZED_CHANGE = null;
-            }
-            
-            IO.WINDOW_ON_POS.fired = false;
-            if (IO.WINDOW_POS_CHANGE != null)
-            {
-                IO.WINDOW_POS.set(IO.WINDOW_POS_CHANGE);
-                IO.WINDOW_ON_POS.fired = true;
-                
-                IO.WINDOW_POS_CHANGE = null;
-            }
-            
-            IO.WINDOW_ON_SIZE.fired = false;
-            if (IO.WINDOW_SIZE_CHANGE != null)
-            {
-                IO.WINDOW_SIZE.set(IO.WINDOW_SIZE_CHANGE);
-                IO.WINDOW_ON_SIZE.fired = true;
-                
-                IO.WINDOW_SIZE_CHANGE = null;
-            }
-            
-            IO.WINDOW_ON_CONTENT_SCALE.fired = false;
-            if (IO.WINDOW_CONTENT_SCALE_CHANGE != null)
-            {
-                IO.WINDOW_CONTENT_SCALE.set(IO.WINDOW_CONTENT_SCALE_CHANGE);
-                IO.WINDOW_ON_CONTENT_SCALE.fired = true;
-                
-                IO.WINDOW_CONTENT_SCALE_CHANGE = null;
-            }
-            
-            IO.WINDOW_ON_FRAMEBUFFER_SIZE.fired = false;
-            if (IO.WINDOW_FRAMEBUFFER_SIZE_CHANGE != null)
-            {
-                IO.WINDOW_FRAMEBUFFER_SIZE.set(IO.WINDOW_FRAMEBUFFER_SIZE_CHANGE);
-                IO.WINDOW_ON_FRAMEBUFFER_SIZE.fired = true;
-                
-                IO.WINDOW_FRAMEBUFFER_SIZE_CHANGE = null;
-            }
-            
-            IO.WINDOW_ON_REFRESH.fired = false;
-            if (IO.WINDOW_REFRESH_REQUESTED)
-            {
-                IO.WINDOW_ON_REFRESH.fired = true;
-                
-                IO.WINDOW_REFRESH_REQUESTED = false;
-            }
-            
-            IO.WINDOW_ON_DROPPED.fired = false;
-            if (IO.WINDOW_DROPPED_CHANGE != null)
-            {
-                IO.WINDOW_DROPPED.clear();
-                while (IO.WINDOW_DROPPED_CHANGE.hasRemaining()) IO.WINDOW_DROPPED.add(MemoryUtil.memUTF8(IO.WINDOW_DROPPED_CHANGE.get()));
-                IO.WINDOW_ON_DROPPED.fired = true;
-                
-                IO.WINDOW_DROPPED_CHANGE = null;
-            }
-        }
+        updateWindow();
         
         // ---------- Mouse ---------- //
-        {
-            IO.MOUSE_ON_ENTERED.fired = false;
-            if (IO.MOUSE_ENTERED_CHANGE != null)
-            {
-                IO.MOUSE_ENTERED          = IO.MOUSE_ENTERED_CHANGE;
-                IO.MOUSE_ON_ENTERED.fired = true;
-                
-                if (IO.MOUSE_ENTERED) IO.MOUSE_POS_CHANGE = new Vector2d(IO.MOUSE_POS.x, IO.MOUSE_POS.y);
-                
-                IO.MOUSE_ENTERED_CHANGE = null;
-            }
-            
-            IO.MOUSE_ON_POS.fired = false;
-            IO.MOUSE_POS_DELTA.set(0);
-            if (IO.MOUSE_POS_CHANGE != null)
-            {
-                IO.MOUSE_POS_DELTA.set(IO.MOUSE_POS_CHANGE.x(), IO.MOUSE_POS_CHANGE.y()).sub(IO.MOUSE_POS);
-                IO.MOUSE_POS.set(IO.MOUSE_POS_CHANGE.x(), IO.MOUSE_POS_CHANGE.y());
-                IO.MOUSE_ON_POS.fired = true;
-                
-                IO.MOUSE_POS_CHANGE = null;
-            }
-            
-            IO.MOUSE_ON_SCROLL.fired = false;
-            IO.MOUSE_SCROLL.set(0);
-            if (IO.MOUSE_SCROLL_CHANGE != null)
-            {
-                System.out.println("Scroll");
-                IO.MOUSE_SCROLL.set(IO.MOUSE_SCROLL_CHANGE.x(), IO.MOUSE_SCROLL_CHANGE.y());
-                IO.MOUSE_ON_SCROLL.fired = true;
-                
-                IO.MOUSE_SCROLL_CHANGE = null;
-            }
-            
-            IO.MOUSE_BUTTON_DOWN.clear();
-            IO.MOUSE_BUTTON_UP.clear();
-            IO.MOUSE_BUTTON_REPEATED.clear();
-            IO.MOUSE_BUTTON_HELD.clear();
-            IO.MOUSE_BUTTON_DRAGGED.clear();
-            for (Button button : IO.MOUSE_BUTTON_STATES.keySet())
-            {
-                ButtonInput input = IO.MOUSE_BUTTON_STATES.get(button);
-                
-                input.state       = input.stateChange;
-                input.stateChange = -1;
-                switch (input.state)
-                {
-                    case GLFW_PRESS ->
-                    {
-                        int tolerance = 2;
-                        
-                        boolean inc = Math.abs(IO.MOUSE_POS.x - input.downPos.x) < tolerance &&
-                                      Math.abs(IO.MOUSE_POS.y - input.downPos.y) < tolerance &&
-                                      time - input.downTime < IO._DOUBLE_PRESS_DELAY;
-                        
-                        input.held      = true;
-                        input.heldTime  = time + IO._HOLD_FREQUENCY;
-                        input.downTime  = time;
-                        input.downCount = inc ? input.downCount + 1 : 1;
-                        input.downPos.set(IO.MOUSE_POS);
-                        
-                        IO.MOUSE_BUTTON_DOWN.add(button);
-                    }
-                    case GLFW_RELEASE ->
-                    {
-                        input.held     = false;
-                        input.heldTime = Long.MAX_VALUE;
-                        
-                        IO.MOUSE_BUTTON_UP.add(button);
-                    }
-                    case GLFW_REPEAT -> IO.MOUSE_BUTTON_REPEATED.add(button);
-                }
-                input.dragging = false;
-                if (input.held)
-                {
-                    if (time - input.heldTime >= IO._HOLD_FREQUENCY)
-                    {
-                        IO.MOUSE_BUTTON_HELD.add(button);
-                        input.heldTime += IO._HOLD_FREQUENCY;
-                    }
-                    if (IO.MOUSE_POS_DELTA.x != 0 || IO.MOUSE_POS_DELTA.y != 0)
-                    {
-                        input.dragging = true;
-                        IO.MOUSE_BUTTON_DRAGGED.add(button);
-                    }
-                }
-            }
-            IO.MOUSE_ON_BUTTON_DOWN.fired     = !IO.MOUSE_BUTTON_DOWN.isEmpty();
-            IO.MOUSE_ON_BUTTON_UP.fired       = !IO.MOUSE_BUTTON_UP.isEmpty();
-            IO.MOUSE_ON_BUTTON_REPEATED.fired = !IO.MOUSE_BUTTON_REPEATED.isEmpty();
-            IO.MOUSE_ON_BUTTON_HELD.fired     = !IO.MOUSE_BUTTON_HELD.isEmpty();
-            IO.MOUSE_ON_BUTTON_DRAGGED.fired  = !IO.MOUSE_BUTTON_DRAGGED.isEmpty();
-        }
+        updateMouse(time);
         
         // ---------- Keyboard ---------- //
-        {
-            IO.KEYBOARD_ON_TYPED.fired = false;
-            IO.KEYBOARD_TYPED.setLength(0);
-            
-            Integer keyTyped;
-            while ((keyTyped = IO.KEYBOARD_TYPED_CHANGES.poll()) != null)
-            {
-                IO.KEYBOARD_TYPED.appendCodePoint(keyTyped);
-                IO.KEYBOARD_ON_TYPED.fired = true;
-            }
-            
-            IO.KEYBOARD_KEY_DOWN.clear();
-            IO.KEYBOARD_KEY_UP.clear();
-            IO.KEYBOARD_KEY_REPEATED.clear();
-            IO.KEYBOARD_KEY_HELD.clear();
-            for (Key key : IO.KEYBOARD_KEY_STATES.keySet())
-            {
-                Input input = IO.KEYBOARD_KEY_STATES.get(key);
-                
-                input.state       = input.stateChange;
-                input.stateChange = -1;
-                switch (input.state)
-                {
-                    case GLFW_PRESS ->
-                    {
-                        boolean inc = time - input.downTime < IO._DOUBLE_PRESS_DELAY;
-                        
-                        input.held      = true;
-                        input.heldTime  = time + IO._HOLD_FREQUENCY;
-                        input.downTime  = time;
-                        input.downCount = inc ? input.downCount + 1 : 1;
-                        
-                        IO.KEYBOARD_KEY_DOWN.add(key);
-                    }
-                    case GLFW_RELEASE ->
-                    {
-                        input.held     = false;
-                        input.heldTime = Long.MAX_VALUE;
-                        
-                        IO.KEYBOARD_KEY_UP.add(key);
-                    }
-                    case GLFW_REPEAT -> IO.KEYBOARD_KEY_REPEATED.add(key);
-                }
-                if (input.held && time - input.heldTime >= IO._HOLD_FREQUENCY)
-                {
-                    input.heldTime += IO._HOLD_FREQUENCY;
-                    IO.KEYBOARD_KEY_HELD.add(key);
-                }
-            }
-            IO.KEYBOARD_ON_KEY_DOWN.fired     = !IO.KEYBOARD_KEY_DOWN.isEmpty();
-            IO.KEYBOARD_ON_KEY_UP.fired       = !IO.KEYBOARD_KEY_UP.isEmpty();
-            IO.KEYBOARD_ON_KEY_REPEATED.fired = !IO.KEYBOARD_KEY_REPEATED.isEmpty();
-            IO.KEYBOARD_ON_KEY_HELD.fired     = !IO.KEYBOARD_KEY_HELD.isEmpty();
-        }
+        updateKeyboard(time);
     }
     
     static void destroy()
@@ -404,39 +87,13 @@ public class IO
         List<Callback> callbacks = new ArrayList<>();
         
         // ---------- Keyboard ---------- //
-        {
-            callbacks.add(glfwSetCharCallback(IO.WINDOW_HANDLE, null));
-            callbacks.add(glfwSetKeyCallback(IO.WINDOW_HANDLE, null));
-            
-            IO.KEYBOARD_KEY_STATES.clear();
-        }
+        destroyKeyboard(callbacks);
         
         // ---------- Mouse ---------- //
-        {
-            callbacks.add(glfwSetCursorEnterCallback(IO.WINDOW_HANDLE, null));
-            callbacks.add(glfwSetCursorPosCallback(IO.WINDOW_HANDLE, null));
-            callbacks.add(glfwSetScrollCallback(IO.WINDOW_HANDLE, null));
-            callbacks.add(glfwSetMouseButtonCallback(IO.WINDOW_HANDLE, null));
-            
-            IO.MOUSE_BUTTON_STATES.clear();
-        }
+        destroyMouse(callbacks);
         
         // ---------- Window ---------- //
-        {
-            callbacks.add(glfwSetWindowCloseCallback(IO.WINDOW_HANDLE, null));
-            callbacks.add(glfwSetWindowFocusCallback(IO.WINDOW_HANDLE, null));
-            callbacks.add(glfwSetWindowIconifyCallback(IO.WINDOW_HANDLE, null));
-            callbacks.add(glfwSetWindowMaximizeCallback(IO.WINDOW_HANDLE, null));
-            callbacks.add(glfwSetWindowPosCallback(IO.WINDOW_HANDLE, null));
-            callbacks.add(glfwSetWindowSizeCallback(IO.WINDOW_HANDLE, null));
-            callbacks.add(glfwSetWindowContentScaleCallback(IO.WINDOW_HANDLE, null));
-            callbacks.add(glfwSetFramebufferSizeCallback(IO.WINDOW_HANDLE, null));
-            callbacks.add(glfwSetWindowRefreshCallback(IO.WINDOW_HANDLE, null));
-            callbacks.add(glfwSetDropCallback(IO.WINDOW_HANDLE, null));
-            
-            glfwDestroyWindow(IO.WINDOW_HANDLE);
-            IO.WINDOW_HANDLE = MemoryUtil.NULL;
-        }
+        destroyWindow(callbacks);
         
         callbacks.add(glfwSetErrorCallback(null));
         
@@ -502,6 +159,165 @@ public class IO
     static final     List<@NotNull String> WINDOW_DROPPED        = new LinkedList<>();
     static @Nullable PointerBuffer         WINDOW_DROPPED_CHANGE = null;
     static final     Event                 WINDOW_ON_DROPPED     = new Event();
+    
+    private static void setupWindow(@NotNull Vector2ic size, @NotNull String title, @NotNull List<Callback> callbacks)
+    {
+        glfwDefaultWindowHints();
+        
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
+        
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
+        
+        IO.WINDOW_HANDLE = glfwCreateWindow(size.x(), size.y(), title, MemoryUtil.NULL, MemoryUtil.NULL);
+        if (IO.WINDOW_HANDLE == MemoryUtil.NULL) throw new RuntimeException("Could not create window.");
+        
+        IO.WINDOW_FOCUSED   = glfwGetWindowAttrib(IO.WINDOW_HANDLE, GLFW_FOCUSED) == GLFW_TRUE;
+        IO.WINDOW_MINIMIZED = glfwGetWindowAttrib(IO.WINDOW_HANDLE, GLFW_ICONIFIED) == GLFW_TRUE;
+        IO.WINDOW_MAXIMIZED = glfwGetWindowAttrib(IO.WINDOW_HANDLE, GLFW_MAXIMIZED) == GLFW_TRUE;
+        
+        try (MemoryStack stack = MemoryStack.stackPush())
+        {
+            IntBuffer x = stack.mallocInt(1);
+            IntBuffer y = stack.mallocInt(1);
+            
+            FloatBuffer xf = stack.mallocFloat(1);
+            FloatBuffer yf = stack.mallocFloat(1);
+            
+            glfwGetWindowPos(IO.WINDOW_HANDLE, x, y);
+            IO.WINDOW_POS.set(x.get(0), y.get(0));
+            
+            glfwGetWindowSize(IO.WINDOW_HANDLE, x, y);
+            IO.WINDOW_SIZE.set(x.get(0), y.get(0));
+            
+            glfwGetWindowContentScale(IO.WINDOW_HANDLE, xf, yf);
+            IO.WINDOW_CONTENT_SCALE.set(xf.get(0), yf.get(0));
+            
+            glfwGetFramebufferSize(IO.WINDOW_HANDLE, x, y);
+            IO.WINDOW_FRAMEBUFFER_SIZE.set(x.get(0), y.get(0));
+        }
+        
+        callbacks.add(glfwSetWindowCloseCallback(IO.WINDOW_HANDLE, IO::windowCloseCallback));
+        callbacks.add(glfwSetWindowFocusCallback(IO.WINDOW_HANDLE, IO::windowFocusCallback));
+        callbacks.add(glfwSetWindowIconifyCallback(IO.WINDOW_HANDLE, IO::windowIconifyCallback));
+        callbacks.add(glfwSetWindowMaximizeCallback(IO.WINDOW_HANDLE, IO::windowMaximizeCallback));
+        callbacks.add(glfwSetWindowPosCallback(IO.WINDOW_HANDLE, IO::windowPosCallback));
+        callbacks.add(glfwSetWindowSizeCallback(IO.WINDOW_HANDLE, IO::windowSizeCallback));
+        callbacks.add(glfwSetWindowContentScaleCallback(IO.WINDOW_HANDLE, IO::windowContentScaleCallback));
+        callbacks.add(glfwSetFramebufferSizeCallback(IO.WINDOW_HANDLE, IO::windowFramebufferSizeCallback));
+        callbacks.add(glfwSetWindowRefreshCallback(IO.WINDOW_HANDLE, IO::windowRefreshCallback));
+        callbacks.add(glfwSetDropCallback(IO.WINDOW_HANDLE, IO::windowDropCallback));
+    }
+    
+    private static void updateWindow()
+    {
+        IO.WINDOW_ON_CLOSE.fired = false;
+        if (IO.WINDOW_CLOSE_REQUESTED)
+        {
+            IO.WINDOW_ON_CLOSE.fired = true;
+            
+            IO.WINDOW_CLOSE_REQUESTED = false;
+        }
+        
+        IO.WINDOW_ON_FOCUSED.fired = false;
+        if (IO.WINDOW_FOCUSED_CHANGE != null)
+        {
+            IO.WINDOW_FOCUSED          = IO.WINDOW_FOCUSED_CHANGE;
+            IO.WINDOW_ON_FOCUSED.fired = true;
+            
+            IO.WINDOW_FOCUSED_CHANGE = null;
+        }
+        
+        IO.WINDOW_ON_MINIMIZED.fired = false;
+        if (IO.WINDOW_MINIMIZED_CHANGE != null)
+        {
+            IO.WINDOW_MINIMIZED          = IO.WINDOW_MINIMIZED_CHANGE;
+            IO.WINDOW_ON_MINIMIZED.fired = true;
+            
+            IO.WINDOW_MINIMIZED_CHANGE = null;
+        }
+        
+        IO.WINDOW_ON_MAXIMIZED.fired = false;
+        if (IO.WINDOW_MAXIMIZED_CHANGE != null)
+        {
+            IO.WINDOW_MAXIMIZED          = IO.WINDOW_MAXIMIZED_CHANGE;
+            IO.WINDOW_ON_MAXIMIZED.fired = true;
+            
+            IO.WINDOW_MAXIMIZED_CHANGE = null;
+        }
+        
+        IO.WINDOW_ON_POS.fired = false;
+        if (IO.WINDOW_POS_CHANGE != null)
+        {
+            IO.WINDOW_POS.set(IO.WINDOW_POS_CHANGE);
+            IO.WINDOW_ON_POS.fired = true;
+            
+            IO.WINDOW_POS_CHANGE = null;
+        }
+        
+        IO.WINDOW_ON_SIZE.fired = false;
+        if (IO.WINDOW_SIZE_CHANGE != null)
+        {
+            IO.WINDOW_SIZE.set(IO.WINDOW_SIZE_CHANGE);
+            IO.WINDOW_ON_SIZE.fired = true;
+            
+            IO.WINDOW_SIZE_CHANGE = null;
+        }
+        
+        IO.WINDOW_ON_CONTENT_SCALE.fired = false;
+        if (IO.WINDOW_CONTENT_SCALE_CHANGE != null)
+        {
+            IO.WINDOW_CONTENT_SCALE.set(IO.WINDOW_CONTENT_SCALE_CHANGE);
+            IO.WINDOW_ON_CONTENT_SCALE.fired = true;
+            
+            IO.WINDOW_CONTENT_SCALE_CHANGE = null;
+        }
+        
+        IO.WINDOW_ON_FRAMEBUFFER_SIZE.fired = false;
+        if (IO.WINDOW_FRAMEBUFFER_SIZE_CHANGE != null)
+        {
+            IO.WINDOW_FRAMEBUFFER_SIZE.set(IO.WINDOW_FRAMEBUFFER_SIZE_CHANGE);
+            IO.WINDOW_ON_FRAMEBUFFER_SIZE.fired = true;
+            
+            IO.WINDOW_FRAMEBUFFER_SIZE_CHANGE = null;
+        }
+        
+        IO.WINDOW_ON_REFRESH.fired = false;
+        if (IO.WINDOW_REFRESH_REQUESTED)
+        {
+            IO.WINDOW_ON_REFRESH.fired = true;
+            
+            IO.WINDOW_REFRESH_REQUESTED = false;
+        }
+        
+        IO.WINDOW_ON_DROPPED.fired = false;
+        if (IO.WINDOW_DROPPED_CHANGE != null)
+        {
+            IO.WINDOW_DROPPED.clear();
+            while (IO.WINDOW_DROPPED_CHANGE.hasRemaining()) IO.WINDOW_DROPPED.add(MemoryUtil.memUTF8(IO.WINDOW_DROPPED_CHANGE.get()));
+            IO.WINDOW_ON_DROPPED.fired = true;
+            
+            IO.WINDOW_DROPPED_CHANGE = null;
+        }
+    }
+    
+    private static void destroyWindow(@NotNull List<Callback> callbacks)
+    {
+        callbacks.add(glfwSetWindowCloseCallback(IO.WINDOW_HANDLE, null));
+        callbacks.add(glfwSetWindowFocusCallback(IO.WINDOW_HANDLE, null));
+        callbacks.add(glfwSetWindowIconifyCallback(IO.WINDOW_HANDLE, null));
+        callbacks.add(glfwSetWindowMaximizeCallback(IO.WINDOW_HANDLE, null));
+        callbacks.add(glfwSetWindowPosCallback(IO.WINDOW_HANDLE, null));
+        callbacks.add(glfwSetWindowSizeCallback(IO.WINDOW_HANDLE, null));
+        callbacks.add(glfwSetWindowContentScaleCallback(IO.WINDOW_HANDLE, null));
+        callbacks.add(glfwSetFramebufferSizeCallback(IO.WINDOW_HANDLE, null));
+        callbacks.add(glfwSetWindowRefreshCallback(IO.WINDOW_HANDLE, null));
+        callbacks.add(glfwSetDropCallback(IO.WINDOW_HANDLE, null));
+        
+        glfwDestroyWindow(IO.WINDOW_HANDLE);
+        IO.WINDOW_HANDLE = MemoryUtil.NULL;
+    }
     
     public static @NotNull Event windowOnClose()
     {
@@ -735,6 +551,138 @@ public class IO
     
     static final EnumSet<Button> MOUSE_BUTTON_DRAGGED    = EnumSet.noneOf(Button.class);
     static final Event           MOUSE_ON_BUTTON_DRAGGED = new Event();
+    
+    private static void setupMouse(@NotNull List<Callback> callbacks)
+    {
+        try (MemoryStack stack = MemoryStack.stackPush())
+        {
+            DoubleBuffer x = stack.mallocDouble(1);
+            DoubleBuffer y = stack.mallocDouble(1);
+            
+            glfwGetCursorPos(IO.WINDOW_HANDLE, x, y);
+            IO.MOUSE_POS.set(x.get(0), y.get(0));
+        }
+        
+        for (Button button : Button.values())
+        {
+            IO.MOUSE_BUTTON_MAP.put(button.ref, button);
+            IO.MOUSE_BUTTON_STATES.put(button, new ButtonInput());
+        }
+        
+        mouseShow();
+        mouseRawInput(true);
+        mouseSticky(false);
+        
+        callbacks.add(glfwSetCursorEnterCallback(IO.WINDOW_HANDLE, IO::mouseEnteredCallback));
+        callbacks.add(glfwSetCursorPosCallback(IO.WINDOW_HANDLE, IO::mousePosCallback));
+        callbacks.add(glfwSetScrollCallback(IO.WINDOW_HANDLE, IO::mouseScrollCallback));
+        callbacks.add(glfwSetMouseButtonCallback(IO.WINDOW_HANDLE, IO::mouseButtonCallback));
+    }
+    
+    private static void updateMouse(long time)
+    {
+        IO.MOUSE_ON_ENTERED.fired = false;
+        if (IO.MOUSE_ENTERED_CHANGE != null)
+        {
+            IO.MOUSE_ENTERED          = IO.MOUSE_ENTERED_CHANGE;
+            IO.MOUSE_ON_ENTERED.fired = true;
+            
+            if (IO.MOUSE_ENTERED) IO.MOUSE_POS_CHANGE = new Vector2d(IO.MOUSE_POS.x, IO.MOUSE_POS.y);
+            
+            IO.MOUSE_ENTERED_CHANGE = null;
+        }
+        
+        IO.MOUSE_ON_POS.fired = false;
+        IO.MOUSE_POS_DELTA.set(0);
+        if (IO.MOUSE_POS_CHANGE != null)
+        {
+            IO.MOUSE_POS_DELTA.set(IO.MOUSE_POS_CHANGE.x(), IO.MOUSE_POS_CHANGE.y()).sub(IO.MOUSE_POS);
+            IO.MOUSE_POS.set(IO.MOUSE_POS_CHANGE.x(), IO.MOUSE_POS_CHANGE.y());
+            IO.MOUSE_ON_POS.fired = true;
+            
+            IO.MOUSE_POS_CHANGE = null;
+        }
+        
+        IO.MOUSE_ON_SCROLL.fired = false;
+        IO.MOUSE_SCROLL.set(0);
+        if (IO.MOUSE_SCROLL_CHANGE != null)
+        {
+            System.out.println("Scroll");
+            IO.MOUSE_SCROLL.set(IO.MOUSE_SCROLL_CHANGE.x(), IO.MOUSE_SCROLL_CHANGE.y());
+            IO.MOUSE_ON_SCROLL.fired = true;
+            
+            IO.MOUSE_SCROLL_CHANGE = null;
+        }
+        
+        IO.MOUSE_BUTTON_DOWN.clear();
+        IO.MOUSE_BUTTON_UP.clear();
+        IO.MOUSE_BUTTON_REPEATED.clear();
+        IO.MOUSE_BUTTON_HELD.clear();
+        IO.MOUSE_BUTTON_DRAGGED.clear();
+        for (Button button : IO.MOUSE_BUTTON_STATES.keySet())
+        {
+            ButtonInput input = IO.MOUSE_BUTTON_STATES.get(button);
+            
+            input.state       = input.stateChange;
+            input.stateChange = -1;
+            switch (input.state)
+            {
+                case GLFW_PRESS ->
+                {
+                    int tolerance = 2;
+                    
+                    boolean inc = Math.abs(IO.MOUSE_POS.x - input.downPos.x) < tolerance &&
+                                  Math.abs(IO.MOUSE_POS.y - input.downPos.y) < tolerance &&
+                                  time - input.downTime < IO._DOUBLE_PRESS_DELAY;
+                    
+                    input.held      = true;
+                    input.heldTime  = time + IO._HOLD_FREQUENCY;
+                    input.downTime  = time;
+                    input.downCount = inc ? input.downCount + 1 : 1;
+                    input.downPos.set(IO.MOUSE_POS);
+                    
+                    IO.MOUSE_BUTTON_DOWN.add(button);
+                }
+                case GLFW_RELEASE ->
+                {
+                    input.held     = false;
+                    input.heldTime = Long.MAX_VALUE;
+                    
+                    IO.MOUSE_BUTTON_UP.add(button);
+                }
+                case GLFW_REPEAT -> IO.MOUSE_BUTTON_REPEATED.add(button);
+            }
+            input.dragging = false;
+            if (input.held)
+            {
+                if (time - input.heldTime >= IO._HOLD_FREQUENCY)
+                {
+                    IO.MOUSE_BUTTON_HELD.add(button);
+                    input.heldTime += IO._HOLD_FREQUENCY;
+                }
+                if (IO.MOUSE_POS_DELTA.x != 0 || IO.MOUSE_POS_DELTA.y != 0)
+                {
+                    input.dragging = true;
+                    IO.MOUSE_BUTTON_DRAGGED.add(button);
+                }
+            }
+        }
+        IO.MOUSE_ON_BUTTON_DOWN.fired     = !IO.MOUSE_BUTTON_DOWN.isEmpty();
+        IO.MOUSE_ON_BUTTON_UP.fired       = !IO.MOUSE_BUTTON_UP.isEmpty();
+        IO.MOUSE_ON_BUTTON_REPEATED.fired = !IO.MOUSE_BUTTON_REPEATED.isEmpty();
+        IO.MOUSE_ON_BUTTON_HELD.fired     = !IO.MOUSE_BUTTON_HELD.isEmpty();
+        IO.MOUSE_ON_BUTTON_DRAGGED.fired  = !IO.MOUSE_BUTTON_DRAGGED.isEmpty();
+    }
+    
+    private static void destroyMouse(@NotNull List<Callback> callbacks)
+    {
+        callbacks.add(glfwSetCursorEnterCallback(IO.WINDOW_HANDLE, null));
+        callbacks.add(glfwSetCursorPosCallback(IO.WINDOW_HANDLE, null));
+        callbacks.add(glfwSetScrollCallback(IO.WINDOW_HANDLE, null));
+        callbacks.add(glfwSetMouseButtonCallback(IO.WINDOW_HANDLE, null));
+        
+        IO.MOUSE_BUTTON_STATES.clear();
+    }
     
     public static boolean mouseEntered()
     {
@@ -1027,6 +975,84 @@ public class IO
     static final EnumSet<@NotNull Key> KEYBOARD_KEY_HELD    = EnumSet.noneOf(Key.class);
     static final Event                 KEYBOARD_ON_KEY_HELD = new Event();
     
+    private static void setupKeyboard(@NotNull List<Callback> callbacks)
+    {
+        for (Key key : Key.values())
+        {
+            IO.KEYBOARD_KEY_MAP.put(key.ref, key);
+            IO.KEYBOARD_KEY_STATES.put(key, new Input());
+        }
+        
+        keyboardSticky(false);
+        
+        callbacks.add(glfwSetCharCallback(IO.WINDOW_HANDLE, IO::keyboardCharCallback));
+        callbacks.add(glfwSetKeyCallback(IO.WINDOW_HANDLE, IO::keyboardKeyCallback));
+    }
+    
+    private static void updateKeyboard(long time)
+    {
+        IO.KEYBOARD_ON_TYPED.fired = false;
+        IO.KEYBOARD_TYPED.setLength(0);
+        
+        Integer keyTyped;
+        while ((keyTyped = IO.KEYBOARD_TYPED_CHANGES.poll()) != null)
+        {
+            IO.KEYBOARD_TYPED.appendCodePoint(keyTyped);
+            IO.KEYBOARD_ON_TYPED.fired = true;
+        }
+        
+        IO.KEYBOARD_KEY_DOWN.clear();
+        IO.KEYBOARD_KEY_UP.clear();
+        IO.KEYBOARD_KEY_REPEATED.clear();
+        IO.KEYBOARD_KEY_HELD.clear();
+        for (Key key : IO.KEYBOARD_KEY_STATES.keySet())
+        {
+            Input input = IO.KEYBOARD_KEY_STATES.get(key);
+            
+            input.state       = input.stateChange;
+            input.stateChange = -1;
+            switch (input.state)
+            {
+                case GLFW_PRESS ->
+                {
+                    boolean inc = time - input.downTime < IO._DOUBLE_PRESS_DELAY;
+                    
+                    input.held      = true;
+                    input.heldTime  = time + IO._HOLD_FREQUENCY;
+                    input.downTime  = time;
+                    input.downCount = inc ? input.downCount + 1 : 1;
+                    
+                    IO.KEYBOARD_KEY_DOWN.add(key);
+                }
+                case GLFW_RELEASE ->
+                {
+                    input.held     = false;
+                    input.heldTime = Long.MAX_VALUE;
+                    
+                    IO.KEYBOARD_KEY_UP.add(key);
+                }
+                case GLFW_REPEAT -> IO.KEYBOARD_KEY_REPEATED.add(key);
+            }
+            if (input.held && time - input.heldTime >= IO._HOLD_FREQUENCY)
+            {
+                input.heldTime += IO._HOLD_FREQUENCY;
+                IO.KEYBOARD_KEY_HELD.add(key);
+            }
+        }
+        IO.KEYBOARD_ON_KEY_DOWN.fired     = !IO.KEYBOARD_KEY_DOWN.isEmpty();
+        IO.KEYBOARD_ON_KEY_UP.fired       = !IO.KEYBOARD_KEY_UP.isEmpty();
+        IO.KEYBOARD_ON_KEY_REPEATED.fired = !IO.KEYBOARD_KEY_REPEATED.isEmpty();
+        IO.KEYBOARD_ON_KEY_HELD.fired     = !IO.KEYBOARD_KEY_HELD.isEmpty();
+    }
+    
+    private static void destroyKeyboard(@NotNull List<Callback> callbacks)
+    {
+        callbacks.add(glfwSetCharCallback(IO.WINDOW_HANDLE, null));
+        callbacks.add(glfwSetKeyCallback(IO.WINDOW_HANDLE, null));
+        
+        IO.KEYBOARD_KEY_STATES.clear();
+    }
+    
     public static @NotNull String keyboardTyped()
     {
         return IO.KEYBOARD_TYPED.toString();
@@ -1142,6 +1168,11 @@ public class IO
     // -------------------- Modifier State -------------------- //
     
     static int MODIFIER_ACTIVE;
+    
+    private static void setupModifier()
+    {
+        modifierLockMods(false);
+    }
     
     public static boolean modifierAny(@NotNull Modifier first, @NotNull Modifier @NotNull ... others)
     {

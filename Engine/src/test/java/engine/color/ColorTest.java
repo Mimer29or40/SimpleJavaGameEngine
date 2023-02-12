@@ -76,13 +76,13 @@ public class ColorTest
     void equals()
     {
         Colorc color;
-    
+        
         color = new Color(50, 200, 100, 250);
         Assertions.assertTrue(color.equals(50, 200, 100, 250));
         Assertions.assertTrue(color.equals(50, 200, 100));
         Assertions.assertTrue(color.equals(Color.toGray(50, 200, 100), 250));
         Assertions.assertTrue(color.equals(Color.toGray(50, 200, 100)));
-    
+        
         color = new Color(0.2, 0.8, 0.4, 0.95);
         Assertions.assertTrue(color.equals(0.2, 0.8, 0.4, 0.95));
         Assertions.assertTrue(color.equals(0.2, 0.8, 0.4));

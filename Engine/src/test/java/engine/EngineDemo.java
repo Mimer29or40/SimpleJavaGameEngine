@@ -6,7 +6,10 @@ public class EngineDemo extends Engine
 {
     protected EngineDemo()
     {
-        super(640, 400);
+        super("Engine Demo", 640, 400);
+        
+        this.updateFreq = 120;
+        this.drawFreq   = 60;
     }
     
     @Override

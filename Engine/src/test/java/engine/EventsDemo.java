@@ -52,6 +52,9 @@ public class EventsDemo extends Engine
         
         if (keyboardKeyDown(Key.SPACE) && modifierOnly(Modifier.SHIFT))
         {
+            System.out.println("seconds() = " + seconds());
+            System.out.println("milliseconds() = " + milliseconds());
+            System.out.println("microseconds() = " + microseconds());
             if (mouseIsShown()) {mouseHide();}
             else if (mouseIsHidden()) {mouseCapture();}
             else if (mouseIsCaptured()) {mouseShow();}
