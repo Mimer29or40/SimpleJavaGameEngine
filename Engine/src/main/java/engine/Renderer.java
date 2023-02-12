@@ -5,6 +5,7 @@ import engine.color.ColorBuffer;
 import engine.color.ColorFormat;
 import engine.color.Colorc;
 import engine.gl.*;
+import engine.gl.texture.Texture2D;
 import engine.util.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +28,7 @@ public class Renderer
     static Shader  defaultVertexShader;
     static Shader  defaultFragmentShader;
     static Program defaultProgram;
+    static Texture defaultTexture;
     
     static void setup()
     {
@@ -93,6 +95,12 @@ public class Renderer
         Renderer.defaultFragmentShader = new Shader(Shader.Type.FRAGMENT, frag);
         
         Renderer.defaultProgram = Program.builder().shader(Renderer.defaultVertexShader).shader(Renderer.defaultFragmentShader).build();
+    
+        try (MemoryStack stack = MemoryStack.stackPush())
+        {
+            ColorBuffer data = ColorBuffer.malloc(ColorFormat.RGBA, 1, stack);
+            Renderer.defaultTexture = new Texture2D(data.put(0, 255, 255, 255, 255), 1, 1);
+        }
         
         stateDefault();
         clearScreenBuffers();
@@ -101,6 +109,9 @@ public class Renderer
     static void destroy()
     {
         Renderer.LOGGER.debug("Destroy");
+        
+        Renderer.defaultTexture.delete();
+        Renderer.defaultTexture = null;
         
         Renderer.defaultProgram.delete();
         Renderer.defaultProgram = null;
@@ -202,6 +213,7 @@ public class Renderer
         
         stateProgram(Renderer.defaultProgram);
         //Renderer.framebuffer[Renderer.stackIndex];  // TODO
+        stateTexture(Renderer.defaultTexture);
         
         stateProjection().identity();
         stateView().identity();
@@ -599,6 +611,19 @@ public class Renderer
     //{
     //    return Renderer.framebuffer[Renderer.stackIndex];
     //}
+    
+    public static void stateTexture(@NotNull Texture texture, int index)  // TODO
+    {
+        Renderer.LOGGER.trace("Binding %s to index=%s", texture, index);
+        
+        GL44.glActiveTexture(GL44.GL_TEXTURE0 + index);
+        GL44.glBindTexture(texture.type, texture.id());
+    }
+    
+    public static void stateTexture(@NotNull Texture texture)  // TODO
+    {
+        stateTexture(texture, 0);
+    }
     
     public static @NotNull Matrix4d stateProjection()
     {
@@ -1085,19 +1110,6 @@ public class Renderer
     {
         return readBuffer(GL44.GL_BACK, x, y, width, height, format);
     }
-    
-    //public static void bind(@NotNull Texture texture, int index)  // TODO
-    //{
-    //    Renderer.LOGGER.trace("Binding %s to index=%s", texture, index);
-    //
-    //    GL44.glActiveTexture(GL44.GL_TEXTURE0 + index);
-    //    GL44.glBindTexture(texture.type, texture.id);
-    //}
-    
-    //public static void bind(@NotNull Texture texture)  // TODO
-    //{
-    //    bind(texture, 0);
-    //}
     
     //public static void bind(@NotNull Buffer buffer)  // TODO
     //{
