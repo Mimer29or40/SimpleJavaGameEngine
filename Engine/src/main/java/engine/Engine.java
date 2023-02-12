@@ -68,7 +68,7 @@ public abstract class Engine
         
         IO.setup(Engine.instance.size, "Engine - " + Engine.instance.name);
         
-        //Renderer.setup(); // TODO
+        Renderer.setup();
         
         Engine.LOGGER.debug("Instance Setup");
         Engine.instance.setup();
@@ -103,7 +103,7 @@ public abstract class Engine
         Engine.LOGGER.debug("Instance Destroy");
         Engine.instance.destroy();
         
-        //Renderer.destroy(); // TODO
+        Renderer.destroy();
         
         IO.destroy();
     }
@@ -196,7 +196,11 @@ public abstract class Engine
         double timeD      = time / 1_000_000_000D;
         double deltaTimeD = deltaTime / 1_000_000_000D;
         
+        Renderer.beforeDraw();
+        
         Engine.instance.draw(frame, timeD, deltaTimeD);
+        
+        Renderer.afterDraw();
         
         IO.windowSwap();
     }

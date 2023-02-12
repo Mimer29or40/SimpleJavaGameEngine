@@ -162,6 +162,8 @@ public class IO
     
     private static void setupWindow(@NotNull Vector2ic size, @NotNull String title, @NotNull List<Callback> callbacks)
     {
+        IO.LOGGER.trace("Setup Window");
+        
         glfwDefaultWindowHints();
         
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -304,6 +306,8 @@ public class IO
     
     private static void destroyWindow(@NotNull List<Callback> callbacks)
     {
+        IO.LOGGER.trace("Destroy Window");
+        
         callbacks.add(glfwSetWindowCloseCallback(IO.WINDOW_HANDLE, null));
         callbacks.add(glfwSetWindowFocusCallback(IO.WINDOW_HANDLE, null));
         callbacks.add(glfwSetWindowIconifyCallback(IO.WINDOW_HANDLE, null));
@@ -554,6 +558,8 @@ public class IO
     
     private static void setupMouse(@NotNull List<Callback> callbacks)
     {
+        IO.LOGGER.trace("Setup Mouse");
+        
         try (MemoryStack stack = MemoryStack.stackPush())
         {
             DoubleBuffer x = stack.mallocDouble(1);
@@ -676,6 +682,8 @@ public class IO
     
     private static void destroyMouse(@NotNull List<Callback> callbacks)
     {
+        IO.LOGGER.trace("Destroy Mouse");
+        
         callbacks.add(glfwSetCursorEnterCallback(IO.WINDOW_HANDLE, null));
         callbacks.add(glfwSetCursorPosCallback(IO.WINDOW_HANDLE, null));
         callbacks.add(glfwSetScrollCallback(IO.WINDOW_HANDLE, null));
@@ -977,6 +985,8 @@ public class IO
     
     private static void setupKeyboard(@NotNull List<Callback> callbacks)
     {
+        IO.LOGGER.trace("Setup Keyboard");
+        
         for (Key key : Key.values())
         {
             IO.KEYBOARD_KEY_MAP.put(key.ref, key);
@@ -1047,6 +1057,8 @@ public class IO
     
     private static void destroyKeyboard(@NotNull List<Callback> callbacks)
     {
+        IO.LOGGER.trace("Destroy Modifier");
+        
         callbacks.add(glfwSetCharCallback(IO.WINDOW_HANDLE, null));
         callbacks.add(glfwSetKeyCallback(IO.WINDOW_HANDLE, null));
         
@@ -1171,6 +1183,8 @@ public class IO
     
     private static void setupModifier()
     {
+        IO.LOGGER.trace("Setup Modifier");
+        
         modifierLockMods(false);
     }
     
