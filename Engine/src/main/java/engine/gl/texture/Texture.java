@@ -4,8 +4,7 @@ import engine.color.ColorBuffer;
 import engine.color.ColorFormat;
 import engine.util.Logger;
 import org.jetbrains.annotations.NotNull;
-import org.lwjgl.opengl.GL40;
-import org.lwjgl.opengl.GL46;
+import org.lwjgl.opengl.GL44;
 
 import java.util.Objects;
 
@@ -34,7 +33,7 @@ public abstract class Texture
     
     protected Texture(int type, @NotNull ColorFormat format)
     {
-        this(GL40.glGenTextures(), type, format);
+        this(GL44.glGenTextures(), type, format);
     }
     
     @Override
@@ -74,17 +73,17 @@ public abstract class Texture
     {
         return switch (this.type)
                 {
-                    case GL40.GL_TEXTURE_1D -> "1D";
-                    case GL40.GL_TEXTURE_2D -> "2D";
-                    case GL40.GL_TEXTURE_3D -> "3D";
-                    case GL40.GL_TEXTURE_1D_ARRAY -> "1D_ARRAY";
-                    case GL40.GL_TEXTURE_2D_ARRAY -> "2D_ARRAY";
-                    case GL40.GL_TEXTURE_RECTANGLE -> "RECTANGLE";
-                    case GL40.GL_TEXTURE_CUBE_MAP -> "CUBE_MAP";
-                    case GL40.GL_TEXTURE_CUBE_MAP_ARRAY -> "CUBE_MAP_ARRAY";
-                    case GL40.GL_TEXTURE_BUFFER -> "BUFFER";
-                    case GL40.GL_TEXTURE_2D_MULTISAMPLE -> "2D_MULTISAMPLE";
-                    case GL40.GL_TEXTURE_2D_MULTISAMPLE_ARRAY -> "2D_MULTISAMPLE_ARRAY";
+                    case GL44.GL_TEXTURE_1D -> "1D";
+                    case GL44.GL_TEXTURE_2D -> "2D";
+                    case GL44.GL_TEXTURE_3D -> "3D";
+                    case GL44.GL_TEXTURE_1D_ARRAY -> "1D_ARRAY";
+                    case GL44.GL_TEXTURE_2D_ARRAY -> "2D_ARRAY";
+                    case GL44.GL_TEXTURE_RECTANGLE -> "RECTANGLE";
+                    case GL44.GL_TEXTURE_CUBE_MAP -> "CUBE_MAP";
+                    case GL44.GL_TEXTURE_CUBE_MAP_ARRAY -> "CUBE_MAP_ARRAY";
+                    case GL44.GL_TEXTURE_BUFFER -> "BUFFER";
+                    case GL44.GL_TEXTURE_2D_MULTISAMPLE -> "2D_MULTISAMPLE";
+                    case GL44.GL_TEXTURE_2D_MULTISAMPLE_ARRAY -> "2D_MULTISAMPLE_ARRAY";
                     default -> "UNKNOWN";
                 };
     }
@@ -100,7 +99,7 @@ public abstract class Texture
     {
         Texture.LOGGER.debug("Deleting", this);
         
-        GL40.glDeleteTextures(this.id);
+        GL44.glDeleteTextures(this.id);
         
         this.id = 0;
     }
@@ -111,9 +110,9 @@ public abstract class Texture
         
         Texture.LOGGER.trace("Setting Texture Wrap: s=%s t=%s r=%s", s, t, r);
         
-        GL46.glTexParameteri(this.type, GL40.GL_TEXTURE_WRAP_S, s.ref);
-        GL46.glTexParameteri(this.type, GL40.GL_TEXTURE_WRAP_T, t.ref);
-        GL46.glTexParameteri(this.type, GL40.GL_TEXTURE_WRAP_R, r.ref);
+        GL44.glTexParameteri(this.type, GL44.GL_TEXTURE_WRAP_S, s.ref);
+        GL44.glTexParameteri(this.type, GL44.GL_TEXTURE_WRAP_T, t.ref);
+        GL44.glTexParameteri(this.type, GL44.GL_TEXTURE_WRAP_R, r.ref);
     }
     
     public void wrapS(@NotNull Texture.Wrap s)
@@ -122,7 +121,7 @@ public abstract class Texture
         
         Texture.LOGGER.trace("Setting Texture Wrap: s=%s", s);
         
-        GL40.glTexParameteri(this.type, GL40.GL_TEXTURE_WRAP_S, s.ref);
+        GL44.glTexParameteri(this.type, GL44.GL_TEXTURE_WRAP_S, s.ref);
     }
     
     public void wrapT(@NotNull Texture.Wrap t)
@@ -131,7 +130,7 @@ public abstract class Texture
         
         Texture.LOGGER.trace("Setting Texture Wrap: t=%s", t);
         
-        GL40.glTexParameteri(this.type, GL40.GL_TEXTURE_WRAP_S, t.ref);
+        GL44.glTexParameteri(this.type, GL44.GL_TEXTURE_WRAP_S, t.ref);
     }
     
     public void wrapR(@NotNull Texture.Wrap r)
@@ -140,7 +139,7 @@ public abstract class Texture
         
         Texture.LOGGER.trace("Setting Texture Wrap: r=%s", r);
         
-        GL40.glTexParameteri(this.type, GL40.GL_TEXTURE_WRAP_S, r.ref);
+        GL44.glTexParameteri(this.type, GL44.GL_TEXTURE_WRAP_S, r.ref);
     }
     
     public void filter(@NotNull Filter min, @NotNull Filter mag)
@@ -149,8 +148,8 @@ public abstract class Texture
         
         Texture.LOGGER.trace("Setting Texture Filter: min=%s mag=%s", min, mag);
         
-        GL40.glTexParameteri(this.type, GL40.GL_TEXTURE_MIN_FILTER, min.ref);
-        GL40.glTexParameteri(this.type, GL40.GL_TEXTURE_MAG_FILTER, mag.ref);
+        GL44.glTexParameteri(this.type, GL44.GL_TEXTURE_MIN_FILTER, min.ref);
+        GL44.glTexParameteri(this.type, GL44.GL_TEXTURE_MAG_FILTER, mag.ref);
     }
     
     public void filterMin(@NotNull Filter min)
@@ -159,7 +158,7 @@ public abstract class Texture
         
         Texture.LOGGER.trace("Setting Texture Filter: min=%s", min);
         
-        GL40.glTexParameteri(this.type, GL40.GL_TEXTURE_MIN_FILTER, min.ref);
+        GL44.glTexParameteri(this.type, GL44.GL_TEXTURE_MIN_FILTER, min.ref);
     }
     
     public void filterMag(@NotNull Filter mag)
@@ -168,19 +167,19 @@ public abstract class Texture
         
         Texture.LOGGER.trace("Setting Texture Filter: mag=%s", mag);
         
-        GL40.glTexParameteri(this.type, GL40.GL_TEXTURE_MAG_FILTER, mag.ref);
+        GL44.glTexParameteri(this.type, GL44.GL_TEXTURE_MAG_FILTER, mag.ref);
     }
     
     // -------------------- Sub-Classes -------------------- //
     
     public enum Filter
     {
-        NEAREST(GL40.GL_NEAREST),
-        LINEAR(GL40.GL_LINEAR),
-        NEAREST_MIPMAP_NEAREST(GL40.GL_NEAREST_MIPMAP_NEAREST),
-        LINEAR_MIPMAP_NEAREST(GL40.GL_LINEAR_MIPMAP_NEAREST),
-        NEAREST_MIPMAP_LINEAR(GL40.GL_NEAREST_MIPMAP_LINEAR),
-        LINEAR_MIPMAP_LINEAR(GL40.GL_LINEAR_MIPMAP_LINEAR),
+        NEAREST(GL44.GL_NEAREST),
+        LINEAR(GL44.GL_LINEAR),
+        NEAREST_MIPMAP_NEAREST(GL44.GL_NEAREST_MIPMAP_NEAREST),
+        LINEAR_MIPMAP_NEAREST(GL44.GL_LINEAR_MIPMAP_NEAREST),
+        NEAREST_MIPMAP_LINEAR(GL44.GL_NEAREST_MIPMAP_LINEAR),
+        LINEAR_MIPMAP_LINEAR(GL44.GL_LINEAR_MIPMAP_LINEAR),
         ;
         
         public static final Filter DEFAULT = NEAREST;
@@ -195,11 +194,11 @@ public abstract class Texture
     
     public enum Wrap
     {
-        CLAMP_TO_EDGE(GL40.GL_CLAMP_TO_EDGE),
-        CLAMP_TO_BORDER(GL40.GL_CLAMP_TO_BORDER),
-        MIRRORED_REPEAT(GL40.GL_MIRRORED_REPEAT),
-        REPEAT(GL40.GL_REPEAT),
-        // MIRROR_CLAMP_TO_EDGE(GL46.GL_MIRROR_CLAMP_TO_EDGE),
+        CLAMP_TO_EDGE(GL44.GL_CLAMP_TO_EDGE),
+        CLAMP_TO_BORDER(GL44.GL_CLAMP_TO_BORDER),
+        MIRRORED_REPEAT(GL44.GL_MIRRORED_REPEAT),
+        REPEAT(GL44.GL_REPEAT),
+        MIRROR_CLAMP_TO_EDGE(GL44.GL_MIRROR_CLAMP_TO_EDGE),
         ;
         
         public static final Wrap DEFAULT = REPEAT;

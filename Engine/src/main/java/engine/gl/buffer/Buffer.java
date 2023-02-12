@@ -4,7 +4,7 @@ import engine.util.Logger;
 import engine.util.MemUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.opengl.GL40;
+import org.lwjgl.opengl.GL44;
 import org.lwjgl.system.CustomBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
@@ -41,12 +41,12 @@ public abstract class Buffer
     
     protected Buffer(int type, @NotNull BufferUsage usage, long address, long size)
     {
-        this(GL40.glGenBuffers(), type, usage, size);
+        this(GL44.glGenBuffers(), type, usage, size);
         
         bind(this);
     
         Buffer.LOGGER.trace("Uploaded Data with usage:", usage);
-        GL40.nglBufferData(this.type, this.size, address, usage.ref);
+        GL44.nglBufferData(this.type, this.size, address, usage.ref);
         
         Buffer.LOGGER.debug("Created", this);
     }
@@ -99,7 +99,7 @@ public abstract class Buffer
     {
         Buffer.LOGGER.debug("Deleting", this);
         
-        GL40.glDeleteBuffers(this.id);
+        GL44.glDeleteBuffers(this.id);
         
         this.id   = -1;
         this.size = 0;
@@ -111,7 +111,7 @@ public abstract class Buffer
         
         Buffer.LOGGER.trace("Mapping %s as %s", this, access);
         
-        return this.mapped = GL40.glMapBuffer(this.type, access.ref, this.size, this.mapped);
+        return this.mapped = GL44.glMapBuffer(this.type, access.ref, this.size, this.mapped);
     }
     
     public void unmap()
@@ -120,7 +120,7 @@ public abstract class Buffer
         
         Buffer.LOGGER.trace("Unmapping %s", this);
         
-        if (!GL40.glUnmapBuffer(this.type)) Buffer.LOGGER.warning("Could not unmap", this);
+        if (!GL44.glUnmapBuffer(this.type)) Buffer.LOGGER.warning("Could not unmap", this);
     }
     
     /**
@@ -137,7 +137,7 @@ public abstract class Buffer
         
         Buffer.LOGGER.trace("Getting Contents of", this);
         
-        GL40.nglGetBufferSubData(this.type, offset, Integer.toUnsignedLong(buffer.remaining() * MemUtil.elementSize(buffer)), MemoryUtil.memAddress(buffer));
+        GL44.nglGetBufferSubData(this.type, offset, Integer.toUnsignedLong(buffer.remaining() * MemUtil.elementSize(buffer)), MemoryUtil.memAddress(buffer));
         return this;
     }
     
@@ -171,7 +171,7 @@ public abstract class Buffer
         
         Buffer.LOGGER.trace("Getting Contents of", this);
         
-        GL40.nglGetBufferSubData(this.type, offset, Integer.toUnsignedLong(buffer.remaining() * buffer.sizeof()), MemoryUtil.memAddress(buffer));
+        GL44.nglGetBufferSubData(this.type, offset, Integer.toUnsignedLong(buffer.remaining() * buffer.sizeof()), MemoryUtil.memAddress(buffer));
         return this;
     }
     
@@ -205,7 +205,7 @@ public abstract class Buffer
         
         Buffer.LOGGER.trace("Setting Contents of", this);
         
-        GL40.nglBufferSubData(this.type, offset, Integer.toUnsignedLong(data.remaining() * MemUtil.elementSize(data)), MemoryUtil.memAddress(data));
+        GL44.nglBufferSubData(this.type, offset, Integer.toUnsignedLong(data.remaining() * MemUtil.elementSize(data)), MemoryUtil.memAddress(data));
         return this;
     }
     
@@ -239,7 +239,7 @@ public abstract class Buffer
         
         Buffer.LOGGER.trace("Setting Contents of", this);
         
-        GL40.nglBufferSubData(this.type, offset, Integer.toUnsignedLong(data.remaining() * data.sizeof()), MemoryUtil.memAddress(data));
+        GL44.nglBufferSubData(this.type, offset, Integer.toUnsignedLong(data.remaining() * data.sizeof()), MemoryUtil.memAddress(data));
         return this;
     }
     

@@ -5,7 +5,7 @@ import engine.gl.buffer.Buffer;
 import engine.gl.buffer.BufferUsage;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.lwjgl.opengl.GL40;
+import org.lwjgl.opengl.GL44;
 import org.lwjgl.system.CustomBuffer;
 import engine.gl.buffer.BufferArray;
 import engine.gl.buffer.BufferElementArray;
@@ -58,7 +58,7 @@ public class VertexArray
     
     private VertexArray(@NotNull BufferElementArray indexBuffer, @NotNull List<BufferArray> buffers, List<Attribute[]> vertexAttributes)
     {
-        this.id = GL40.glGenVertexArrays();
+        this.id = GL44.glGenVertexArrays();
         
         bind(this);
         
@@ -86,8 +86,8 @@ public class VertexArray
             {
                 Attribute attribute = attributes[j];
                 
-                GL40.glVertexAttribPointer(attributeCount, attribute.count(), attribute.type().ref, attribute.normalized(), stride, offset);
-                GL40.glEnableVertexAttribArray(attributeCount++);
+                GL44.glVertexAttribPointer(attributeCount, attribute.count(), attribute.type().ref, attribute.normalized(), stride, offset);
+                GL44.glEnableVertexAttribArray(attributeCount++);
                 offset += attribute.size();
                 
                 this._attributes.add(attribute);
@@ -186,7 +186,7 @@ public class VertexArray
         this._attributes.clear();
         this.vertexCount = 0;
         
-        GL40.glDeleteVertexArrays(this.id);
+        GL44.glDeleteVertexArrays(this.id);
         
         this.id = 0;
     }
@@ -208,7 +208,7 @@ public class VertexArray
         
         VertexArray.LOGGER.trace("Drawing Arrays size=%s from %s", count, this);
         
-        GL40.glDrawArrays(mode.ref, offset, count);
+        GL44.glDrawArrays(mode.ref, offset, count);
         // glDrawArraysInstanced(int mode, int first, int count, int primcount) // TODO
         
         return this;
@@ -258,8 +258,8 @@ public class VertexArray
         
         GLType indexType = this.indexBuffer.indexType;
         
-        GL40.glDrawElements(mode.ref, count, indexType.ref, offset * indexType.bytes);
-        // GL40.glDrawElementsInstanced(int mode, int count, int type, long indices, int primcount); // TODO
+        GL44.glDrawElements(mode.ref, count, indexType.ref, offset * indexType.bytes);
+        // GL44.glDrawElementsInstanced(int mode, int count, int type, long indices, int primcount); // TODO
         
         return this;
     }

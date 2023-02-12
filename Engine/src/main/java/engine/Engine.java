@@ -1,5 +1,6 @@
 package engine;
 
+import engine.gl.vertex.DrawMode;
 import engine.util.Logger;
 import engine.util.ThreadExecutor;
 import org.jetbrains.annotations.NotNull;
@@ -7,6 +8,7 @@ import org.joml.Vector2i;
 import org.joml.Vector2ic;
 import org.lwjgl.glfw.GLFW;
 
+import static engine.Renderer.*;
 import static org.lwjgl.glfw.GLFW.glfwWaitEvents;
 
 public abstract class Engine
@@ -171,7 +173,39 @@ public abstract class Engine
         double timeD      = time / 1_000_000_000D;
         double deltaTimeD = deltaTime / 1_000_000_000D;
         
+        bind(Renderer.defaultProgram);
+        bind(Renderer.defaultFramebuffer);
+    
+        stateReset();
+        stateDefault();
+    
+        //int r = Renderer.defaultFramebuffer.width() >> 1;
+        //int l = -r;
+        //int b = Renderer.defaultFramebuffer.height() >> 1;
+        //int t = -b;
+        //
+        //stateProjection().setOrtho(l, r, b, t, 1.0, -1.0);
+        //stateView().translate(l, t, 0.0);
+        
+        drawVertexBegin(DrawMode.TRIANGLES);
+        
+        drawVertexPos(-1.0, 1.0);
+        drawVertexColor(255, 0, 0, 255);
+    
+        drawVertexPos(-1.0, 1.0);
+        drawVertexColor(0, 0, 255, 255);
+        
+        //drawVertexPos(1.0, 1.0);
+        //drawVertexColor(0, 0, 0, 0);
+    
+        drawVertexPos(1.0, -1.0);
+        drawVertexColor(0, 255, 0, 255);
+        
+        drawVertexEnd();
+        
         Engine.instance.draw(frame, timeD, deltaTimeD);
+        
+        drawVertices();
         
         IO.windowSwap();
     }
