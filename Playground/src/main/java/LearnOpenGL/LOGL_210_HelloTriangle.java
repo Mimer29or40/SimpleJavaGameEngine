@@ -57,7 +57,7 @@ public class LOGL_210_HelloTriangle extends Engine
         vertShader = new Shader(ShaderType.VERTEX, vertCode);
         fragShader = new Shader(ShaderType.FRAGMENT, fragCode);
         
-        program = Program.builder().shader(vertShader).shader(fragShader).build();
+        program = new Program(vertShader, fragShader);
         
         float[] vertices = {
                 -0.5f, -0.5f, +0.0f, // Vertex 0
