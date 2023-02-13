@@ -2,4 +2,11 @@ version "unspecified"
 
 dependencies {
     implementation project(":Engine")
+
+    implementation platform("org.lwjgl:lwjgl-bom:3.3.1")
+
+    implementation "org.lwjgl:lwjgl"
+    runtimeOnly "org.lwjgl:lwjgl::natives-windows"
+    implementation "org.lwjgl:lwjgl-opengl"
+    runtimeOnly "org.lwjgl:lwjgl-opengl::natives-windows"
 }
