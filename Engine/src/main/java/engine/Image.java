@@ -197,4 +197,14 @@ public class Image
             return false;
         }
     }
+    
+    // -------------------- Utility Functions -------------------- //
+    
+    protected void validateRect(int x, int y, int width, int height)
+    {
+        if (x < 0) throw new IllegalArgumentException("subregion x exceeds image bounds");
+        if (y < 0) throw new IllegalArgumentException("subregion y exceeds image bounds");
+        if (x + width - 1 >= this.width) throw new IllegalArgumentException("subregion width exceeds image bounds");
+        if (y + height - 1 >= this.height) throw new IllegalArgumentException("subregion height exceeds image bounds");
+    }
 }

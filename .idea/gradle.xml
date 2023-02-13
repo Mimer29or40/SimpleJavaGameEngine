@@ -13,7 +13,9 @@
             <option value="$PROJECT_DIR$/Engine" />
             <option value="$PROJECT_DIR$/Playground" />
             <option value="$PROJECT_DIR$/Plugins" />
+            <option value="$PROJECT_DIR$/Plugins/GIF" />
             <option value="$PROJECT_DIR$/Plugins/Image" />
+            <option value="$PROJECT_DIR$/Plugins/Shader" />
           </set>
         </option>
       </GradleProjectSettings>

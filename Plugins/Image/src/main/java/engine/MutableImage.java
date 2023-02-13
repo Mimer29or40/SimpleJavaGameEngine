@@ -20,7 +20,7 @@ public class MutableImage extends Image
     
     public MutableImage(@NotNull Image image)
     {
-        super(image.data.copy(), image.width, image.height);
+        super(image.data, image.width, image.height);
     }
     
     public MutableImage(@NotNull ColorFormat format, int width, int height)
@@ -1127,7 +1127,7 @@ public class MutableImage extends Image
         // Force mask to be Grayscale
         if (alphaMask.data.format != ColorFormat.RED)
         {
-            mask       = new MutableImage(alphaMask).reformat(ColorFormat.RED);
+            mask       = new MutableImage(alphaMask.copy()).reformat(ColorFormat.RED);
             deleteMask = true;
         }
         
@@ -1181,15 +1181,5 @@ public class MutableImage extends Image
         this.data = newData;
         
         return this;
-    }
-    
-    // -------------------- Utility Functions -------------------- //
-    
-    private void validateRect(int x, int y, int width, int height)
-    {
-        if (x < 0) throw new IllegalArgumentException("subregion x exceeds image bounds");
-        if (y < 0) throw new IllegalArgumentException("subregion y exceeds image bounds");
-        if (x + width - 1 >= this.width) throw new IllegalArgumentException("subregion width exceeds image bounds");
-        if (y + height - 1 >= this.height) throw new IllegalArgumentException("subregion height exceeds image bounds");
     }
 }
