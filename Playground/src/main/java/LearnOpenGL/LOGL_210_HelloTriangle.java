@@ -2,6 +2,7 @@ package LearnOpenGL;
 
 import engine.Engine;
 import engine.gl.Framebuffer;
+import engine.gl.GL;
 import engine.gl.GLType;
 import engine.gl.ScreenBuffer;
 import engine.gl.buffer.BufferUsage;
@@ -16,8 +17,6 @@ import org.lwjgl.system.MemoryStack;
 import java.nio.FloatBuffer;
 
 import static engine.IO.windowTitle;
-import static engine.Renderer.clearColor;
-import static engine.Renderer.clearBuffers;
 
 public class LOGL_210_HelloTriangle extends Engine
 {
@@ -84,8 +83,8 @@ public class LOGL_210_HelloTriangle extends Engine
     {
         Framebuffer.bind(Framebuffer.NULL);
         
-        clearColor(0.2, 0.3, 0.3, 1.0);
-        clearBuffers(ScreenBuffer.COLOR);
+        GL.clearColor(0.2, 0.3, 0.3, 1.0);
+        GL.clearBuffers(ScreenBuffer.COLOR);
         
         Program.bind(program);
         VertexArray.bind(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized

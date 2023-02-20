@@ -2,11 +2,10 @@ package LearnOpenGL;
 
 import engine.Engine;
 import engine.gl.Framebuffer;
+import engine.gl.GL;
 import engine.gl.ScreenBuffer;
 
 import static engine.IO.windowTitle;
-import static engine.Renderer.clearColor;
-import static engine.Renderer.clearBuffers;
 
 public class LOGL_120_HelloWindowClear extends Engine
 {
@@ -32,8 +31,8 @@ public class LOGL_120_HelloWindowClear extends Engine
     {
         Framebuffer.bind(Framebuffer.NULL);
         
-        clearColor(0.2, 0.3, 0.3, 1.0);
-        clearBuffers(ScreenBuffer.COLOR);
+        GL.clearColor(0.2, 0.3, 0.3, 1.0);
+        GL.clearBuffers(ScreenBuffer.COLOR);
     }
     
     @Override

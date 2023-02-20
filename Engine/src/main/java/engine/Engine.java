@@ -1,5 +1,6 @@
 package engine;
 
+import engine.gl.GL;
 import engine.util.Logger;
 import engine.util.ThreadExecutor;
 import org.jetbrains.annotations.NotNull;
@@ -68,7 +69,7 @@ public abstract class Engine
         
         IO.setup(Engine.instance.size, "Engine - " + Engine.instance.name);
         
-        Renderer.setup();
+        setupRenderers();
         
         Engine.LOGGER.debug("Instance Setup");
         Engine.instance.setup();
@@ -103,9 +104,20 @@ public abstract class Engine
         Engine.LOGGER.debug("Instance Destroy");
         Engine.instance.destroy();
         
-        Renderer.destroy();
+        destroyRenderers();
         
         IO.destroy();
+    }
+    
+    private static void setupRenderers()
+    {
+        GL.defaultState();
+        Renderer.setup();
+    }
+    
+    private static void destroyRenderers()
+    {
+        Renderer.destroy();
     }
     
     private static void renderThread()
