@@ -1,6 +1,13 @@
 package engine;
 
+import engine.gl.Framebuffer;
 import engine.gl.GL;
+import engine.gl.buffer.Buffer;
+import engine.gl.buffer.BufferArray;
+import engine.gl.shader.Program;
+import engine.gl.texture.Texture;
+import engine.gl.texture.Texture2D;
+import engine.gl.vertex.VertexArray;
 import engine.util.Logger;
 import engine.util.ThreadExecutor;
 import org.jetbrains.annotations.NotNull;
@@ -112,6 +119,13 @@ public abstract class Engine
     private static void setupRenderers()
     {
         GL.defaultState();
+        
+        Framebuffer.bind(Framebuffer.NULL);
+        Program.bind(Program.NULL);
+        VertexArray.bind(VertexArray.NULL);
+        Buffer.bind(BufferArray.NULL);
+        Texture.bind(Texture2D.NULL);
+        
         Renderer.setup();
     }
     

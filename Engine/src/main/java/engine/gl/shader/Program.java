@@ -17,11 +17,16 @@ public class Program
     
     // -------------------- Static -------------------- //
     
-    private static Program boundProgram;
+    private static Program bound;
+    
+    public static @NotNull Program get()
+    {
+        return Program.bound;
+    }
     
     public static void bind(@NotNull Program program)
     {
-        Program.LOGGER.trace("Binding:", Program.boundProgram = program);
+        Program.LOGGER.trace("Binding:", Program.bound = program);
         
         GL44.glUseProgram(program.id);
     }
@@ -177,42 +182,42 @@ public class Program
     {
         Program.LOGGER.trace("attributeShort(%s, %s)", name, value);
         
-        GL44.glVertexAttrib1s(Program.boundProgram.getUniform(name), value);
+        GL44.glVertexAttrib1s(Program.bound.getUniform(name), value);
     }
     
     public void attributeInt(@NotNull String name, int value)
     {
         Program.LOGGER.trace("attributeInt(%s, %s)", name, value);
         
-        GL44.glVertexAttribI1i(Program.boundProgram.getUniform(name), value);
+        GL44.glVertexAttribI1i(Program.bound.getUniform(name), value);
     }
     
     public void attributeUInt(@NotNull String name, long value)
     {
         Program.LOGGER.trace("attributeUInt(%s, %s)", name, value);
         
-        GL44.glVertexAttribI1ui(Program.boundProgram.getUniform(name), (int) (value & 0xFFFFFFFFL));
+        GL44.glVertexAttribI1ui(Program.bound.getUniform(name), (int) (value & 0xFFFFFFFFL));
     }
     
     public void attributeFloat(@NotNull String name, double value)
     {
         Program.LOGGER.trace("attributeFloat(%s, %s)", name, value);
         
-        GL44.glVertexAttrib1f(Program.boundProgram.getUniform(name), (float) value);
+        GL44.glVertexAttrib1f(Program.bound.getUniform(name), (float) value);
     }
     
     public void attributeShort2(@NotNull String name, short x, short y)
     {
         Program.LOGGER.trace("attributeShort2(%s, %s, %s)", name, x, y);
         
-        GL44.glVertexAttrib2s(Program.boundProgram.getUniform(name), x, y);
+        GL44.glVertexAttrib2s(Program.bound.getUniform(name), x, y);
     }
     
     public void attributeInt2(@NotNull String name, int x, int y)
     {
         Program.LOGGER.trace("attributeInt2(%s, %s, %s)", name, x, y);
         
-        GL44.glVertexAttribI2i(Program.boundProgram.getUniform(name), x, y);
+        GL44.glVertexAttribI2i(Program.bound.getUniform(name), x, y);
     }
     
     public void attributeInt2(@NotNull String name, @NotNull Vector2ic vec)
@@ -224,7 +229,7 @@ public class Program
     {
         Program.LOGGER.trace("attributeUInt2(%s, %s, %s)", name, x, y);
         
-        GL44.glVertexAttribI2ui(Program.boundProgram.getUniform(name), (int) (x & 0xFFFFFFFFL), (int) (y & 0xFFFFFFFFL));
+        GL44.glVertexAttribI2ui(Program.bound.getUniform(name), (int) (x & 0xFFFFFFFFL), (int) (y & 0xFFFFFFFFL));
     }
     
     public void attributeUInt2(@NotNull String name, @NotNull Vector2ic vec)
@@ -236,7 +241,7 @@ public class Program
     {
         Program.LOGGER.trace("attributeFloat2(%s, %s, %s)", name, x, y);
         
-        GL44.glVertexAttrib2f(Program.boundProgram.getUniform(name), (float) x, (float) y);
+        GL44.glVertexAttrib2f(Program.bound.getUniform(name), (float) x, (float) y);
     }
     
     public void attributeFloat2(@NotNull String name, @NotNull Vector2dc vec)
@@ -248,14 +253,14 @@ public class Program
     {
         Program.LOGGER.trace("attributeShort3(%s, %s, %s, %s)", name, x, y, z);
         
-        GL44.glVertexAttrib3s(Program.boundProgram.getUniform(name), x, y, z);
+        GL44.glVertexAttrib3s(Program.bound.getUniform(name), x, y, z);
     }
     
     public void attributeInt3(@NotNull String name, int x, int y, int z)
     {
         Program.LOGGER.trace("attributeInt3(%s, %s, %s, %s)", name, x, y, z);
         
-        GL44.glVertexAttribI3i(Program.boundProgram.getUniform(name), x, y, z);
+        GL44.glVertexAttribI3i(Program.bound.getUniform(name), x, y, z);
     }
     
     public void attributeInt3(@NotNull String name, @NotNull Vector3ic vec)
@@ -267,7 +272,7 @@ public class Program
     {
         Program.LOGGER.trace("attributeUInt3(%s, %s, %s, %s)", name, x, y, z);
         
-        GL44.glVertexAttribI3ui(Program.boundProgram.getUniform(name), (int) (x & 0xFFFFFFFFL), (int) (y & 0xFFFFFFFFL), (int) (z & 0xFFFFFFFFL));
+        GL44.glVertexAttribI3ui(Program.bound.getUniform(name), (int) (x & 0xFFFFFFFFL), (int) (y & 0xFFFFFFFFL), (int) (z & 0xFFFFFFFFL));
     }
     
     public void attributeUInt3(@NotNull String name, @NotNull Vector3ic vec)
@@ -279,7 +284,7 @@ public class Program
     {
         Program.LOGGER.trace("attributeFloat3(%s, %s, %s, %s)", name, x, y, z);
         
-        GL44.glVertexAttrib3f(Program.boundProgram.getUniform(name), (float) x, (float) y, (float) z);
+        GL44.glVertexAttrib3f(Program.bound.getUniform(name), (float) x, (float) y, (float) z);
     }
     
     public void attributeFloat3(@NotNull String name, @NotNull Vector3dc vec)
@@ -291,14 +296,14 @@ public class Program
     {
         Program.LOGGER.trace("attributeShort4(%s, %s, %s, %s, %s)", name, x, y, z, w);
         
-        GL44.glVertexAttrib4s(Program.boundProgram.getUniform(name), x, y, z, w);
+        GL44.glVertexAttrib4s(Program.bound.getUniform(name), x, y, z, w);
     }
     
     public void attributeInt4(@NotNull String name, int x, int y, int z, int w)
     {
         Program.LOGGER.trace("attributeInt4(%s, %s, %s, %s, %s)", name, x, y, z, w);
         
-        GL44.glVertexAttribI4i(Program.boundProgram.getUniform(name), x, y, z, w);
+        GL44.glVertexAttribI4i(Program.bound.getUniform(name), x, y, z, w);
     }
     
     public void attributeInt4(@NotNull String name, @NotNull Vector4ic vec)
@@ -310,7 +315,7 @@ public class Program
     {
         Program.LOGGER.trace("attributeUInt4(%s, %s, %s, %s, %s)", name, x, y, z, w);
         
-        GL44.glVertexAttribI4ui(Program.boundProgram.getUniform(name), (int) (x & 0xFFFFFFFFL), (int) (y & 0xFFFFFFFFL), (int) (z & 0xFFFFFFFFL), (int) (w & 0xFFFFFFFFL));
+        GL44.glVertexAttribI4ui(Program.bound.getUniform(name), (int) (x & 0xFFFFFFFFL), (int) (y & 0xFFFFFFFFL), (int) (z & 0xFFFFFFFFL), (int) (w & 0xFFFFFFFFL));
     }
     
     public void attributeUInt4(@NotNull String name, @NotNull Vector4ic vec)
@@ -322,7 +327,7 @@ public class Program
     {
         Program.LOGGER.trace("attributeFloat4(%s, %s, %s, %s, %s)", name, x, y, z, w);
         
-        GL44.glVertexAttrib4f(Program.boundProgram.getUniform(name), (float) x, (float) y, (float) z, (float) w);
+        GL44.glVertexAttrib4f(Program.bound.getUniform(name), (float) x, (float) y, (float) z, (float) w);
     }
     
     public void attributeFloat4(@NotNull String name, @NotNull Vector4dc vec)
@@ -334,7 +339,7 @@ public class Program
     {
         Program.LOGGER.trace("attributeNormalizedUByte4(%s, %s, %s, %s, %s)", name, x, y, z, w);
         
-        GL44.glVertexAttrib4Nub(Program.boundProgram.getUniform(name), (byte) (x & 0xFF), (byte) (y & 0xFF), (byte) (z & 0xFF), (byte) (w & 0xFF));
+        GL44.glVertexAttrib4Nub(Program.bound.getUniform(name), (byte) (x & 0xFF), (byte) (y & 0xFF), (byte) (z & 0xFF), (byte) (w & 0xFF));
     }
     
     // -------------------- Uniform -------------------- //
@@ -343,42 +348,42 @@ public class Program
     {
         Program.LOGGER.trace("uniformBool(%s, %s)", name, value);
         
-        GL44.glUniform1i(Program.boundProgram.getUniform(name), value ? 1 : 0);
+        GL44.glUniform1i(Program.bound.getUniform(name), value ? 1 : 0);
     }
     
     public static void uniformInt(@NotNull String name, int value)
     {
         Program.LOGGER.trace("uniformInt(%s, %s)", name, value);
         
-        GL44.glUniform1i(Program.boundProgram.getUniform(name), value);
+        GL44.glUniform1i(Program.bound.getUniform(name), value);
     }
     
     public static void uniformUInt(@NotNull String name, long value)
     {
         Program.LOGGER.trace("uniformUInt(%s, %s)", name, value);
         
-        GL44.glUniform1ui(Program.boundProgram.getUniform(name), (int) (value & 0xFFFFFFFFL));
+        GL44.glUniform1ui(Program.bound.getUniform(name), (int) (value & 0xFFFFFFFFL));
     }
     
     public static void uniformFloat(@NotNull String name, double value)
     {
         Program.LOGGER.trace("uniformFloat(%s, %s)", name, value);
         
-        GL44.glUniform1f(Program.boundProgram.getUniform(name), (float) value);
+        GL44.glUniform1f(Program.bound.getUniform(name), (float) value);
     }
     
     public static void uniformBool2(@NotNull String name, boolean x, boolean y)
     {
         Program.LOGGER.trace("uniformBool2(%s, %s, %s)", name, x, y);
         
-        GL44.glUniform2i(Program.boundProgram.getUniform(name), x ? 1 : 0, y ? 1 : 0);
+        GL44.glUniform2i(Program.bound.getUniform(name), x ? 1 : 0, y ? 1 : 0);
     }
     
     public static void uniformInt2(@NotNull String name, int x, int y)
     {
         Program.LOGGER.trace("uniformInt2(%s, %s, %s)", name, x, y);
         
-        GL44.glUniform2i(Program.boundProgram.getUniform(name), x, y);
+        GL44.glUniform2i(Program.bound.getUniform(name), x, y);
     }
     
     public static void uniformInt2(@NotNull String name, @NotNull Vector2ic vec)
@@ -390,7 +395,7 @@ public class Program
     {
         Program.LOGGER.trace("uniformUInt2(%s, %s, %s)", name, x, y);
         
-        GL44.glUniform2ui(Program.boundProgram.getUniform(name), (int) (x & 0xFFFFFFFFL), (int) (y & 0xFFFFFFFFL));
+        GL44.glUniform2ui(Program.bound.getUniform(name), (int) (x & 0xFFFFFFFFL), (int) (y & 0xFFFFFFFFL));
     }
     
     public static void uniformUInt2(@NotNull String name, @NotNull Vector2ic vec)
@@ -402,7 +407,7 @@ public class Program
     {
         Program.LOGGER.trace("uniformFloat2(%s, %s, %s)", name, x, y);
         
-        GL44.glUniform2f(Program.boundProgram.getUniform(name), (float) x, (float) y);
+        GL44.glUniform2f(Program.bound.getUniform(name), (float) x, (float) y);
     }
     
     public static void uniformFloat2(@NotNull String name, @NotNull Vector2dc vec)
@@ -414,14 +419,14 @@ public class Program
     {
         Program.LOGGER.trace("uniformBool3(%s, %s, %s, %s)", name, x, y, z);
         
-        GL44.glUniform3i(Program.boundProgram.getUniform(name), x ? 1 : 0, y ? 1 : 0, z ? 1 : 0);
+        GL44.glUniform3i(Program.bound.getUniform(name), x ? 1 : 0, y ? 1 : 0, z ? 1 : 0);
     }
     
     public static void uniformInt3(@NotNull String name, int x, int y, int z)
     {
         Program.LOGGER.trace("uniformInt3(%s, %s, %s, %s)", name, x, y, z);
         
-        GL44.glUniform3i(Program.boundProgram.getUniform(name), x, y, z);
+        GL44.glUniform3i(Program.bound.getUniform(name), x, y, z);
     }
     
     public static void uniformInt3(@NotNull String name, @NotNull Vector3ic vec)
@@ -433,7 +438,7 @@ public class Program
     {
         Program.LOGGER.trace("uniformUInt3(%s, %s, %s, %s)", name, x, y, z);
         
-        GL44.glUniform3ui(Program.boundProgram.getUniform(name), (int) (x & 0xFFFFFFFFL), (int) (y & 0xFFFFFFFFL), (int) (z & 0xFFFFFFFFL));
+        GL44.glUniform3ui(Program.bound.getUniform(name), (int) (x & 0xFFFFFFFFL), (int) (y & 0xFFFFFFFFL), (int) (z & 0xFFFFFFFFL));
     }
     
     public static void uniformUInt3(@NotNull String name, @NotNull Vector3ic vec)
@@ -445,7 +450,7 @@ public class Program
     {
         Program.LOGGER.trace("uniformFloat3(%s, %s, %s, %s)", name, x, y, z);
         
-        GL44.glUniform3f(Program.boundProgram.getUniform(name), (float) x, (float) y, (float) z);
+        GL44.glUniform3f(Program.bound.getUniform(name), (float) x, (float) y, (float) z);
     }
     
     public static void uniformFloat3(@NotNull String name, @NotNull Vector3dc vec)
@@ -457,14 +462,14 @@ public class Program
     {
         Program.LOGGER.trace("uniformBool3(%s, %s, %s, %s, %s)", name, x, y, z, w);
         
-        GL44.glUniform4i(Program.boundProgram.getUniform(name), x ? 1 : 0, y ? 1 : 0, z ? 1 : 0, w ? 1 : 0);
+        GL44.glUniform4i(Program.bound.getUniform(name), x ? 1 : 0, y ? 1 : 0, z ? 1 : 0, w ? 1 : 0);
     }
     
     public static void uniformInt4(@NotNull String name, int x, int y, int z, int w)
     {
         Program.LOGGER.trace("uniformInt4(%s, %s, %s, %s, %s)", name, x, y, z, w);
         
-        GL44.glUniform4i(Program.boundProgram.getUniform(name), x, y, z, w);
+        GL44.glUniform4i(Program.bound.getUniform(name), x, y, z, w);
     }
     
     public static void uniformInt4(@NotNull String name, @NotNull Vector4ic vec)
@@ -476,7 +481,7 @@ public class Program
     {
         Program.LOGGER.trace("uniformUInt4(%s, %s, %s, %s, %s)", name, x, y, z, w);
         
-        GL44.glUniform4ui(Program.boundProgram.getUniform(name), (int) (x & 0xFFFFFFFFL), (int) (y & 0xFFFFFFFFL), (int) (z & 0xFFFFFFFFL), (int) (w & 0xFFFFFFFFL));
+        GL44.glUniform4ui(Program.bound.getUniform(name), (int) (x & 0xFFFFFFFFL), (int) (y & 0xFFFFFFFFL), (int) (z & 0xFFFFFFFFL), (int) (w & 0xFFFFFFFFL));
     }
     
     public static void uniformUInt4(@NotNull String name, @NotNull Vector4ic vec)
@@ -488,7 +493,7 @@ public class Program
     {
         Program.LOGGER.trace("uniformFloat4(%s, %s, %s, %s, %s)", name, x, y, z, w);
         
-        GL44.glUniform4f(Program.boundProgram.getUniform(name), (float) x, (float) y, (float) z, (float) w);
+        GL44.glUniform4f(Program.bound.getUniform(name), (float) x, (float) y, (float) z, (float) w);
     }
     
     public static void uniformFloat4(@NotNull String name, @NotNull Vector4dc vec)
@@ -503,7 +508,7 @@ public class Program
         try (MemoryStack stack = MemoryStack.stackPush())
         {
             FloatBuffer buffer = stack.floats((float) mat.m00(), (float) mat.m01(), (float) mat.m10(), (float) mat.m11());
-            GL44.glUniformMatrix2fv(Program.boundProgram.getUniform(name), transpose, buffer);
+            GL44.glUniformMatrix2fv(Program.bound.getUniform(name), transpose, buffer);
         }
     }
     
@@ -513,7 +518,7 @@ public class Program
         
         try (MemoryStack stack = MemoryStack.stackPush())
         {
-            GL44.glUniformMatrix3fv(Program.boundProgram.getUniform(name), transpose, mat.get(stack.mallocFloat(9)));
+            GL44.glUniformMatrix3fv(Program.bound.getUniform(name), transpose, mat.get(stack.mallocFloat(9)));
         }
     }
     
@@ -523,7 +528,7 @@ public class Program
         
         try (MemoryStack stack = MemoryStack.stackPush())
         {
-            GL44.glUniformMatrix4fv(Program.boundProgram.getUniform(name), transpose, mat.get(stack.mallocFloat(16)));
+            GL44.glUniformMatrix4fv(Program.bound.getUniform(name), transpose, mat.get(stack.mallocFloat(16)));
         }
     }
     
@@ -531,7 +536,7 @@ public class Program
     {
         Program.LOGGER.trace("uniformColor(%s, %s", name, color);
         
-        GL44.glUniform4f(Program.boundProgram.getUniform(name), color.rf(), color.gf(), color.bf(), color.af());
+        GL44.glUniform4f(Program.bound.getUniform(name), color.rf(), color.gf(), color.bf(), color.af());
     }
     
     // -------------------- Sub-Classes -------------------- //

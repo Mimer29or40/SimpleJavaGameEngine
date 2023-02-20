@@ -1,9 +1,14 @@
 package engine;
 
+import engine.renderer.TextRenderer;
 import engine.util.Logger;
+
+import static engine.IO.mousePos;
 
 public class EngineDemo extends Engine
 {
+    TextRenderer textRenderer;
+    
     protected EngineDemo()
     {
         super("Engine Demo", 640, 400);
@@ -15,7 +20,7 @@ public class EngineDemo extends Engine
     @Override
     protected void setup()
     {
-    
+        this.textRenderer = new TextRenderer();
     }
     
     @Override
@@ -27,13 +32,13 @@ public class EngineDemo extends Engine
     @Override
     protected void draw(int frame, double time, double deltaTime)
     {
-    
+        this.textRenderer.drawText("TEXT", 50, 50);
     }
     
     @Override
     protected void destroy()
     {
-    
+        this.textRenderer.delete();
     }
     
     public static void main(String[] args)

@@ -22,9 +22,16 @@ public class Framebuffer
     
     // -------------------- Static -------------------- //
     
+    private static Framebuffer bound = Framebuffer.NULL;
+    
+    public static @NotNull Framebuffer get()
+    {
+        return Framebuffer.bound;
+    }
+    
     public static void bind(@NotNull Framebuffer framebuffer)
     {
-        Framebuffer.LOGGER.trace("Binding:", framebuffer);
+        Framebuffer.LOGGER.trace("Binding:", Framebuffer.bound = framebuffer);
         
         GL44.glBindFramebuffer(GL44.GL_FRAMEBUFFER, framebuffer.id());
         GL44.glViewport(0, 0, framebuffer.width(), framebuffer.height());
