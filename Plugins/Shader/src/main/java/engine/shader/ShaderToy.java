@@ -29,7 +29,7 @@ public class ShaderToy
     private final AtomicBoolean threadRunning;
     private final AtomicBoolean fileChanged;
     
-    private boolean shouldLoadFragmentShader;
+    private boolean shouldLoadShader;
     
     private VertexArray vertexArray;
     
@@ -44,7 +44,7 @@ public class ShaderToy
         this.threadRunning = new AtomicBoolean(true);
         this.fileChanged   = new AtomicBoolean(false);
         
-        this.shouldLoadFragmentShader = true;
+        this.shouldLoadShader = true;
     }
     
     @Override
@@ -59,17 +59,18 @@ public class ShaderToy
         
         try (MemoryStack stack = MemoryStack.stackPush())
         {
-            FloatBuffer data = stack.floats(-1.0F, +1.0F, // Top Left
-                                            +1.0F, +1.0F, // Top Right
-                                            -1.0F, -1.0F, // Bottom Left
-                                            +1.0F, +1.0F, // Top Right
-                                            +1.0F, -1.0F, // Bottom Right
-                                            -1.0F, -1.0F  // Bottom Left
+            FloatBuffer data = stack.floats(-1F, +1F, 0F, 0F, // Top Left
+                                            +1F, +1F, 1F, 0F, // Top Right
+                                            -1F, -1F, 0F, 1F, // Bottom Left
+                                            +1F, +1F, 1F, 0F, // Top Right
+                                            +1F, -1F, 1F, 1F, // Bottom Right
+                                            -1F, -1F, 0F, 1F  // Bottom Left
                                            );
             
-            final BufferArray     buffer   = new BufferArray(BufferUsage.STATIC_DRAW, data);
-            final VertexAttribute position = new VertexAttribute(GLType.FLOAT, 2);
-            this.vertexArray = VertexArray.builder().buffer(buffer, position).build();
+            final BufferArray     buffer    = new BufferArray(BufferUsage.STATIC_DRAW, data);
+            final VertexAttribute fragPos   = new VertexAttribute(GLType.FLOAT, 2);
+            final VertexAttribute fragCoord = new VertexAttribute(GLType.FLOAT, 2);
+            this.vertexArray = VertexArray.builder().buffer(buffer, fragPos, fragCoord).build();
         }
         
         Thread thread = new Thread(this::threadRunner, "ShaderFileWatcher");
@@ -78,9 +79,15 @@ public class ShaderToy
         
         final String vertexCode = """
                                   #version 440 core
+                                  
                                   layout(location = 0) in vec2 pos;
+                                  layout(location = 1) in vec2 coord;
+                                  
+                                  out vec2 FragCoord;
+                                  
                                   void main(void)
                                   {
+                                      FragCoord = coord;
                                       gl_Position = vec4(pos, 0.0, 1.0);
                                   }
                                   """;
@@ -99,7 +106,7 @@ public class ShaderToy
     
     public void draw(int frame, double time, double deltaTime)
     {
-        if (this.fileChanged.getAndSet(false) || this.shouldLoadFragmentShader)
+        if (this.fileChanged.getAndSet(false) || this.shouldLoadShader)
         {
             loadFragmentShader();
         }
@@ -108,7 +115,7 @@ public class ShaderToy
         {
             Framebuffer.bind(Framebuffer.NULL);
             Program.bind(this.program);
-    
+            
             Program.uniformInt("FRAME", frame);
             Program.uniformFloat("TIME", time);
             Program.uniformFloat("DELTA_TIME", deltaTime);
@@ -173,6 +180,8 @@ public class ShaderToy
             Program.uniformBool("KEYBOARD_ON_KEY_HELD", keyboardOnKeyHeld().fired());
             
             this.vertexArray.draw(DrawMode.TRIANGLES);
+            
+            // TODO - Draw Frame & Time at bottom of the screen
         }
     }
     
@@ -195,26 +204,32 @@ public class ShaderToy
     private void loadFragmentShader()
     {
         // TODO - Think of a way to not through out the last successfully compiles shader
+        Shader  newShader  = null;
+        Program newProgram = null;
         try
         {
+            final String fragmentCode = Files.readString(this.file);
+            
+            newShader  = new Shader(ShaderType.FRAGMENT, fragmentCode);
+            newProgram = new Program(this.vertexShader, newShader);
+            
             if (this.fragmentShader != null) this.fragmentShader.delete();
-            this.fragmentShader = null;
+            this.fragmentShader = newShader;
             
             if (this.program != null) this.program.delete();
-            this.program = null;
+            this.program = newProgram;
             
-            final String fragmentCode = Files.readString(this.file);
-            this.fragmentShader = new Shader(ShaderType.FRAGMENT, fragmentCode);
-            
-            this.program = new Program(this.vertexShader, this.fragmentShader);
-            
-            this.shouldLoadFragmentShader = false;
+            this.shouldLoadShader = false;
         }
         catch (Throwable e)
         {
             ShaderToy.LOGGER.warning("Unable to Load Shader");
+            ShaderToy.LOGGER.warning(e);
             
-            this.shouldLoadFragmentShader = true;
+            if (newShader != null) newShader.delete();
+            if (newProgram != null) newProgram.delete();
+            
+            this.shouldLoadShader = true;
         }
     }
     
