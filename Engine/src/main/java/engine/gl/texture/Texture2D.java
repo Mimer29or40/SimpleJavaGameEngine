@@ -5,9 +5,10 @@ import engine.color.ColorBuffer;
 import engine.color.ColorFormat;
 import engine.util.Logger;
 import org.jetbrains.annotations.NotNull;
-import org.lwjgl.opengl.GL44;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
+
+import static org.lwjgl.opengl.GL44.*;
 
 public class Texture2D extends Texture
 {
@@ -19,17 +20,17 @@ public class Texture2D extends Texture
     
     private Texture2D()
     {
-        super(0, GL44.GL_TEXTURE_2D, ColorFormat.DEFAULT);
+        super(0, GL_TEXTURE_2D, ColorFormat.DEFAULT);
     }
     
     protected Texture2D(@NotNull ColorFormat format)
     {
-        super(0, GL44.GL_TEXTURE_2D, format);
+        super(0, GL_TEXTURE_2D, format);
     }
     
     public Texture2D(@NotNull ColorBuffer data, int width, int height)
     {
-        super(GL44.GL_TEXTURE_2D, data.format);
+        super(GL_TEXTURE_2D, data.format);
         
         this.width  = width;
         this.height = height;
@@ -39,7 +40,7 @@ public class Texture2D extends Texture
     
     public Texture2D(@NotNull ColorFormat format, int width, int height)
     {
-        super(GL44.GL_TEXTURE_2D, format);
+        super(GL_TEXTURE_2D, format);
         
         this.width  = width;
         this.height = height;
@@ -49,7 +50,7 @@ public class Texture2D extends Texture
     
     public Texture2D(@NotNull Image image)
     {
-        super(GL44.GL_TEXTURE_2D, image.format());
+        super(GL_TEXTURE_2D, image.format());
         
         this.width  = image.width();
         this.height = image.height();
@@ -85,15 +86,15 @@ public class Texture2D extends Texture
         
         Texture2D.LOGGER.trace("Loading texture data");
         
-        GL44.glTexImage2D(this.type, 0, this.format.internalFormat, this.width, this.height, 0, this.format.format, GL44.GL_UNSIGNED_BYTE, data);
+        glTexImage2D(this.type, 0, this.format.internalFormat, this.width, this.height, 0, this.format.format, GL_UNSIGNED_BYTE, data);
         
         try (MemoryStack stack = MemoryStack.stackPush())
         {
             switch (format)
             {
-                case RED -> GL44.glTexParameteriv(this.type, GL44.GL_TEXTURE_SWIZZLE_RGBA, stack.ints(GL44.GL_RED, GL44.GL_RED, GL44.GL_RED, GL44.GL_ONE));
-                case RED_ALPHA -> GL44.glTexParameteriv(this.type, GL44.GL_TEXTURE_SWIZZLE_RGBA, stack.ints(GL44.GL_RED, GL44.GL_RED, GL44.GL_RED, GL44.GL_GREEN));
-                case RGB -> GL44.glTexParameteriv(this.type, GL44.GL_TEXTURE_SWIZZLE_RGBA, stack.ints(GL44.GL_RED, GL44.GL_GREEN, GL44.GL_BLUE, GL44.GL_ONE));
+                case RED -> glTexParameteriv(this.type, GL_TEXTURE_SWIZZLE_RGBA, stack.ints(GL_RED, GL_RED, GL_RED, GL_ONE));
+                case RED_ALPHA -> glTexParameteriv(this.type, GL_TEXTURE_SWIZZLE_RGBA, stack.ints(GL_RED, GL_RED, GL_RED, GL_GREEN));
+                case RGB -> glTexParameteriv(this.type, GL_TEXTURE_SWIZZLE_RGBA, stack.ints(GL_RED, GL_GREEN, GL_BLUE, GL_ONE));
             }
         }
         
@@ -115,7 +116,7 @@ public class Texture2D extends Texture
         
         ColorBuffer pixels = ColorBuffer.malloc(this.format, this.width * this.height);
         
-        GL44.glGetTexImage(this.type, 0, this.format.format, GL44.GL_UNSIGNED_BYTE, pixels.address());
+        glGetTexImage(this.type, 0, this.format.format, GL_UNSIGNED_BYTE, pixels.address());
         
         return pixels;
     }
@@ -134,7 +135,7 @@ public class Texture2D extends Texture
         
         long pixels = MemoryUtil.memAddressSafe(data);
         
-        GL44.glTexSubImage2D(this.type, 0, x, y, width, height, this.format.format, GL44.GL_UNSIGNED_BYTE, pixels);
+        glTexSubImage2D(this.type, 0, x, y, width, height, this.format.format, GL_UNSIGNED_BYTE, pixels);
     }
     
     public void update(@NotNull ColorBuffer data)
@@ -157,8 +158,8 @@ public class Texture2D extends Texture
         if (this.width > 0 && (this.width & this.width - 1) == 0 && this.height > 0 && (this.height & this.height - 1) == 0)
         {
             // Hint for mipmaps generation algorithm: GL.FASTEST, GL.NICEST, GL.DONT_CARE
-            GL44.glHint(GL44.GL_GENERATE_MIPMAP_HINT, GL44.GL_DONT_CARE);
-            GL44.glGenerateMipmap(this.type); // Generate mipmaps automatically
+            glHint(GL_GENERATE_MIPMAP_HINT, GL_DONT_CARE);
+            glGenerateMipmap(this.type); // Generate mipmaps automatically
             
             filter(TextureFilter.LINEAR, TextureFilter.LINEAR_MIPMAP_LINEAR); // Activate Tri-Linear filtering for mipmaps
             

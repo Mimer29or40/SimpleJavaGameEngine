@@ -7,7 +7,6 @@ import engine.gl.texture.TextureDepthStencil;
 import engine.gl.texture.TextureStencil;
 import engine.util.Logger;
 import org.jetbrains.annotations.NotNull;
-import org.lwjgl.opengl.GL44;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -15,6 +14,7 @@ import java.util.List;
 import java.util.Objects;
 
 import static engine.IO.windowFramebufferSize;
+import static org.lwjgl.opengl.GL44.*;
 
 public class Framebuffer
 {
@@ -33,8 +33,8 @@ public class Framebuffer
     {
         Framebuffer.LOGGER.trace("Binding:", Framebuffer.bound = framebuffer);
         
-        GL44.glBindFramebuffer(GL44.GL_FRAMEBUFFER, framebuffer.id());
-        GL44.glViewport(0, 0, framebuffer.width(), framebuffer.height());
+        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer.id());
+        glViewport(0, 0, framebuffer.width(), framebuffer.height());
     }
     
     // -------------------- Instance -------------------- //
@@ -67,7 +67,7 @@ public class Framebuffer
     private Framebuffer(
             int width, int height, @NotNull List<Texture2D> colors, @NotNull TextureDepth depth, @NotNull TextureStencil stencil, @NotNull TextureDepthStencil depthStencil)
     {
-        this.id = GL44.glGenFramebuffers();
+        this.id = glGenFramebuffers();
         
         this.width  = width;
         this.height = height;
@@ -82,45 +82,45 @@ public class Framebuffer
             if (color != Texture2D.NULL)
             {
                 Framebuffer.LOGGER.trace("Attaching Color[%s]=%s to %s", i, color, this);
-                GL44.glFramebufferTexture2D(GL44.GL_FRAMEBUFFER, GL44.GL_COLOR_ATTACHMENT0 + i++, color.type, color.id(), 0);
+                glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i++, color.type, color.id(), 0);
             }
         }
         
         if (depth != TextureDepth.NULL)
         {
             Framebuffer.LOGGER.trace("Attaching Depth=%s to %s", depth, this);
-            GL44.glFramebufferTexture2D(GL44.GL_FRAMEBUFFER, GL44.GL_DEPTH_ATTACHMENT, depth.type, depth.id(), 0);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depth.type, depth.id(), 0);
             this.depth = depth;
         }
         
         if (stencil != TextureStencil.NULL)
         {
             Framebuffer.LOGGER.trace("Attaching Stencil=%s to %s", stencil, this);
-            GL44.glFramebufferTexture2D(GL44.GL_FRAMEBUFFER, GL44.GL_STENCIL_ATTACHMENT, stencil.type, stencil.id(), 0);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, stencil.type, stencil.id(), 0);
             this.stencil = stencil;
         }
         
         if (depthStencil != TextureDepthStencil.NULL)
         {
             Framebuffer.LOGGER.trace("Attaching DepthStencil=%s to %s", depthStencil, this);
-            GL44.glFramebufferTexture2D(GL44.GL_FRAMEBUFFER, GL44.GL_DEPTH_STENCIL_ATTACHMENT, depthStencil.type, depthStencil.id(), 0);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, depthStencil.type, depthStencil.id(), 0);
             this.depthStencil = depthStencil;
         }
         
-        int status = GL44.glCheckFramebufferStatus(GL44.GL_FRAMEBUFFER);
+        int status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
         
-        if (status != GL44.GL_FRAMEBUFFER_COMPLETE)
+        if (status != GL_FRAMEBUFFER_COMPLETE)
         {
             String message = switch (status)
                     {
-                        case GL44.GL_FRAMEBUFFER_UNDEFINED -> "GL_FRAMEBUFFER_UNDEFINED";
-                        case GL44.GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT -> "GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT";
-                        case GL44.GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT -> "GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT";
-                        case GL44.GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER -> "GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER";
-                        case GL44.GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER -> "GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER";
-                        case GL44.GL_FRAMEBUFFER_UNSUPPORTED -> "GL_FRAMEBUFFER_UNSUPPORTED";
-                        case GL44.GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE -> "GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE";
-                        case GL44.GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS -> "GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS";
+                        case GL_FRAMEBUFFER_UNDEFINED -> "GL_FRAMEBUFFER_UNDEFINED";
+                        case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT -> "GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT";
+                        case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT -> "GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT";
+                        case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER -> "GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER";
+                        case GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER -> "GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER";
+                        case GL_FRAMEBUFFER_UNSUPPORTED -> "GL_FRAMEBUFFER_UNSUPPORTED";
+                        case GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE -> "GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE";
+                        case GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS -> "GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS";
                         default -> "" + status;
                     };
             throw new IllegalStateException(String.format("%s: Framebuffer Error: %s", this, message));
@@ -192,7 +192,7 @@ public class Framebuffer
     {
         Framebuffer.LOGGER.debug("Deleting", this);
         
-        GL44.glDeleteFramebuffers(this.id);
+        glDeleteFramebuffers(this.id);
         
         this.colors.forEach(Texture2D::delete);
         this.colors.clear();

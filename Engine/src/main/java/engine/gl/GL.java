@@ -1,14 +1,14 @@
 package engine.gl;
 
-import engine.Renderer;
 import engine.color.ColorBuffer;
 import engine.color.ColorFormat;
 import engine.util.Logger;
 import org.jetbrains.annotations.NotNull;
-import org.lwjgl.opengl.GL44;
 import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
+
+import static org.lwjgl.opengl.GL44.*;
 
 public class GL
 {
@@ -16,8 +16,8 @@ public class GL
     
     public static void defaultState()
     {
-        GL44.glPixelStorei(GL44.GL_PACK_ALIGNMENT, 1);
-        GL44.glPixelStorei(GL44.GL_UNPACK_ALIGNMENT, 1);
+        glPixelStorei(GL_PACK_ALIGNMENT, 1);
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
         
         depthClamp(true);
         lineSmooth(false);
@@ -44,36 +44,36 @@ public class GL
     
     private static void setFlag(int flag, boolean value)
     {
-        if (value) {GL44.glEnable(flag);}
-        else {GL44.glDisable(flag);}
+        if (value) {glEnable(flag);}
+        else {glDisable(flag);}
     }
     
     public static void depthClamp(boolean depthClamp)
     {
         GL.LOGGER.trace("depthClamp(%s)", depthClamp);
         
-        setFlag(GL44.GL_DEPTH_CLAMP, depthClamp);
+        setFlag(GL_DEPTH_CLAMP, depthClamp);
     }
     
     public static void lineSmooth(boolean lineSmooth)
     {
         GL.LOGGER.trace("lineSmooth(%s)", lineSmooth);
         
-        setFlag(GL44.GL_LINE_SMOOTH, lineSmooth);
+        setFlag(GL_LINE_SMOOTH, lineSmooth);
     }
     
     public static void textureCubeMapSeamless(boolean textureCubeMapSeamless)
     {
         GL.LOGGER.trace("textureCubeMapSeamless(%s)", textureCubeMapSeamless);
         
-        setFlag(GL44.GL_TEXTURE_CUBE_MAP_SEAMLESS, textureCubeMapSeamless);
+        setFlag(GL_TEXTURE_CUBE_MAP_SEAMLESS, textureCubeMapSeamless);
     }
     
     public static void polygonMode(@NotNull PolygonMode mode)
     {
         GL.LOGGER.trace("polygonMode(%s)", mode);
         
-        GL44.glPolygonMode(GL44.GL_FRONT_AND_BACK, mode.ref);
+        glPolygonMode(GL_FRONT_AND_BACK, mode.ref);
     }
     
     public static void blendMode(@NotNull BlendMode mode)
@@ -82,13 +82,13 @@ public class GL
         
         if (mode == BlendMode.NONE)
         {
-            GL44.glDisable(GL44.GL_BLEND);
+            glDisable(GL_BLEND);
         }
         else
         {
-            GL44.glEnable(GL44.GL_BLEND);
-            GL44.glBlendFunc(mode.srcFunc().ref, mode.dstFunc().ref);
-            GL44.glBlendEquation(mode.blendEqn().ref);
+            glEnable(GL_BLEND);
+            glBlendFunc(mode.srcFunc().ref, mode.dstFunc().ref);
+            glBlendEquation(mode.blendEqn().ref);
         }
     }
     
@@ -98,12 +98,12 @@ public class GL
         
         if (mode == DepthMode.NONE)
         {
-            GL44.glDisable(GL44.GL_DEPTH_TEST);
+            glDisable(GL_DEPTH_TEST);
         }
         else
         {
-            GL44.glEnable(GL44.GL_DEPTH_TEST);
-            GL44.glDepthFunc(mode.ref);
+            glEnable(GL_DEPTH_TEST);
+            glDepthFunc(mode.ref);
         }
     }
     
@@ -113,13 +113,13 @@ public class GL
         
         if (mode == StencilMode.NONE)
         {
-            GL44.glDisable(GL44.GL_STENCIL_TEST);
+            glDisable(GL_STENCIL_TEST);
         }
         else
         {
-            GL44.glEnable(GL44.GL_STENCIL_TEST);
-            GL44.glStencilFunc(mode.func().ref, mode.ref(), mode.mask());
-            GL44.glStencilOp(mode.sFail().ref, mode.dpFail().ref, mode.dpPass().ref);
+            glEnable(GL_STENCIL_TEST);
+            glStencilFunc(mode.func().ref, mode.ref(), mode.mask());
+            glStencilOp(mode.sFail().ref, mode.dpFail().ref, mode.dpPass().ref);
         }
     }
     
@@ -129,12 +129,12 @@ public class GL
         
         if (mode == ScissorMode.NONE)
         {
-            GL44.glDisable(GL44.GL_SCISSOR_TEST);
+            glDisable(GL_SCISSOR_TEST);
         }
         else
         {
-            GL44.glEnable(GL44.GL_SCISSOR_TEST);
-            GL44.glScissor(mode.x(), mode.y(), mode.width(), mode.height());
+            glEnable(GL_SCISSOR_TEST);
+            glScissor(mode.x(), mode.y(), mode.width(), mode.height());
         }
     }
     
@@ -142,57 +142,57 @@ public class GL
     {
         GL.LOGGER.trace("scissorMode(%s, %s, %s, %s)", x, y, width, height);
         
-        GL44.glEnable(GL44.GL_SCISSOR_TEST);
-        GL44.glScissor(x, y, width, height);
+        glEnable(GL_SCISSOR_TEST);
+        glScissor(x, y, width, height);
     }
     
     public static void colorMask(boolean r, boolean g, boolean b, boolean a)
     {
         GL.LOGGER.trace("colorMask(%s, %s, %s, %s)", r, g, b, a);
         
-        GL44.glColorMask(r, g, b, a);
+        glColorMask(r, g, b, a);
     }
     
     public static void depthMask(boolean mask)
     {
         GL.LOGGER.trace("depthMask(%s)", mask);
         
-        GL44.glDepthMask(mask);
+        glDepthMask(mask);
     }
     
     public static void stencilMask(int mask)
     {
         GL.LOGGER.trace("stencilMask(0x%02X)", mask);
         
-        GL44.glStencilMask(mask);
+        glStencilMask(mask);
     }
     
     public static void clearColor(double r, double g, double b, double a)
     {
         GL.LOGGER.trace("clearColor(%.3f, %.3f, %.3f, %.3f)", r, g, b, a);
         
-        GL44.glClearColor((float) r, (float) g, (float) b, (float) a);
+        glClearColor((float) r, (float) g, (float) b, (float) a);
     }
     
     public static void clearDepth(double depth)
     {
         GL.LOGGER.trace("clearDepth(%.3f)", depth);
         
-        GL44.glClearDepth(depth);
+        glClearDepth(depth);
     }
     
     public static void clearStencil(int stencil)
     {
         GL.LOGGER.trace("clearStencil(0x%02X)", stencil);
         
-        GL44.glClearStencil(stencil);
+        glClearStencil(stencil);
     }
     
     public static void clearBuffers()
     {
         GL.LOGGER.trace("clearBuffers()");
         
-        GL44.glClear(GL44.GL_COLOR_BUFFER_BIT | GL44.GL_DEPTH_BUFFER_BIT | GL44.GL_STENCIL_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     }
     
     public static void clearBuffers(@NotNull ScreenBuffer buffer, @NotNull ScreenBuffer @NotNull ... others)
@@ -200,7 +200,7 @@ public class GL
         if (others.length == 0)
         {
             GL.LOGGER.trace("clearBuffers(%s)", buffer);
-            GL44.glClear(buffer.ref);
+            glClear(buffer.ref);
             return;
         }
         
@@ -208,7 +208,7 @@ public class GL
         
         int mask = buffer.ref;
         for (ScreenBuffer b : others) mask |= b.ref;
-        GL44.glClear(mask);
+        glClear(mask);
     }
     
     public static void cullFace(@NotNull CullFace cullFace)
@@ -217,12 +217,12 @@ public class GL
         
         if (cullFace == CullFace.NONE)
         {
-            GL44.glDisable(GL44.GL_CULL_FACE);
+            glDisable(GL_CULL_FACE);
         }
         else
         {
-            GL44.glEnable(GL44.GL_CULL_FACE);
-            GL44.glCullFace(cullFace.ref);
+            glEnable(GL_CULL_FACE);
+            glCullFace(cullFace.ref);
         }
     }
     
@@ -230,15 +230,15 @@ public class GL
     {
         GL.LOGGER.trace("winding(%s)", winding);
         
-        GL44.glFrontFace(winding.ref);
+        glFrontFace(winding.ref);
     }
     
     private static @NotNull ColorBuffer readBuffer(int buffer, int x, int y, int width, int height, @NotNull ColorFormat format)
     {
         ByteBuffer data = MemoryUtil.memAlloc(width * height * format.sizeof);
         
-        GL44.glReadBuffer(buffer);
-        GL44.glReadPixels(x, y, width, height, format.format, GL44.GL_UNSIGNED_BYTE, MemoryUtil.memAddress(data));
+        glReadBuffer(buffer);
+        glReadPixels(x, y, width, height, format.format, GL_UNSIGNED_BYTE, MemoryUtil.memAddress(data));
         
         // Flip data vertically
         int    s    = width * format.sizeof;
@@ -260,14 +260,14 @@ public class GL
     {
         GL.LOGGER.trace("readFrontBuffer(%s, %s, %s, %s, %s)", x, y, width, height, format);
         
-        return readBuffer(GL44.GL_FRONT, x, y, width, height, format);
+        return readBuffer(GL_FRONT, x, y, width, height, format);
     }
     
     public static @NotNull ColorBuffer readBackBuffer(int x, int y, int width, int height, @NotNull ColorFormat format)
     {
         GL.LOGGER.trace("readBackBuffer(%s, %s, %s, %s, %s)", x, y, width, height, format);
         
-        return readBuffer(GL44.GL_BACK, x, y, width, height, format);
+        return readBuffer(GL_BACK, x, y, width, height, format);
     }
     
     private GL() {}

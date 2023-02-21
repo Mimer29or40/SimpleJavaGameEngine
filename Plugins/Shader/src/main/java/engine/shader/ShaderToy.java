@@ -208,9 +208,7 @@ public class ShaderToy
         Program newProgram = null;
         try
         {
-            final String fragmentCode = Files.readString(this.file);
-            
-            newShader  = new Shader(ShaderType.FRAGMENT, fragmentCode);
+            newShader  = new Shader(ShaderType.FRAGMENT, this.file);
             newProgram = new Program(this.vertexShader, newShader);
             
             if (this.fragmentShader != null) this.fragmentShader.delete();

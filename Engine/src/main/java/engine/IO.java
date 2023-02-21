@@ -613,7 +613,6 @@ public class IO
         IO.MOUSE_SCROLL.set(0);
         if (IO.MOUSE_SCROLL_CHANGE != null)
         {
-            System.out.println("Scroll");
             IO.MOUSE_SCROLL.set(IO.MOUSE_SCROLL_CHANGE.x(), IO.MOUSE_SCROLL_CHANGE.y());
             IO.MOUSE_ON_SCROLL.fired = true;
             

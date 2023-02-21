@@ -4,13 +4,14 @@ import engine.util.Logger;
 import engine.util.MemUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.opengl.GL44;
 import org.lwjgl.system.CustomBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
 import java.util.Objects;
+
+import static org.lwjgl.opengl.GL44.*;
 
 public abstract class Buffer
 {
@@ -20,7 +21,7 @@ public abstract class Buffer
     
     public static void bind(@NotNull Buffer buffer)
     {
-        GL44.glBindBuffer(buffer.type, buffer.id());
+        glBindBuffer(buffer.type, buffer.id());
     }
     
     // -------------------- Instance -------------------- //
@@ -46,12 +47,12 @@ public abstract class Buffer
     
     protected Buffer(int type, @NotNull BufferUsage usage, long address, long size)
     {
-        this(GL44.glGenBuffers(), type, usage, size);
+        this(glGenBuffers(), type, usage, size);
         
         bind(this);
         
         Buffer.LOGGER.trace("Uploaded Data with usage:", usage);
-        GL44.nglBufferData(this.type, this.size, address, usage.ref);
+        nglBufferData(this.type, this.size, address, usage.ref);
         
         Buffer.LOGGER.debug("Created", this);
     }
@@ -95,7 +96,7 @@ public abstract class Buffer
     {
         Buffer.LOGGER.debug("Deleting", this);
         
-        GL44.glDeleteBuffers(this.id);
+        glDeleteBuffers(this.id);
         
         this.id   = -1;
         this.size = 0;
@@ -107,7 +108,7 @@ public abstract class Buffer
         
         Buffer.LOGGER.trace("Mapping %s as %s", this, access);
         
-        return this.mapped = GL44.glMapBuffer(this.type, access.ref, this.size, this.mapped);
+        return this.mapped = glMapBuffer(this.type, access.ref, this.size, this.mapped);
     }
     
     public void unmap()
@@ -116,7 +117,7 @@ public abstract class Buffer
         
         Buffer.LOGGER.trace("Unmapping %s", this);
         
-        if (!GL44.glUnmapBuffer(this.type)) Buffer.LOGGER.warning("Could not unmap", this);
+        if (!glUnmapBuffer(this.type)) Buffer.LOGGER.warning("Could not unmap", this);
     }
     
     public Buffer get(long offset, @NotNull java.nio.Buffer buffer)
@@ -125,7 +126,7 @@ public abstract class Buffer
         
         Buffer.LOGGER.trace("Getting Contents of", this);
         
-        GL44.nglGetBufferSubData(this.type, offset, Integer.toUnsignedLong(buffer.remaining() * MemUtil.elementSize(buffer)), MemoryUtil.memAddress(buffer));
+        nglGetBufferSubData(this.type, offset, Integer.toUnsignedLong(buffer.remaining() * MemUtil.elementSize(buffer)), MemoryUtil.memAddress(buffer));
         return this;
     }
     
@@ -140,7 +141,7 @@ public abstract class Buffer
         
         Buffer.LOGGER.trace("Getting Contents of", this);
         
-        GL44.nglGetBufferSubData(this.type, offset, Integer.toUnsignedLong(buffer.remaining() * buffer.sizeof()), MemoryUtil.memAddress(buffer));
+        nglGetBufferSubData(this.type, offset, Integer.toUnsignedLong(buffer.remaining() * buffer.sizeof()), MemoryUtil.memAddress(buffer));
         return this;
     }
     
@@ -155,7 +156,7 @@ public abstract class Buffer
         
         Buffer.LOGGER.trace("Setting Contents of", this);
         
-        GL44.nglBufferSubData(this.type, offset, Integer.toUnsignedLong(data.remaining() * MemUtil.elementSize(data)), MemoryUtil.memAddress(data));
+        nglBufferSubData(this.type, offset, Integer.toUnsignedLong(data.remaining() * MemUtil.elementSize(data)), MemoryUtil.memAddress(data));
         return this;
     }
     
@@ -170,7 +171,7 @@ public abstract class Buffer
         
         Buffer.LOGGER.trace("Setting Contents of", this);
         
-        GL44.nglBufferSubData(this.type, offset, Integer.toUnsignedLong(data.remaining() * data.sizeof()), MemoryUtil.memAddress(data));
+        nglBufferSubData(this.type, offset, Integer.toUnsignedLong(data.remaining() * data.sizeof()), MemoryUtil.memAddress(data));
         return this;
     }
     

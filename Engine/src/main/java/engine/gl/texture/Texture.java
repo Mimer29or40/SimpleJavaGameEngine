@@ -4,10 +4,10 @@ import engine.color.ColorBuffer;
 import engine.color.ColorFormat;
 import engine.util.Logger;
 import org.jetbrains.annotations.NotNull;
-import org.lwjgl.opengl.GL40;
-import org.lwjgl.opengl.GL44;
 
 import java.util.Objects;
+
+import static org.lwjgl.opengl.GL44.*;
 
 public abstract class Texture
 {
@@ -19,8 +19,8 @@ public abstract class Texture
     {
         Texture.LOGGER.trace("Binding: %s to index=%s", texture, index);
         
-        GL40.glActiveTexture(GL40.GL_TEXTURE0 + index);
-        GL40.glBindTexture(texture.type, texture.id);
+        glActiveTexture(GL_TEXTURE0 + index);
+        glBindTexture(texture.type, texture.id);
     }
     
     public static void bind(@NotNull Texture texture)
@@ -47,7 +47,7 @@ public abstract class Texture
     
     protected Texture(int type, @NotNull ColorFormat format)
     {
-        this(GL44.glGenTextures(), type, format);
+        this(glGenTextures(), type, format);
     }
     
     @Override
@@ -94,7 +94,7 @@ public abstract class Texture
     {
         Texture.LOGGER.debug("Deleting", this);
         
-        GL44.glDeleteTextures(this.id);
+        glDeleteTextures(this.id);
         
         this.id = 0;
     }
@@ -105,9 +105,9 @@ public abstract class Texture
         
         Texture.LOGGER.trace("Setting Texture Wrap: s=%s t=%s r=%s", s, t, r);
         
-        GL44.glTexParameteri(this.type, GL44.GL_TEXTURE_WRAP_S, s.ref);
-        GL44.glTexParameteri(this.type, GL44.GL_TEXTURE_WRAP_T, t.ref);
-        GL44.glTexParameteri(this.type, GL44.GL_TEXTURE_WRAP_R, r.ref);
+        glTexParameteri(this.type, GL_TEXTURE_WRAP_S, s.ref);
+        glTexParameteri(this.type, GL_TEXTURE_WRAP_T, t.ref);
+        glTexParameteri(this.type, GL_TEXTURE_WRAP_R, r.ref);
     }
     
     public void wrapS(@NotNull TextureWrap s)
@@ -116,7 +116,7 @@ public abstract class Texture
         
         Texture.LOGGER.trace("Setting Texture Wrap: s=%s", s);
         
-        GL44.glTexParameteri(this.type, GL44.GL_TEXTURE_WRAP_S, s.ref);
+        glTexParameteri(this.type, GL_TEXTURE_WRAP_S, s.ref);
     }
     
     public void wrapT(@NotNull TextureWrap t)
@@ -125,7 +125,7 @@ public abstract class Texture
         
         Texture.LOGGER.trace("Setting Texture Wrap: t=%s", t);
         
-        GL44.glTexParameteri(this.type, GL44.GL_TEXTURE_WRAP_S, t.ref);
+        glTexParameteri(this.type, GL_TEXTURE_WRAP_S, t.ref);
     }
     
     public void wrapR(@NotNull TextureWrap r)
@@ -134,7 +134,7 @@ public abstract class Texture
         
         Texture.LOGGER.trace("Setting Texture Wrap: r=%s", r);
         
-        GL44.glTexParameteri(this.type, GL44.GL_TEXTURE_WRAP_S, r.ref);
+        glTexParameteri(this.type, GL_TEXTURE_WRAP_S, r.ref);
     }
     
     public void filter(@NotNull TextureFilter min, @NotNull TextureFilter mag)
@@ -143,8 +143,8 @@ public abstract class Texture
         
         Texture.LOGGER.trace("Setting Texture Filter: min=%s mag=%s", min, mag);
         
-        GL44.glTexParameteri(this.type, GL44.GL_TEXTURE_MIN_FILTER, min.ref);
-        GL44.glTexParameteri(this.type, GL44.GL_TEXTURE_MAG_FILTER, mag.ref);
+        glTexParameteri(this.type, GL_TEXTURE_MIN_FILTER, min.ref);
+        glTexParameteri(this.type, GL_TEXTURE_MAG_FILTER, mag.ref);
     }
     
     public void filterMin(@NotNull TextureFilter min)
@@ -153,7 +153,7 @@ public abstract class Texture
         
         Texture.LOGGER.trace("Setting Texture Filter: min=%s", min);
         
-        GL44.glTexParameteri(this.type, GL44.GL_TEXTURE_MIN_FILTER, min.ref);
+        glTexParameteri(this.type, GL_TEXTURE_MIN_FILTER, min.ref);
     }
     
     public void filterMag(@NotNull TextureFilter mag)
@@ -162,6 +162,6 @@ public abstract class Texture
         
         Texture.LOGGER.trace("Setting Texture Filter: mag=%s", mag);
         
-        GL44.glTexParameteri(this.type, GL44.GL_TEXTURE_MAG_FILTER, mag.ref);
+        glTexParameteri(this.type, GL_TEXTURE_MAG_FILTER, mag.ref);
     }
 }

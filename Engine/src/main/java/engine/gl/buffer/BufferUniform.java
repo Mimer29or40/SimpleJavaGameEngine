@@ -4,11 +4,13 @@ import engine.util.Logger;
 import engine.util.MemUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.opengl.GL44;
 import org.lwjgl.system.CustomBuffer;
 import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
+
+import static org.lwjgl.opengl.GL44.GL_UNIFORM_BUFFER;
+import static org.lwjgl.opengl.GL44.glBindBufferBase;
 
 public class BufferUniform extends Buffer
 {
@@ -18,22 +20,22 @@ public class BufferUniform extends Buffer
     
     private BufferUniform()
     {
-        super(0, GL44.GL_UNIFORM_BUFFER, BufferUsage.STATIC_READ, 0);
+        super(0, GL_UNIFORM_BUFFER, BufferUsage.STATIC_READ, 0);
     }
     
     public BufferUniform(@NotNull BufferUsage usage, long size)
     {
-        super(GL44.GL_UNIFORM_BUFFER, usage, MemoryUtil.NULL, size);
+        super(GL_UNIFORM_BUFFER, usage, MemoryUtil.NULL, size);
     }
     
     public BufferUniform(@NotNull BufferUsage usage, @NotNull java.nio.Buffer data)
     {
-        super(GL44.GL_UNIFORM_BUFFER, usage, MemoryUtil.memAddress(data), Integer.toUnsignedLong(data.remaining() * MemUtil.elementSize(data)));
+        super(GL_UNIFORM_BUFFER, usage, MemoryUtil.memAddress(data), Integer.toUnsignedLong(data.remaining() * MemUtil.elementSize(data)));
     }
     
     public BufferUniform(@NotNull BufferUsage usage, @NotNull CustomBuffer<?> data)
     {
-        super(GL44.GL_UNIFORM_BUFFER, usage, MemoryUtil.memAddress(data), Integer.toUnsignedLong(data.remaining() * data.sizeof()));
+        super(GL_UNIFORM_BUFFER, usage, MemoryUtil.memAddress(data), Integer.toUnsignedLong(data.remaining() * data.sizeof()));
     }
     
     public @NotNull BufferUniform base(int index)
@@ -42,7 +44,7 @@ public class BufferUniform extends Buffer
         
         BufferUniform.LOGGER.trace("%s: Binding to Base: %s", this, index);
         
-        GL44.glBindBufferBase(this.type, index, this.id);
+        glBindBufferBase(this.type, index, this.id);
         
         return this;
     }

@@ -5,11 +5,12 @@ import engine.util.Logger;
 import engine.util.MemUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.opengl.GL44;
 import org.lwjgl.system.CustomBuffer;
 import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
+
+import static org.lwjgl.opengl.GL44.GL_ELEMENT_ARRAY_BUFFER;
 
 public class BufferElementArray extends Buffer
 {
@@ -21,28 +22,28 @@ public class BufferElementArray extends Buffer
     
     private BufferElementArray()
     {
-        super(0, GL44.GL_ELEMENT_ARRAY_BUFFER, BufferUsage.STATIC_READ, 0);
+        super(0, GL_ELEMENT_ARRAY_BUFFER, BufferUsage.STATIC_READ, 0);
         
         this.indexType = GLType.UNSIGNED_INT;
     }
     
     public BufferElementArray(@NotNull BufferUsage usage, int indexCount, @NotNull GLType indexType)
     {
-        super(GL44.GL_ELEMENT_ARRAY_BUFFER, usage, MemoryUtil.NULL, Integer.toUnsignedLong(indexCount * indexType.bytes));
+        super(GL_ELEMENT_ARRAY_BUFFER, usage, MemoryUtil.NULL, Integer.toUnsignedLong(indexCount * indexType.bytes));
         
         this.indexType = indexType;
     }
     
     public BufferElementArray(@NotNull BufferUsage usage, @NotNull java.nio.Buffer data, @NotNull GLType indexType)
     {
-        super(GL44.GL_ELEMENT_ARRAY_BUFFER, usage, MemoryUtil.memAddress(data), Integer.toUnsignedLong(data.remaining() * MemUtil.elementSize(data)));
+        super(GL_ELEMENT_ARRAY_BUFFER, usage, MemoryUtil.memAddress(data), Integer.toUnsignedLong(data.remaining() * MemUtil.elementSize(data)));
         
         this.indexType = indexType;
     }
     
     public BufferElementArray(@NotNull BufferUsage usage, @NotNull CustomBuffer<?> data, @NotNull GLType indexType)
     {
-        super(GL44.GL_ELEMENT_ARRAY_BUFFER, usage, MemoryUtil.memAddress(data), Integer.toUnsignedLong(data.remaining() * data.sizeof()));
+        super(GL_ELEMENT_ARRAY_BUFFER, usage, MemoryUtil.memAddress(data), Integer.toUnsignedLong(data.remaining() * data.sizeof()));
         
         this.indexType = indexType;
     }

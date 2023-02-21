@@ -2,12 +2,13 @@ package engine.gl.shader;
 
 import engine.util.Logger;
 import org.jetbrains.annotations.NotNull;
-import org.lwjgl.opengl.GL44;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
+
+import static org.lwjgl.opengl.GL44.*;
 
 public class Shader
 {
@@ -20,7 +21,7 @@ public class Shader
     
     public Shader(@NotNull ShaderType type, @NotNull Path filePath)
     {
-        this.id   = GL44.glCreateShader(type.ref);
+        this.id   = glCreateShader(type.ref);
         this.type = type;
         try
         {
@@ -36,7 +37,7 @@ public class Shader
     
     public Shader(@NotNull ShaderType type, @NotNull String code)
     {
-        this.id   = GL44.glCreateShader(type.ref);
+        this.id   = glCreateShader(type.ref);
         this.type = type;
         
         compile(code);
@@ -76,16 +77,16 @@ public class Shader
     {
         Shader.LOGGER.trace("Compiling %s:%n%s", this, code);
         
-        GL44.glShaderSource(this.id, code);
-        GL44.glCompileShader(this.id);
+        glShaderSource(this.id, code);
+        glCompileShader(this.id);
         
-        if (GL44.glGetShaderi(this.id, GL44.GL_COMPILE_STATUS) == GL44.GL_TRUE)
+        if (glGetShaderi(this.id, GL_COMPILE_STATUS) == GL_TRUE)
         {
             Shader.LOGGER.debug("Created", this);
         }
         else
         {
-            throw new IllegalStateException("Failed to Compile: " + this + '\n' + GL44.glGetShaderInfoLog(this.id));
+            throw new IllegalStateException("Failed to Compile: " + this + '\n' + glGetShaderInfoLog(this.id));
         }
     }
     
@@ -93,7 +94,7 @@ public class Shader
     {
         Shader.LOGGER.debug("Deleting", this);
         
-        GL44.glDeleteShader(this.id);
+        glDeleteShader(this.id);
         
         this.id = 0;
     }

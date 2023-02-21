@@ -7,12 +7,13 @@ import engine.gl.buffer.BufferElementArray;
 import engine.gl.buffer.BufferUsage;
 import engine.util.Logger;
 import org.jetbrains.annotations.NotNull;
-import org.lwjgl.opengl.GL44;
 import org.lwjgl.system.CustomBuffer;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+
+import static org.lwjgl.opengl.GL44.*;
 
 public class VertexArray
 {
@@ -24,7 +25,7 @@ public class VertexArray
     {
         VertexArray.LOGGER.trace("Binding:", vertexArray);
         
-        GL44.glBindVertexArray(vertexArray.id());
+        glBindVertexArray(vertexArray.id());
     }
     
     // -------------------- Instance -------------------- //
@@ -48,7 +49,7 @@ public class VertexArray
     
     private VertexArray(@NotNull BufferElementArray indexBuffer, @NotNull List<BufferArray> buffers, List<VertexAttribute[]> vertexAttributes)
     {
-        this.id = GL44.glGenVertexArrays();
+        this.id = glGenVertexArrays();
         
         bind(this);
         
@@ -76,8 +77,8 @@ public class VertexArray
             {
                 VertexAttribute attribute = attributes[j];
                 
-                GL44.glVertexAttribPointer(attributeCount, attribute.count(), attribute.type().ref, attribute.normalized(), stride, offset);
-                GL44.glEnableVertexAttribArray(attributeCount++);
+                glVertexAttribPointer(attributeCount, attribute.count(), attribute.type().ref, attribute.normalized(), stride, offset);
+                glEnableVertexAttribArray(attributeCount++);
                 offset += attribute.size();
                 
                 this.attributes.add(attribute);
@@ -160,17 +161,17 @@ public class VertexArray
     public void delete()
     {
         VertexArray.LOGGER.debug("Deleting", this);
-    
+        
         if (this.indexBuffer != BufferElementArray.NULL) this.indexBuffer.delete();
         this.indexBuffer = null;
-    
+        
         for (Buffer vbo : this.buffers) vbo.delete();
         this.buffers.clear();
         
         this.attributes.clear();
         this.vertexCount = 0;
         
-        GL44.glDeleteVertexArrays(this.id);
+        glDeleteVertexArrays(this.id);
         
         this.id = 0;
     }
@@ -183,7 +184,7 @@ public class VertexArray
         
         VertexArray.LOGGER.trace("Drawing Arrays size=%s from %s", count, this);
         
-        GL44.glDrawArrays(mode.ref, offset, count);
+        glDrawArrays(mode.ref, offset, count);
         // glDrawArraysInstanced(int mode, int first, int count, int primcount) // TODO
         
         return this;
@@ -209,8 +210,8 @@ public class VertexArray
         
         GLType indexType = this.indexBuffer.indexType;
         
-        GL44.glDrawElements(mode.ref, count, indexType.ref, offset * indexType.bytes);
-        // GL44.glDrawElementsInstanced(int mode, int count, int type, long indices, int primcount); // TODO
+        glDrawElements(mode.ref, count, indexType.ref, offset * indexType.bytes);
+        // glDrawElementsInstanced(int mode, int count, int type, long indices, int primcount); // TODO
         
         return this;
     }

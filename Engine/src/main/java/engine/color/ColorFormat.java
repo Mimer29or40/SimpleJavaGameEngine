@@ -1,15 +1,16 @@
 package engine.color;
 
 import org.jetbrains.annotations.NotNull;
-import org.lwjgl.opengl.GL44;
+
+import static org.lwjgl.opengl.GL44.*;
 
 public enum ColorFormat
 {
     UNKNOWN(0, false, -1, -1),
-    RED(1, false, GL44.GL_RED, GL44.GL_R8),
-    RED_ALPHA(2, true, GL44.GL_RG, GL44.GL_RG8),
-    RGB(3, false, GL44.GL_RGB, GL44.GL_RGB8),
-    RGBA(4, true, GL44.GL_RGBA, GL44.GL_RGBA8),
+    RED(1, false, GL_RED, GL_R8),
+    RED_ALPHA(2, true, GL_RG, GL_RG8),
+    RGB(3, false, GL_RGB, GL_RGB8),
+    RGBA(4, true, GL_RGBA, GL_RGBA8),
     ;
     
     public static final ColorFormat DEFAULT = RGBA;

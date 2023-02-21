@@ -68,8 +68,8 @@ public class TextRenderer
         VertexAttribute tex = new VertexAttribute(GLType.FLOAT, 2, false);
         
         this.vertexArray = VertexArray.builder()
-                                      .buffer(BufferUsage.DYNAMIC_DRAW, this.posBuffer, pos)
-                                      .buffer(BufferUsage.DYNAMIC_DRAW, this.texBuffer, tex)
+                                      .buffer(BufferUsage.DYNAMIC_DRAW, this.posBuffer.clear(), pos)
+                                      .buffer(BufferUsage.DYNAMIC_DRAW, this.texBuffer.clear(), tex)
                                       .indexBuffer(BufferUsage.STATIC_DRAW, indices.clear())
                                       .build();
         

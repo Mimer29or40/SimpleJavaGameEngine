@@ -5,7 +5,8 @@ import engine.color.ColorBuffer;
 import engine.color.ColorFormat;
 import engine.util.Logger;
 import org.jetbrains.annotations.NotNull;
-import org.lwjgl.opengl.GL44;
+
+import static org.lwjgl.opengl.GL44.*;
 
 public class TextureDepthStencil extends Texture2D
 {
@@ -32,7 +33,7 @@ public class TextureDepthStencil extends Texture2D
         
         TextureDepthStencil.LOGGER.trace("Loading texture data");
         
-        GL44.glTexImage2D(this.type, 0, GL44.GL_DEPTH24_STENCIL8, width, height, 0, GL44.GL_DEPTH_STENCIL, GL44.GL_UNSIGNED_INT_24_8, data);
+        glTexImage2D(this.type, 0, GL_DEPTH24_STENCIL8, width, height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, data);
         
         // Default Texture Parameters
         wrap(TextureWrap.DEFAULT, TextureWrap.DEFAULT, TextureWrap.DEFAULT);
@@ -52,7 +53,7 @@ public class TextureDepthStencil extends Texture2D
         
         ColorBuffer pixels = ColorBuffer.malloc(this.format, this.width * this.height);
         
-        GL44.glGetTexImage(this.type, 0, GL44.GL_DEPTH_STENCIL, GL44.GL_UNSIGNED_INT_24_8, pixels.address());
+        glGetTexImage(this.type, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, pixels.address());
         
         return pixels;
     }

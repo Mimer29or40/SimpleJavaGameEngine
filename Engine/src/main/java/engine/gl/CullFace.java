@@ -1,13 +1,13 @@
 package engine.gl;
 
-import org.lwjgl.opengl.GL44;
+import static org.lwjgl.opengl.GL44.*;
 
 public enum CullFace
 {
     NONE(-1),
-    FRONT(GL44.GL_FRONT),
-    BACK(GL44.GL_BACK),
-    FRONT_AND_BACK(GL44.GL_FRONT_AND_BACK),
+    FRONT(GL_FRONT),
+    BACK(GL_BACK),
+    FRONT_AND_BACK(GL_FRONT_AND_BACK),
     ;
     
     public static final CullFace DEFAULT = BACK;

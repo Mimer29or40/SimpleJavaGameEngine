@@ -1,24 +1,24 @@
 package engine.gl;
 
-import org.lwjgl.opengl.GL44;
+import static org.lwjgl.opengl.GL44.*;
 
 public enum DepthMode
 {
     NONE(-1, (s, d) -> false),
     
-    NEVER(GL44.GL_NEVER, (s, d) -> false),
-    ALWAYS(GL44.GL_ALWAYS, (s, d) -> true),
+    NEVER(GL_NEVER, (s, d) -> false),
+    ALWAYS(GL_ALWAYS, (s, d) -> true),
     
-    EQUAL(GL44.GL_EQUAL, (s, d) -> Double.compare(s, d) == 0),
-    NOT_EQUAL(GL44.GL_NOTEQUAL, (s, d) -> Double.compare(s, d) != 0),
+    EQUAL(GL_EQUAL, (s, d) -> Double.compare(s, d) == 0),
+    NOT_EQUAL(GL_NOTEQUAL, (s, d) -> Double.compare(s, d) != 0),
     
-    LESS(GL44.GL_LESS, (s, d) -> Double.compare(s, d) < 0),
-    L_EQUAL(GL44.GL_LEQUAL, (s, d) -> Double.compare(s, d) <= 0),
-    G_EQUAL(GL44.GL_GEQUAL, (s, d) -> Double.compare(s, d) >= 0),
-    GREATER(GL44.GL_GREATER, (s, d) -> Double.compare(s, d) > 0),
+    LESS(GL_LESS, (s, d) -> Double.compare(s, d) < 0),
+    L_EQUAL(GL_LEQUAL, (s, d) -> Double.compare(s, d) <= 0),
+    G_EQUAL(GL_GEQUAL, (s, d) -> Double.compare(s, d) >= 0),
+    GREATER(GL_GREATER, (s, d) -> Double.compare(s, d) > 0),
     ;
     
-    public static final DepthMode DEFAULT = LESS;
+    public static final DepthMode DEFAULT = NONE;
     
     public final  int        ref;
     private final IDepthFunc func;
