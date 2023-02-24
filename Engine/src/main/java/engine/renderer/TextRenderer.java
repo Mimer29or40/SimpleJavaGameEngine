@@ -1,15 +1,13 @@
 package engine.renderer;
 
-import engine.Image;
 import engine.color.Color;
 import engine.color.Colorc;
 import engine.font.CharData;
-import engine.font.Font;
+import engine.font.GlyphData;
+import engine.font.SDFFont;
 import engine.font.TextAlign;
 import engine.gl.Framebuffer;
-import engine.gl.GL;
 import engine.gl.GLType;
-import engine.gl.Winding;
 import engine.gl.buffer.BufferUsage;
 import engine.gl.shader.Program;
 import engine.gl.shader.Shader;
@@ -38,7 +36,7 @@ public class TextRenderer
     
     protected final Matrix4d view = new Matrix4d();
     
-    protected Font font;
+    protected SDFFont font;
     
     protected double    size  = 24.0;
     protected Color     color = new Color(Color.WHITE);
@@ -94,7 +92,8 @@ public class TextRenderer
                           uniform sampler2D fontTexture;
                           void main()
                           {
-                              FragColor = texture(fontTexture, tex);
+                              vec4 textureColor = texture(fontTexture, tex);
+                              if (textureColor.r < 0.5) discard;
                               FragColor = vec4(1.0);
                           }
                           """;
@@ -103,11 +102,12 @@ public class TextRenderer
         Shader fragShader = new Shader(ShaderType.FRAGMENT, fragCode);
         
         this.program = new Program(vertShader, fragShader);
-    
+        
         vertShader.delete();
         fragShader.delete();
         
-        this.font = new Font(IOUtil.getPath("font/PressStart2P/PressStart2P.ttf"), true, false, false);
+        //this.font = new SDFFont(IOUtil.getPath("font/PressStart2P/PressStart2P.ttf"), true);
+        this.font = new SDFFont(IOUtil.getPath("c:/windows/fonts/times.ttf"), true);
     }
     
     public void delete()
@@ -116,7 +116,7 @@ public class TextRenderer
         MemoryUtil.memFree(this.texBuffer);
         this.vertexArray.delete();
         this.program.delete();
-    
+        
         this.font.delete();
     }
     
@@ -174,42 +174,39 @@ public class TextRenderer
     {
         double scale = this.font.scale(this.size);
         
-        CharData prevChar = null, currChar;
+        GlyphData prevGlyph = null, currGlyph;
         for (int i = 0, n = line.length(); i < n; i++)
         {
-            char character = line.charAt(i);
+            CharData charData = this.font.charData.get(line.charAt(i));
+            currGlyph = this.font.glyphData.get(charData.glyph());
             
-            currChar = this.font.charData.get(character);
+            x += this.font.kerningAdvanceUnscaled(prevGlyph, currGlyph) * scale;
             
-            x += this.font.kerningAdvanceUnscaled(prevChar, currChar) * scale;
-            
-            double x0 = x + currChar.x0Unscaled() * scale;
-            double y0 = y + currChar.y0Unscaled() * scale;
-            double x1 = x + currChar.x1Unscaled() * scale;
-            double y1 = y + currChar.y1Unscaled() * scale;
+            double x0 = x + currGlyph.x0() * scale;
+            double y0 = y + currGlyph.y0() * scale;
+            double x1 = x + currGlyph.x1() * scale;
+            double y1 = y + currGlyph.y1() * scale;
             
             this.posBuffer.put((float) x0).put((float) y0).put(0F);
-            this.texBuffer.put((float) currChar.u0()).put((float) currChar.v0());
+            this.texBuffer.put((float) currGlyph.u0()).put((float) currGlyph.v0());
             
             this.posBuffer.put((float) x0).put((float) y1).put(0F);
-            this.texBuffer.put((float) currChar.u0()).put((float) currChar.v1());
+            this.texBuffer.put((float) currGlyph.u0()).put((float) currGlyph.v1());
             
             this.posBuffer.put((float) x1).put((float) y1).put(0F);
-            this.texBuffer.put((float) currChar.u1()).put((float) currChar.v1());
+            this.texBuffer.put((float) currGlyph.u1()).put((float) currGlyph.v1());
             
             this.posBuffer.put((float) x1).put((float) y0).put(0F);
-            this.texBuffer.put((float) currChar.u1()).put((float) currChar.v0());
+            this.texBuffer.put((float) currGlyph.u1()).put((float) currGlyph.v0());
             
             this.quadCount++;
             
-            x += currChar.advanceWidthUnscaled() * scale;
+            x += currGlyph.advance() * scale;
             
-            prevChar = currChar;
+            prevGlyph = currGlyph;
         }
         // Correct increment formula would be: depthInc = (zFar - zNear)/pow(2, bits)
         //this.currentDepth -= 0.00005; // TODO
-    
-        GL.winding(Winding.CCW);
         
         Framebuffer fb = Framebuffer.get();
         
@@ -226,7 +223,7 @@ public class TextRenderer
         
         this.posBuffer.clear();
         this.texBuffer.clear();
-    
+        
         this.quadCount = 0;
         
         //this.currentDepth = 0.99995; // TODO

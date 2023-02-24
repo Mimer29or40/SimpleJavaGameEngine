@@ -1,33 +1,29 @@
 package engine.font;
 
+import engine.Image;
 import engine.color.ColorBuffer;
 import engine.color.ColorFormat;
 import engine.gl.texture.Texture2D;
 import engine.gl.texture.TextureFilter;
+import engine.util.BinaryPacker;
 import engine.util.IOUtil;
 import engine.util.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
-import org.lwjgl.stb.STBTTAlignedQuad;
 import org.lwjgl.stb.STBTTFontinfo;
-import org.lwjgl.stb.STBTTPackContext;
-import org.lwjgl.stb.STBTTPackedchar;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static org.lwjgl.stb.STBTruetype.*;
 
-public class Font
+public class SDFFont
 {
     private static final Logger LOGGER = Logger.getLogger();
     
@@ -63,17 +59,17 @@ public class Font
     public final boolean italicized;
     
     public final boolean kerning;
-    public final boolean alignToInt;
     
     public final int ascentUnscaled;
     public final int descentUnscaled;
     public final int lineGapUnscaled;
     
-    public final @UnmodifiableView @NotNull List<@NotNull CharDataOld> charData;
+    public final @UnmodifiableView @NotNull List<@NotNull CharData>          charData;
+    public final @UnmodifiableView @NotNull Map<Integer, @NotNull GlyphData> glyphData;
     
     public final Texture2D texture;
     
-    public Font(@NotNull Path filePath, boolean kerning, boolean alignToInt, boolean interpolated)
+    public SDFFont(@NotNull Path filePath, boolean kerning)
     {
         this.info     = STBTTFontinfo.malloc();
         this.fileData = IOUtil.readFromFile(filePath, new int[1], MemoryUtil::memAlloc);
@@ -102,8 +98,7 @@ public class Font
             this.italicized = false;
         }
         
-        this.kerning    = kerning;
-        this.alignToInt = alignToInt;
+        this.kerning = kerning;
         
         try (MemoryStack stack = MemoryStack.stackPush())
         {
@@ -117,94 +112,107 @@ public class Font
             this.descentUnscaled = descent.get(0);
             this.lineGapUnscaled = lineGap.get(0);
             
-            int baseSize = 96;
+            IntBuffer w    = stack.mallocInt(1);
+            IntBuffer h    = stack.mallocInt(1);
+            IntBuffer xoff = stack.mallocInt(1);
+            IntBuffer yoff = stack.mallocInt(1);
             
-            STBTTPackedchar.Buffer packedChars = STBTTPackedchar.malloc(0xFFFF);
+            // TODO - Class members
+            float scale            = stbtt_ScaleForPixelHeight(this.info, 32F);
+            int   padding          = 4;
+            int   edge_value       = 128;
+            float pixel_dist_scale = 64F;
             
-            int width;
-            int height;
+            // ---------- CharData ---------- //
+            int maxChar = 0xFFFF;
             
-            ByteBuffer buffer;
+            List<CharData>          charData  = new ArrayList<>();
+            Map<Integer, GlyphData> glyphData = new HashMap<>();
             
-            boolean success;
+            ByteBuffer nullBuffer = stack.malloc(0);
             
-            int textureSize = 32;
-            int samples     = 1;
-            while (true)
+            Map<Integer, BinaryPacker.Container<ByteBuffer>> containers = new HashMap<>();
+            for (int i = 0; i <= maxChar; i++)
             {
-                width  = baseSize * textureSize;
-                height = baseSize * (textureSize >> 1);
+                int glyph = stbtt_FindGlyphIndex(this.info, i);
+                charData.add(new CharData((char) i, glyph));
                 
-                buffer = MemoryUtil.memAlloc(width * height);
-                
-                packedChars.position(32);
-                try (STBTTPackContext pc = STBTTPackContext.malloc())
-                {
-                    stbtt_PackBegin(pc, buffer, width, height, 0, 2, MemoryUtil.NULL);
-                    stbtt_PackSetOversampling(pc, samples, samples);
-                    success = stbtt_PackFontRange(pc, this.fileData, 0, baseSize, packedChars.position(), packedChars);
-                    stbtt_PackEnd(pc);
-                }
-                packedChars.clear();
-                buffer.clear();
-                
-                textureSize <<= 1;
-                
-                if (success || textureSize >= 1000) break;
-                MemoryUtil.memFree(buffer);
+                containers.computeIfAbsent(glyph, g -> {
+                    w.put(0, 0);
+                    h.put(0, 0);
+                    ByteBuffer bitmap = stbtt_GetGlyphSDF(this.info, scale, g, padding, (byte) edge_value, pixel_dist_scale, w, h, xoff, yoff);
+                    if (bitmap == null) bitmap = nullBuffer;
+                    return new BinaryPacker.Container<>(bitmap, w.get(0), h.get(0));
+                });
             }
             
-            IntBuffer advanceWidth    = stack.mallocInt(1);
-            IntBuffer leftSideBearing = stack.mallocInt(1);
+            BinaryPacker packer = new BinaryPacker();
+            packer.sortFunc = BinaryPacker.Sort.HEIGHT;
+            BinaryPacker.Result result = packer.fit(new ArrayList<>(containers.values()));
+            
+            ColorBuffer data      = ColorBuffer.calloc(ColorFormat.RED, result.width() * result.height());
+            Image       image     = new Image(data, result.width(), result.height());
+            ByteBuffer  imageData = MemoryUtil.memByteBuffer(Objects.requireNonNull(image.data()));
+            
+            IntBuffer advance = stack.mallocInt(1);
+            IntBuffer bearing = stack.mallocInt(1);
             
             IntBuffer x0 = stack.mallocInt(1);
             IntBuffer y0 = stack.mallocInt(1);
             IntBuffer x1 = stack.mallocInt(1);
             IntBuffer y1 = stack.mallocInt(1);
             
-            FloatBuffer x = stack.floats(0);
-            FloatBuffer y = stack.floats(0);
-            
-            STBTTAlignedQuad quad = STBTTAlignedQuad.malloc(stack);
-            
-            int size = 0xFFFF;
-            
-            List<CharDataOld> charData = new ArrayList<>(size);
-            for (int i = 0; i < size; i++)
+            for (Integer glyph : containers.keySet())
             {
-                int index = stbtt_FindGlyphIndex(this.info, i);
+                BinaryPacker.Container<ByteBuffer> container = containers.get(glyph);
                 
-                stbtt_GetGlyphHMetrics(this.info, index, advanceWidth, leftSideBearing);
-                stbtt_GetGlyphBox(this.info, index, x0, y0, x1, y1);
-                stbtt_GetPackedQuad(packedChars, width, height, i, x, y, quad, this.alignToInt);
+                ByteBuffer bitmap = container.object();
                 
-                int x0Unscaled = x0.get(0);
-                int y0Unscaled = this.ascentUnscaled - y1.get(0);
-                int x1Unscaled = x1.get(0);
-                int y1Unscaled = this.ascentUnscaled - y0.get(0);
+                stbtt_GetGlyphHMetrics(this.info, glyph, advance, bearing);
+                stbtt_GetGlyphBox(this.info, glyph, x0, y0, x1, y1);
                 
-                charData.add(new CharDataOld((char) i,
-                                             index,
-                                             advanceWidth.get(0),
-                                             leftSideBearing.get(0),
-                                             x0Unscaled,
-                                             y0Unscaled,
-                                             x1Unscaled,
-                                             y1Unscaled,
-                                             quad.s0(),
-                                             quad.t0(),
-                                             quad.s1(),
-                                             quad.t1()));
+                int _x0 = x0.get(0);
+                int _y0 = this.ascentUnscaled - y1.get(0);
+                int _x1 = x1.get(0);
+                int _y1 = this.ascentUnscaled - y0.get(0);
+                
+                double u0 = (double) container.x() / (double) result.width();
+                double v0 = (double) container.y() / (double) result.height();
+                double u1 = (double) (container.x() + container.width()) / (double) result.width();
+                double v1 = (double) (container.y() + container.height()) / (double) result.height();
+                
+                if (bitmap != nullBuffer)
+                {
+                    for (int y = 0; y < container.height(); y++)
+                    {
+                        for (int x = 0; x < container.width(); x++)
+                        {
+                            byte value = bitmap.get(y * container.width() + x);
+                            
+                            int index = (container.y() + y) * result.width() + (container.x() + x);
+                            imageData.put(index, value);
+                        }
+                    }
+                }
+                
+                glyphData.put(glyph, new GlyphData(glyph, advance.get(0), bearing.get(0), _x0, _y0, _x1, _y1, u0, v0, u1, v1));
             }
-            this.charData = Collections.unmodifiableList(charData);
             
-            packedChars.free();
+            this.charData  = Collections.unmodifiableList(charData);
+            this.glyphData = Collections.unmodifiableMap(glyphData);
             
-            ColorBuffer data = ColorBuffer.wrap(ColorFormat.RED, buffer);
-            this.texture = new Texture2D(data, width, height);
-            if (interpolated) this.texture.filter(TextureFilter.LINEAR, TextureFilter.LINEAR);
+            image.save(Path.of("SDFFont.png"));
             
-            MemoryUtil.memFree(buffer);
+            this.texture = new Texture2D(image);
+            this.texture.filter(TextureFilter.LINEAR, TextureFilter.LINEAR);
+            
+            image.delete();
+            
+            for (BinaryPacker.Container<ByteBuffer> container : containers.values())
+            {
+                ByteBuffer bitmap = container.object();
+                if (bitmap != nullBuffer) stbtt_FreeSDF(bitmap);
+            }
         }
     }
     
@@ -219,7 +227,7 @@ public class Font
     {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Font font = (Font) o;
+        SDFFont font = (SDFFont) o;
         return this.name.equals(font.name);
     }
     
@@ -236,19 +244,19 @@ public class Font
         return stbtt_ScaleForPixelHeight(this.info, (float) size);
     }
     
-    public double kerningAdvanceUnscaled(CharDataOld ch1, CharDataOld ch2)
+    public double kerningAdvanceUnscaled(GlyphData glyph1, GlyphData glyph2)
     {
-        if (ch1 == null) return 0.0;
-        if (ch2 == null) return 0.0;
+        if (glyph1 == null) return 0.0;
+        if (glyph2 == null) return 0.0;
         if (!this.kerning) return 0.0;
-        return stbtt_GetGlyphKernAdvance(this.info, ch1.glyph(), ch2.glyph());
+        return stbtt_GetGlyphKernAdvance(this.info, glyph1.glyph(), glyph2.glyph());
     }
     
     // -------------------- Functions -------------------- //
     
     public void delete()
     {
-        Font.LOGGER.debug("Deleting:", this);
+        SDFFont.LOGGER.debug("Deleting:", this);
         
         this.info.free();
         MemoryUtil.memFree(this.fileData);
@@ -322,16 +330,17 @@ public class Font
         
         double width = 0.0;
         
-        CharDataOld prevChar = null, currChar;
+        GlyphData prevGlyph = null, currGlyph;
         for (int i = 0, n = line.length(); i < n; i++)
         {
-            currChar = this.charData.get(line.charAt(i));
+            CharData ch = this.charData.get(line.charAt(i));
+            currGlyph = this.glyphData.get(ch.glyph());
             
-            double charWidth = currChar.advanceWidthUnscaled() + kerningAdvanceUnscaled(prevChar, currChar);
+            double charWidth = currGlyph.advance() + kerningAdvanceUnscaled(prevGlyph, currGlyph);
             
             width += charWidth * scale;
             
-            prevChar = currChar;
+            prevGlyph = currGlyph;
         }
         return width;
     }

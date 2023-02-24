@@ -1,5 +1,7 @@
 package engine;
 
+import engine.gl.Framebuffer;
+import engine.gl.GL;
 import engine.renderer.TextRenderer;
 import engine.util.Logger;
 
@@ -32,7 +34,10 @@ public class EngineDemo extends Engine
     @Override
     protected void draw(int frame, double time, double deltaTime)
     {
-        this.textRenderer.drawText("TEXT", 50, 50);
+        GL.clearColor(0.2, 0.8, 0.4, 1.0);
+        GL.clearBuffers();
+        this.textRenderer.textSize(mousePos().x());
+        this.textRenderer.drawText("ABCDEF\nGHIJK\nLMNOP\nQRSTU\nVWXYZ", 10, 10);
     }
     
     @Override

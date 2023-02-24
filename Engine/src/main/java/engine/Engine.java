@@ -222,6 +222,10 @@ public abstract class Engine
         double timeD      = time / 1_000_000_000D;
         double deltaTimeD = deltaTime / 1_000_000_000D;
         
+        GL.defaultState();
+        
+        Framebuffer.bind(Framebuffer.NULL);
+        
         Renderer.beforeDraw();
         
         Engine.instance.draw(frame, timeD, deltaTimeD);
