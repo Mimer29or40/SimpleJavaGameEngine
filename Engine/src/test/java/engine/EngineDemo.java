@@ -1,5 +1,6 @@
 package engine;
 
+import engine.color.Color;
 import engine.gl.Framebuffer;
 import engine.gl.GL;
 import engine.renderer.TextRenderer;
@@ -34,8 +35,9 @@ public class EngineDemo extends Engine
     @Override
     protected void draw(int frame, double time, double deltaTime)
     {
-        GL.clearColor(0.2, 0.8, 0.4, 1.0);
+        //GL.clearColor(0.2, 0.8, 0.4, 1.0);
         GL.clearBuffers();
+        this.textRenderer.textColor(Color.DARK_GREEN);
         this.textRenderer.textSize(mousePos().x());
         this.textRenderer.drawText("ABCDEF\nGHIJK\nLMNOP\nQRSTU\nVWXYZ", 10, 10);
     }

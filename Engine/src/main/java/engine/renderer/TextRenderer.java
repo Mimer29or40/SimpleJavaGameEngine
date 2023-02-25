@@ -3,8 +3,8 @@ package engine.renderer;
 import engine.color.Color;
 import engine.color.Colorc;
 import engine.font.CharData;
+import engine.font.Font;
 import engine.font.GlyphData;
-import engine.font.SDFFont;
 import engine.font.TextAlign;
 import engine.gl.Framebuffer;
 import engine.gl.GLType;
@@ -36,7 +36,7 @@ public class TextRenderer
     
     protected final Matrix4d view = new Matrix4d();
     
-    protected SDFFont font;
+    protected Font font;
     
     protected double    size  = 24.0;
     protected Color     color = new Color(Color.WHITE);
@@ -90,11 +90,12 @@ public class TextRenderer
                           in vec2 tex;
                           out vec4 FragColor;
                           uniform sampler2D fontTexture;
+                          uniform vec4 fontColor;
                           void main()
                           {
                               vec4 textureColor = texture(fontTexture, tex);
                               if (textureColor.r < 0.5) discard;
-                              FragColor = vec4(1.0);
+                              FragColor = fontColor;
                           }
                           """;
         
@@ -106,8 +107,8 @@ public class TextRenderer
         vertShader.delete();
         fragShader.delete();
         
-        //this.font = new SDFFont(IOUtil.getPath("font/PressStart2P/PressStart2P.ttf"), true);
-        this.font = new SDFFont(IOUtil.getPath("c:/windows/fonts/times.ttf"), true);
+        this.font = new Font(IOUtil.getPath("font/PressStart2P/PressStart2P.ttf"), true);
+        //this.font = new Font(IOUtil.getPath("c:/windows/fonts/times.ttf"), true);
     }
     
     public void delete()
@@ -214,6 +215,7 @@ public class TextRenderer
         
         Program.bind(this.program);
         Program.uniformInt("fontTexture", 0);
+        Program.uniformColor("fontColor", this.color);
         Program.uniformMatrix4("view", false, this.view.setOrtho(0, fb.width(), fb.height(), 0, -1, 1));
         
         VertexArray.bind(this.vertexArray);
