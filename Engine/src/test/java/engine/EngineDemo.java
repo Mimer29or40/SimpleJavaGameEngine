@@ -3,6 +3,7 @@ package engine;
 import engine.color.Color;
 import engine.gl.Framebuffer;
 import engine.gl.GL;
+import engine.renderer.LineRenderer;
 import engine.renderer.TextRenderer;
 import engine.util.Logger;
 
@@ -11,6 +12,7 @@ import static engine.IO.mousePos;
 public class EngineDemo extends Engine
 {
     TextRenderer textRenderer;
+    LineRenderer lineRenderer;
     
     protected EngineDemo()
     {
@@ -24,6 +26,7 @@ public class EngineDemo extends Engine
     protected void setup()
     {
         this.textRenderer = new TextRenderer();
+        this.lineRenderer = new LineRenderer();
     }
     
     @Override
@@ -37,15 +40,18 @@ public class EngineDemo extends Engine
     {
         //GL.clearColor(0.2, 0.8, 0.4, 1.0);
         GL.clearBuffers();
-        this.textRenderer.textColor(Color.DARK_GREEN);
-        this.textRenderer.textSize(mousePos().x());
+        this.textRenderer.color.set(Color.DARK_GREEN);
+        this.textRenderer.size = mousePos().x();
         this.textRenderer.drawText("ABCDEF\nGHIJK\nLMNOP\nQRSTU\nVWXYZ", 10, 10);
+        
+        this.lineRenderer.drawLines(10, 10, 10, 20, 20, 20, 20, 10);
     }
     
     @Override
     protected void destroy()
     {
         this.textRenderer.delete();
+        this.lineRenderer.delete();
     }
     
     public static void main(String[] args)

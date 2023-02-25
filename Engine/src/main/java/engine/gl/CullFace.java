@@ -10,7 +10,7 @@ public enum CullFace
     FRONT_AND_BACK(GL_FRONT_AND_BACK),
     ;
     
-    public static final CullFace DEFAULT = BACK;
+    public static final CullFace DEFAULT = NONE;
     
     public final int ref;
     

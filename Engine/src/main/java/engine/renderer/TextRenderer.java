@@ -1,7 +1,6 @@
 package engine.renderer;
 
 import engine.color.Color;
-import engine.color.Colorc;
 import engine.font.CharData;
 import engine.font.Font;
 import engine.font.GlyphData;
@@ -38,9 +37,9 @@ public class TextRenderer
     
     protected Font font;
     
-    protected double    size  = 24.0;
-    protected Color     color = new Color(Color.WHITE);
-    protected TextAlign align = TextAlign.TOP_LEFT;
+    public          double    size  = 24.0;
+    public final    Color     color = new Color(Color.WHITE);
+    public @NotNull TextAlign align = TextAlign.TOP_LEFT;
     
     public TextRenderer()
     {
@@ -121,36 +120,6 @@ public class TextRenderer
         this.font.delete();
     }
     
-    public double textSize()
-    {
-        return this.size;
-    }
-    
-    public void textSize(double size)
-    {
-        this.size = size;
-    }
-    
-    public @NotNull Colorc textColor()
-    {
-        return this.color;
-    }
-    
-    public void textColor(@NotNull Colorc color)
-    {
-        this.color.set(color);
-    }
-    
-    public @NotNull TextAlign textAlign()
-    {
-        return this.align;
-    }
-    
-    public void textAlign(@NotNull TextAlign align)
-    {
-        this.align = align;
-    }
-    
     public double textWidth(@NotNull String text, int maxWidth)
     {
         return this.font.textWidth(text, this.size, maxWidth);
@@ -214,9 +183,10 @@ public class TextRenderer
         Texture.bind(this.font.texture, 0);
         
         Program.bind(this.program);
+        // TODO - Make view matrix mutable
+        Program.uniformMatrix4("view", false, this.view.setOrtho(0, fb.width(), fb.height(), 0, -1, 1));
         Program.uniformInt("fontTexture", 0);
         Program.uniformColor("fontColor", this.color);
-        Program.uniformMatrix4("view", false, this.view.setOrtho(0, fb.width(), fb.height(), 0, -1, 1));
         
         VertexArray.bind(this.vertexArray);
         this.vertexArray.buffer(0).set(0, this.posBuffer.flip());

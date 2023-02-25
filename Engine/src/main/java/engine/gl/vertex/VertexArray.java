@@ -206,6 +206,8 @@ public class VertexArray
         
         if (this.indexBuffer == null) throw new IllegalStateException("Cannot draw elements when non are provided.");
         
+        Buffer.bind(this.indexBuffer);
+        
         VertexArray.LOGGER.trace("Drawing Elements size=%s from %s", count, this);
         
         GLType indexType = this.indexBuffer.indexType;
