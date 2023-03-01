@@ -16,12 +16,17 @@ public class TextureDepth extends Texture2D
     
     private TextureDepth()
     {
-        super(ColorFormat.RGB);
+        super(ColorFormat.RGB, 0);
+    }
+    
+    public TextureDepth(int width, int height, int samples)
+    {
+        super(ColorFormat.RGB, width, height, samples);
     }
     
     public TextureDepth(int width, int height)
     {
-        super(ColorFormat.RGB, width, height);
+        this(width, height, 0);
     }
     
     // -------------------- Functions -------------------- //
@@ -33,8 +38,16 @@ public class TextureDepth extends Texture2D
         
         TextureDepth.LOGGER.trace("Loading texture data");
         
-        // TODO - Verify
-        glTexImage2D(this.type, 0, GL_DEPTH_COMPONENT24, this.width, this.height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, data);
+        if (this.samples > 0)
+        {
+            // TODO - Flag for fixedSampleLocations
+            glTexImage2DMultisample(this.type, this.samples, GL_DEPTH_COMPONENT24, this.width, this.height, true);
+        }
+        else
+        {
+            // TODO - Verify
+            glTexImage2D(this.type, 0, GL_DEPTH_COMPONENT24, this.width, this.height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, data);
+        }
         
         // Default Texture Parameters
         wrap(TextureWrap.DEFAULT, TextureWrap.DEFAULT, TextureWrap.DEFAULT);
@@ -76,7 +89,7 @@ public class TextureDepth extends Texture2D
         @Override
         public @NotNull String toString()
         {
-            return "Texture2D.NULL";
+            return "TextureDepth.NULL";
         }
         
         @Override

@@ -18,44 +18,71 @@ public class Texture2D extends Texture
     
     protected int width, height;
     
+    public final int samples;
+    
     private Texture2D()
     {
         super(0, GL_TEXTURE_2D, ColorFormat.DEFAULT);
+        
+        this.samples = 0;
     }
     
-    protected Texture2D(@NotNull ColorFormat format)
+    protected Texture2D(@NotNull ColorFormat format, int samples)
     {
-        super(0, GL_TEXTURE_2D, format);
+        super(0, samples > 0 ? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D, format);
+        
+        this.samples = samples;
     }
     
-    public Texture2D(@NotNull ColorBuffer data, int width, int height)
+    public Texture2D(@NotNull ColorBuffer data, int width, int height, int samples)
     {
-        super(GL_TEXTURE_2D, data.format);
+        super(samples > 0 ? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D, data.format);
         
         this.width  = width;
         this.height = height;
+        
+        this.samples = samples;
         
         load(MemoryUtil.memAddress(data));
     }
     
-    public Texture2D(@NotNull ColorFormat format, int width, int height)
+    public Texture2D(@NotNull ColorBuffer data, int width, int height)
     {
-        super(GL_TEXTURE_2D, format);
+        this(data, width, height, 0);
+    }
+    
+    public Texture2D(@NotNull ColorFormat format, int width, int height, int samples)
+    {
+        super(samples > 0 ? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D, format);
         
         this.width  = width;
         this.height = height;
         
+        this.samples = samples;
+        
         load(MemoryUtil.NULL);
     }
     
-    public Texture2D(@NotNull Image image)
+    public Texture2D(@NotNull ColorFormat format, int width, int height)
     {
-        super(GL_TEXTURE_2D, image.format());
+        this(format, width, height, 0);
+    }
+    
+    public Texture2D(@NotNull Image image, int samples)
+    {
+        super(samples > 0 ? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D, image.format());
         
         this.width  = image.width();
         this.height = image.height();
         
+        this.samples = samples;
+        
         load(MemoryUtil.memAddressSafe(image.data()));
+    }
+    
+    public Texture2D(@NotNull Image image)
+    {
+        this(image, 0);
     }
     
     // -------------------- Properties -------------------- //
@@ -86,7 +113,15 @@ public class Texture2D extends Texture
         
         Texture2D.LOGGER.trace("Loading texture data");
         
-        glTexImage2D(this.type, 0, this.format.internalFormat, this.width, this.height, 0, this.format.format, GL_UNSIGNED_BYTE, data);
+        if (this.samples > 0)
+        {
+            // TODO - Flag for fixedSampleLocations
+            glTexImage2DMultisample(this.type, this.samples, this.format.internalFormat, this.width, this.height, true);
+        }
+        else
+        {
+            glTexImage2D(this.type, 0, this.format.internalFormat, this.width, this.height, 0, this.format.format, GL_UNSIGNED_BYTE, data);
+        }
         
         try (MemoryStack stack = MemoryStack.stackPush())
         {

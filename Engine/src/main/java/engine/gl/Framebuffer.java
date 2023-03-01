@@ -8,10 +8,7 @@ import engine.gl.texture.TextureStencil;
 import engine.util.Logger;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import static engine.IO.windowFramebufferSize;
 import static org.lwjgl.opengl.GL44.*;
@@ -35,6 +32,33 @@ public class Framebuffer
         
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer.id());
         glViewport(0, 0, framebuffer.width(), framebuffer.height());
+    }
+    
+    public static void bindRead(@NotNull Framebuffer framebuffer)
+    {
+        Framebuffer.LOGGER.trace("Binding Read:", framebuffer);
+        
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, framebuffer.id());
+    }
+    
+    public static void bindDraw(@NotNull Framebuffer framebuffer)
+    {
+        Framebuffer.LOGGER.trace("Binding Draw:", framebuffer);
+        
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffer.id());
+    }
+    
+    public static void blit(@NotNull Framebuffer read, @NotNull Framebuffer draw, @NotNull EnumSet<ScreenBuffer> buffers, boolean nearest)
+    {
+        Framebuffer.LOGGER.trace("Bliting from %s to %s", read, draw);
+        
+        assert buffers.size() > 0;
+        int buffer = 0;
+        for (ScreenBuffer b : buffers) buffer |= b.ref;
+        
+        bindRead(read);
+        bindDraw(draw);
+        glBlitFramebuffer(0, 0, read.width, read.height, 0, 0, draw.width, draw.height, buffer, nearest ? GL_NEAREST : GL_LINEAR);
     }
     
     // -------------------- Instance -------------------- //
@@ -243,14 +267,20 @@ public class Framebuffer
     
     private static final Builder BUILDER = new Builder();
     
+    public static Builder builder(int width, int height, int samples)
+    {
+        return Framebuffer.BUILDER.reset(width, height, samples);
+    }
+    
     public static Builder builder(int width, int height)
     {
-        return Framebuffer.BUILDER.reset(width, height);
+        return Framebuffer.BUILDER.reset(width, height, 0);
     }
     
     public static final class Builder
     {
         private int width, height;
+        private int samples;
         
         private       int         colorIndex;
         private final Texture2D[] color = new Texture2D[32];
@@ -259,10 +289,11 @@ public class Framebuffer
         private TextureStencil      stencil;
         private TextureDepthStencil depthStencil;
         
-        private Builder reset(int width, int height)
+        private Builder reset(int width, int height, int samples)
         {
-            this.width  = width;
-            this.height = height;
+            this.width   = width;
+            this.height  = height;
+            this.samples = samples;
             
             this.colorIndex = 0;
             Arrays.fill(this.color, Texture2D.NULL);
@@ -286,14 +317,14 @@ public class Framebuffer
             return this;
         }
         
-        public @NotNull Builder color(@NotNull ColorFormat format, int width, int height)
+        public @NotNull Builder color(@NotNull ColorFormat format)
         {
-            return color(new Texture2D(format, width, height));
+            return color(new Texture2D(format, this.width, this.height, this.samples));
         }
         
-        public @NotNull Builder color(int width, int height)
+        public @NotNull Builder color()
         {
-            return color(new Texture2D(ColorFormat.DEFAULT, width, height));
+            return color(new Texture2D(ColorFormat.DEFAULT, this.width, this.height, this.samples));
         }
         
         public @NotNull Builder depth(@NotNull TextureDepth texture)
@@ -303,14 +334,9 @@ public class Framebuffer
             return this;
         }
         
-        public @NotNull Builder depth(int width, int height)
-        {
-            return depth(new TextureDepth(width, height));
-        }
-        
         public @NotNull Builder depth()
         {
-            return depth(new TextureDepth(this.width, this.height));
+            return depth(new TextureDepth(this.width, this.height, this.samples));
         }
         
         public @NotNull Builder stencil(@NotNull TextureStencil texture)
@@ -320,14 +346,9 @@ public class Framebuffer
             return this;
         }
         
-        public @NotNull Builder stencil(int width, int height)
-        {
-            return stencil(new TextureStencil(width, height));
-        }
-        
         public @NotNull Builder stencil()
         {
-            return stencil(new TextureStencil(this.width, this.height));
+            return stencil(new TextureStencil(this.width, this.height, this.samples));
         }
         
         public @NotNull Builder depthStencil(@NotNull TextureDepthStencil texture)
@@ -337,14 +358,9 @@ public class Framebuffer
             return this;
         }
         
-        public @NotNull Builder depthStencil(int width, int height)
-        {
-            return depthStencil(new TextureDepthStencil(width, height));
-        }
-        
         public @NotNull Builder depthStencil()
         {
-            return depthStencil(new TextureDepthStencil(this.width, this.height));
+            return depthStencil(new TextureDepthStencil(this.width, this.height, this.samples));
         }
     }
 }

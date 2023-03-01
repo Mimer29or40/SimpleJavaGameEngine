@@ -16,12 +16,17 @@ public class TextureStencil extends Texture2D
     
     private TextureStencil()
     {
-        super(ColorFormat.RED);
+        super(ColorFormat.RED, 0);
+    }
+    
+    public TextureStencil(int width, int height, int samples)
+    {
+        super(ColorFormat.RED, width, height, samples);
     }
     
     public TextureStencil(int width, int height)
     {
-        super(ColorFormat.RED, width, height);
+        this(width, height, 0);
     }
     
     // -------------------- Functions -------------------- //
@@ -33,8 +38,16 @@ public class TextureStencil extends Texture2D
         
         TextureStencil.LOGGER.trace("Loading texture data");
         
-        // TODO - Verify
-        glTexImage2D(this.type, 0, GL_STENCIL_INDEX8, this.width, this.height, 0, GL_STENCIL_INDEX, GL_UNSIGNED_BYTE, data);
+        if (this.samples > 0)
+        {
+            // TODO - Flag for fixedSampleLocations
+            glTexImage2DMultisample(this.type, this.samples, GL_STENCIL_INDEX8, this.width, this.height, true);
+        }
+        else
+        {
+            // TODO - Verify
+            glTexImage2D(this.type, 0, GL_STENCIL_INDEX8, this.width, this.height, 0, GL_STENCIL_INDEX, GL_UNSIGNED_BYTE, data);
+        }
         
         // Default Texture Parameters
         wrap(TextureWrap.DEFAULT, TextureWrap.DEFAULT, TextureWrap.DEFAULT);
@@ -76,7 +89,7 @@ public class TextureStencil extends Texture2D
         @Override
         public @NotNull String toString()
         {
-            return "Texture2D.NULL";
+            return "TextureStencil.NULL";
         }
         
         @Override
