@@ -18,66 +18,102 @@ public class Texture2D extends Texture
     
     protected int width, height;
     
-    public final int samples;
+    public final int     samples;
+    public final boolean gammaCorrected;
     
     private Texture2D()
     {
         super(0, GL_TEXTURE_2D, ColorFormat.DEFAULT);
         
-        this.samples = 0;
+        this.samples        = 0;
+        this.gammaCorrected = false;
     }
     
-    protected Texture2D(@NotNull ColorFormat format, int samples)
+    protected Texture2D(@NotNull ColorFormat format, int samples, boolean gammaCorrected)
     {
         super(0, samples > 0 ? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D, format);
         
-        this.samples = samples;
+        this.samples        = samples;
+        this.gammaCorrected = gammaCorrected;
     }
     
-    public Texture2D(@NotNull ColorBuffer data, int width, int height, int samples)
+    public Texture2D(@NotNull ColorBuffer data, int width, int height, int samples, boolean gammaCorrected)
     {
         super(samples > 0 ? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D, data.format);
         
         this.width  = width;
         this.height = height;
         
-        this.samples = samples;
+        this.samples        = samples;
+        this.gammaCorrected = gammaCorrected;
         
         load(MemoryUtil.memAddress(data));
     }
     
-    public Texture2D(@NotNull ColorBuffer data, int width, int height)
+    public Texture2D(@NotNull ColorBuffer data, int width, int height, int samples)
     {
-        this(data, width, height, 0);
+        this(data, width, height, samples, false);
     }
     
-    public Texture2D(@NotNull ColorFormat format, int width, int height, int samples)
+    public Texture2D(@NotNull ColorBuffer data, int width, int height, boolean gammaCorrected)
+    {
+        this(data, width, height, 0, gammaCorrected);
+    }
+    
+    public Texture2D(@NotNull ColorBuffer data, int width, int height)
+    {
+        this(data, width, height, 0, false);
+    }
+    
+    public Texture2D(@NotNull ColorFormat format, int width, int height, int samples, boolean gammaCorrected)
     {
         super(samples > 0 ? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D, format);
         
         this.width  = width;
         this.height = height;
         
-        this.samples = samples;
+        this.samples        = samples;
+        this.gammaCorrected = gammaCorrected;
         
         load(MemoryUtil.NULL);
     }
     
-    public Texture2D(@NotNull ColorFormat format, int width, int height)
+    public Texture2D(@NotNull ColorFormat format, int width, int height, int samples)
     {
-        this(format, width, height, 0);
+        this(format, width, height, samples, false);
     }
     
-    public Texture2D(@NotNull Image image, int samples)
+    public Texture2D(@NotNull ColorFormat format, int width, int height, boolean gammaCorrected)
+    {
+        this(format, width, height, 0, gammaCorrected);
+    }
+    
+    public Texture2D(@NotNull ColorFormat format, int width, int height)
+    {
+        this(format, width, height, 0, false);
+    }
+    
+    public Texture2D(@NotNull Image image, int samples, boolean gammaCorrected)
     {
         super(samples > 0 ? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D, image.format());
         
         this.width  = image.width();
         this.height = image.height();
         
-        this.samples = samples;
+        this.samples        = samples;
+        this.gammaCorrected = gammaCorrected;
         
         load(MemoryUtil.memAddressSafe(image.data()));
+    }
+    
+    public Texture2D(@NotNull Image image, int samples)
+    {
+        this(image, samples, false);
+    }
+    
+    public Texture2D(@NotNull Image image, boolean gammaCorrected)
+    {
+        this(image, 0, gammaCorrected);
     }
     
     public Texture2D(@NotNull Image image)
@@ -113,14 +149,16 @@ public class Texture2D extends Texture
         
         Texture2D.LOGGER.trace("Loading texture data");
         
+        int internalFormat = this.gammaCorrected ? this.format.gammaFormat : this.format.internalFormat;
+        
         if (this.samples > 0)
         {
             // TODO - Flag for fixedSampleLocations
-            glTexImage2DMultisample(this.type, this.samples, this.format.internalFormat, this.width, this.height, true);
+            glTexImage2DMultisample(this.type, this.samples, internalFormat, this.width, this.height, true);
         }
         else
         {
-            glTexImage2D(this.type, 0, this.format.internalFormat, this.width, this.height, 0, this.format.format, GL_UNSIGNED_BYTE, data);
+            glTexImage2D(this.type, 0, internalFormat, this.width, this.height, 0, this.format.format, GL_UNSIGNED_BYTE, data);
         }
         
         try (MemoryStack stack = MemoryStack.stackPush())

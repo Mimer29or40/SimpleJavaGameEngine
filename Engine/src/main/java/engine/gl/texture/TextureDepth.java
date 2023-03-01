@@ -16,7 +16,7 @@ public class TextureDepth extends Texture2D
     
     private TextureDepth()
     {
-        super(ColorFormat.RGB, 0);
+        super(ColorFormat.RGB, 0, false);
     }
     
     public TextureDepth(int width, int height, int samples)
@@ -26,7 +26,7 @@ public class TextureDepth extends Texture2D
     
     public TextureDepth(int width, int height)
     {
-        this(width, height, 0);
+        super(ColorFormat.RGB, width, height);
     }
     
     // -------------------- Functions -------------------- //

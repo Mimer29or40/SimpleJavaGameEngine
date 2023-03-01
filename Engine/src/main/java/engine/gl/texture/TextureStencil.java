@@ -16,7 +16,7 @@ public class TextureStencil extends Texture2D
     
     private TextureStencil()
     {
-        super(ColorFormat.RED, 0);
+        super(ColorFormat.RED, 0, false);
     }
     
     public TextureStencil(int width, int height, int samples)
@@ -26,7 +26,7 @@ public class TextureStencil extends Texture2D
     
     public TextureStencil(int width, int height)
     {
-        this(width, height, 0);
+        super(ColorFormat.RED, width, height);
     }
     
     // -------------------- Functions -------------------- //

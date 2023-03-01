@@ -16,7 +16,7 @@ public class TextureDepthStencil extends Texture2D
     
     private TextureDepthStencil()
     {
-        super(ColorFormat.RGBA, 0);
+        super(ColorFormat.RGBA, 0, false);
     }
     
     public TextureDepthStencil(int width, int height, int samples)
@@ -26,7 +26,7 @@ public class TextureDepthStencil extends Texture2D
     
     public TextureDepthStencil(int width, int height)
     {
-        this(width, height, 0);
+        super(ColorFormat.RGBA, width, height);
     }
     
     // -------------------- Functions -------------------- //
