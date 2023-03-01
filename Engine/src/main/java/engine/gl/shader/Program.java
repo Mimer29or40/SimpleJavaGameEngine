@@ -62,9 +62,9 @@ public class Program
         glLinkProgram(this.id);
         if (glGetProgrami(this.id, GL_LINK_STATUS) != GL_TRUE) throw new IllegalStateException("Link failure: " + this + '\n' + glGetProgramInfoLog(this.id));
         
-        glValidateProgram(this.id);
-        if (glGetProgrami(this.id, GL_VALIDATE_STATUS) != GL_TRUE)
-        {throw new IllegalStateException("Validation failure: " + this + '\n' + glGetProgramInfoLog(this.id));}
+        //glValidateProgram(this.id);
+        //if (glGetProgrami(this.id, GL_VALIDATE_STATUS) != GL_TRUE)
+        //{throw new IllegalStateException("Validation failure: " + this + '\n' + glGetProgramInfoLog(this.id));}
         
         Program.LOGGER.debug("Created", this);
     }
