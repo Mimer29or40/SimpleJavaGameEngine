@@ -1,0 +1,158 @@
+package LearnOpenGL.LOGL_01_GettingStarted;
+
+import engine.Engine;
+import engine.Image;
+import engine.Key;
+import engine.gl.GL;
+import engine.gl.GLType;
+import engine.gl.ScreenBuffer;
+import engine.gl.buffer.BufferUsage;
+import engine.gl.shader.Program;
+import engine.gl.shader.Shader;
+import engine.gl.shader.ShaderType;
+import engine.gl.texture.Texture;
+import engine.gl.texture.Texture2D;
+import engine.gl.texture.TextureFilter;
+import engine.gl.texture.TextureWrap;
+import engine.gl.vertex.DrawMode;
+import engine.gl.vertex.VertexArray;
+import engine.gl.vertex.VertexAttribute;
+import engine.util.IOUtil;
+import org.lwjgl.system.MemoryStack;
+
+import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
+
+import static engine.IO.keyboardKeyDown;
+import static engine.IO.windowTitle;
+
+public class LOGL_141_Texture extends Engine
+{
+    Program program;
+    
+    VertexArray VAO;
+    
+    Texture2D texture;
+    
+    protected LOGL_141_Texture()
+    {
+        super(800, 600);
+    }
+    
+    @Override
+    protected void setup()
+    {
+        windowTitle("LearnOpenGL - 1.4.1 - Texture");
+        
+        String vertCode = """
+                          #version 330 core
+                          layout (location = 0) in vec3 aPos;
+                          layout (location = 1) in vec3 aColor;
+                          layout (location = 2) in vec2 aTexCoord;
+                          
+                          out vec3 ourColor;
+                          out vec2 TexCoord;
+                          
+                          void main()
+                          {
+                              gl_Position = vec4(aPos, 1.0);
+                              ourColor = aColor;
+                              TexCoord = vec2(aTexCoord.x, aTexCoord.y);
+                          }
+                          """;
+        String fragCode = """
+                          #version 330 core
+                          out vec4 FragColor;
+                          
+                          in vec3 ourColor;
+                          in vec2 TexCoord;
+                          
+                          // texture sampler
+                          uniform sampler2D texture1;
+                          
+                          void main()
+                          {
+                              FragColor = texture(texture1, TexCoord);
+                          }
+                          """;
+        
+        Shader vertShader = new Shader(ShaderType.VERTEX, vertCode);
+        Shader fragShader = new Shader(ShaderType.FRAGMENT, fragCode);
+        
+        program = new Program(vertShader, fragShader);
+        
+        vertShader.delete();
+        fragShader.delete();
+        
+        float[] vertices = {
+                // positions        // colors         // texture coords
+                +0.5f, +0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, // top right
+                +0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, // bottom right
+                -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, // bottom left
+                -0.5f, +0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f  // top left
+        };
+        int[] indices = {
+                0, 1, 3, // first triangle
+                1, 2, 3  // second triangle
+        };
+        
+        try (MemoryStack stack = MemoryStack.stackPush())
+        {
+            FloatBuffer _vertices = stack.floats(vertices);
+            IntBuffer   _indices  = stack.ints(indices);
+            
+            VertexAttribute position = new VertexAttribute(GLType.FLOAT, 3, false);
+            VertexAttribute color    = new VertexAttribute(GLType.FLOAT, 3, false);
+            VertexAttribute texCoord = new VertexAttribute(GLType.FLOAT, 2, false);
+            
+            VAO = VertexArray.builder().buffer(BufferUsage.STATIC_DRAW, _vertices, position, color, texCoord).indexBuffer(BufferUsage.STATIC_DRAW, _indices).build();
+        }
+        
+        Image image = new Image(IOUtil.getPath("LearnOpenGL/textures/container.jpg"));
+        
+        texture = new Texture2D(image);
+        texture.wrap(TextureWrap.REPEAT, TextureWrap.REPEAT, TextureWrap.REPEAT);
+        texture.filter(TextureFilter.LINEAR_MIPMAP_LINEAR, TextureFilter.LINEAR);
+        texture.genMipmaps();
+        
+        image.delete();
+    }
+    
+    @Override
+    protected void update(int frame, double time, double deltaTime)
+    {
+        if (keyboardKeyDown(Key.ESCAPE)) stop();
+    }
+    
+    @Override
+    protected void draw(int frame, double time, double deltaTime)
+    {
+        GL.clearColor(0.2, 0.3, 0.3, 1.0);
+        GL.clearBuffers(ScreenBuffer.COLOR);
+        
+        // bind Texture
+        Texture.bind(texture, 0);
+        
+        // render container
+        Program.bind(program);
+        
+        VAO.drawElements(DrawMode.TRIANGLES, 6);
+    }
+    
+    @Override
+    protected void destroy()
+    {
+        texture.delete();
+        
+        VAO.delete();
+        
+        program.delete();
+    }
+    
+    public static void main(String[] args)
+    {
+        Engine instance = new LOGL_141_Texture();
+        
+        start(instance);
+    }
+}

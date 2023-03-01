@@ -14,4 +14,6 @@ dependencies {
     runtimeOnly "org.lwjgl:lwjgl::natives-windows"
     implementation "org.lwjgl:lwjgl-opengl"
     runtimeOnly "org.lwjgl:lwjgl-opengl::natives-windows"
+    implementation "org.lwjgl:lwjgl-assimp"
+    runtimeOnly "org.lwjgl:lwjgl-assimp::natives-windows"
 }
