@@ -7,7 +7,6 @@ import org.joml.*;
 import org.lwjgl.system.MemoryStack;
 
 import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
 import java.util.*;
 
 import static org.lwjgl.opengl.GL44.*;
@@ -38,8 +37,9 @@ public class Program
     
     protected final List<Shader> shaders = new ArrayList<>();
     
-    protected final Map<String, Integer> attributes = new HashMap<>();
-    protected final Map<String, Integer> uniforms   = new HashMap<>();
+    protected final Map<String, Integer> attributes    = new HashMap<>();
+    protected final Map<String, Integer> uniforms      = new HashMap<>();
+    protected final Map<String, Integer> uniformBlocks = new HashMap<>();
     
     private Program()
     {
@@ -64,29 +64,6 @@ public class Program
         glValidateProgram(this.id);
         if (glGetProgrami(this.id, GL_VALIDATE_STATUS) != GL_TRUE)
         {throw new IllegalStateException("Validation failure: " + this + '\n' + glGetProgramInfoLog(this.id));}
-        
-        try (MemoryStack stack = MemoryStack.stackPush())
-        {
-            String    name;
-            IntBuffer size = stack.callocInt(1);
-            IntBuffer type = stack.callocInt(1);
-            
-            for (int i = 0, attr, n = glGetProgrami(this.id, GL_ACTIVE_ATTRIBUTES); i < n; i++)
-            {
-                name = glGetActiveAttrib(this.id, i, size, type);
-                
-                attr = getAttribute(name);
-                assert attr == i;
-            }
-            
-            for (int i = 0, uniform, n = glGetProgrami(this.id, GL_ACTIVE_UNIFORMS); i < n; i++)
-            {
-                name = glGetActiveUniform(this.id, i, size, type);
-                
-                uniform = getUniform(name);
-                assert uniform == i;
-            }
-        }
         
         Program.LOGGER.debug("Created", this);
     }
@@ -175,6 +152,25 @@ public class Program
     public int getUniform(@NotNull String uniform)
     {
         return this.uniforms.computeIfAbsent(uniform, this::_getUniform);
+    }
+    
+    private int _getUniformBlock(String uniform)
+    {
+        int location = glGetUniformBlockIndex(this.id, uniform);
+        if (location == -1)
+        {
+            Program.LOGGER.warning("Failed to find Uniform Block (%s) for %s", uniform, this);
+        }
+        else
+        {
+            Program.LOGGER.trace("Uniform Block (%s) Set at Location (%s) for %s", uniform, location, this);
+        }
+        return location;
+    }
+    
+    public int getUniformBlock(@NotNull String uniform)
+    {
+        return this.uniformBlocks.computeIfAbsent(uniform, this::_getUniformBlock);
     }
     
     // -------------------- Attribute -------------------- //
@@ -538,6 +534,13 @@ public class Program
         Program.LOGGER.trace("uniformColor(%s, %s", name, color);
         
         glUniform4f(Program.bound.getUniform(name), color.rf(), color.gf(), color.bf(), color.af());
+    }
+    
+    public static void uniformBlock(@NotNull String name, int binding)
+    {
+        Program.LOGGER.trace("uniformBlock(%s, %s", name, binding);
+        
+        glUniformBlockBinding(Program.bound.id(), Program.bound.getUniformBlock(name), binding);
     }
     
     // -------------------- Sub-Classes -------------------- //
