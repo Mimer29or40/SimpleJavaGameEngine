@@ -14,6 +14,7 @@ import java.nio.IntBuffer;
 import java.nio.file.Path;
 
 import static org.lwjgl.stb.STBImage.stbi_load;
+import static org.lwjgl.stb.STBImage.stbi_set_flip_vertically_on_load;
 import static org.lwjgl.stb.STBImageWrite.stbi_write_png;
 
 public class Image
@@ -51,12 +52,18 @@ public class Image
     
     public Image(@NotNull Path filePath)
     {
+        this(filePath, true);
+    }
+    
+    public Image(@NotNull Path filePath, boolean flip)
+    {
         try (MemoryStack stack = MemoryStack.stackPush())
         {
             IntBuffer width    = stack.mallocInt(1);
             IntBuffer height   = stack.mallocInt(1);
             IntBuffer channels = stack.mallocInt(1);
             
+            stbi_set_flip_vertically_on_load(flip);
             ByteBuffer container = stbi_load(filePath.toString(), width, height, channels, 0);
             
             if (container == null)
