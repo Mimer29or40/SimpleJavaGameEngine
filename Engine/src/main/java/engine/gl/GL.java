@@ -14,32 +14,39 @@ public class GL
 {
     private static final Logger LOGGER = Logger.getLogger();
     
+    public static final State DEFAULT_STATE = new State();
+    
     public static void defaultState()
     {
         glPixelStorei(GL_PACK_ALIGNMENT, 1);
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
         
-        depthClamp(true);
-        lineSmooth(false);
-        textureCubeMapSeamless(true);
+        setState(GL.DEFAULT_STATE);
+    }
+    
+    public static void setState(@NotNull State state)
+    {
+        depthClamp(state.depthClamp);
+        lineSmooth(state.lineSmooth);
+        textureCubeMapSeamless(state.textureCubeMapSeamless);
         
-        polygonMode(PolygonMode.DEFAULT);
+        polygonMode(state.polygonMode);
         
-        blendMode(BlendMode.DEFAULT);
-        depthMode(DepthMode.DEFAULT);
-        stencilMode(StencilMode.DEFAULT);
-        scissorMode(ScissorMode.DEFAULT);
+        blendMode(state.blendMode);
+        depthMode(state.depthMode);
+        stencilMode(state.stencilMode);
+        scissorMode(state.scissorMode);
         
-        colorMask(true, true, true, true);
-        depthMask(true);
-        stencilMask(0xFF);
+        colorMask(state.colorMask[0], state.colorMask[1], state.colorMask[2], state.colorMask[3]);
+        depthMask(state.depthMask);
+        stencilMask(state.stencilMask);
         
-        clearColor(0.0, 0.0, 0.0, 1.0);
-        clearDepth(1.0);
-        clearStencil(0x00);
+        clearColor(state.clearColor[0], state.clearColor[1], state.clearColor[2], state.clearColor[3]);
+        clearDepth(state.clearDepth);
+        clearStencil(state.clearStencil);
         
-        cullFace(CullFace.DEFAULT);
-        winding(Winding.DEFAULT);
+        cullFace(state.cullFace);
+        winding(state.winding);
     }
     
     private static void setFlag(int flag, boolean value)
@@ -271,4 +278,29 @@ public class GL
     }
     
     private GL() {}
+    
+    public static final class State
+    {
+        public boolean depthClamp             = true;
+        public boolean lineSmooth             = false;
+        public boolean textureCubeMapSeamless = true;
+        
+        public @NotNull PolygonMode polygonMode = PolygonMode.DEFAULT;
+        
+        public @NotNull BlendMode   blendMode   = BlendMode.DEFAULT;
+        public @NotNull DepthMode   depthMode   = DepthMode.DEFAULT;
+        public @NotNull StencilMode stencilMode = StencilMode.DEFAULT;
+        public @NotNull ScissorMode scissorMode = ScissorMode.DEFAULT;
+        
+        public boolean[] colorMask   = {true, true, true, true};
+        public boolean   depthMask   = true;
+        public int       stencilMask = 0xFF;
+        
+        public double[] clearColor   = {0.0, 0.0, 0.0, 1.0};
+        public double   clearDepth   = 1.0;
+        public int      clearStencil = 0x00;
+        
+        public @NotNull CullFace cullFace = CullFace.DEFAULT;
+        public @NotNull Winding  winding  = Winding.DEFAULT;
+    }
 }
