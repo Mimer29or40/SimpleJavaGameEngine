@@ -31,7 +31,20 @@ public abstract class Engine
     private static boolean shouldMainThreadRun   = false;
     private static boolean shouldRenderThreadRun = false;
     
+    private static long updateTimeActual = 0;
+    private static long drawTimeActual   = 0;
+    
     public static final ThreadExecutor executor = new ThreadExecutor(Engine.mainThread);
+    
+    public static double updateTimeActual()
+    {
+        return Engine.updateTimeActual / 1_000_000_000D;
+    }
+    
+    public static double drawTimeActual()
+    {
+        return Engine.drawTimeActual / 1_000_000_000D;
+    }
     
     protected static void start(@NotNull Engine instance)
     {
@@ -134,21 +147,24 @@ public abstract class Engine
         Renderer.destroy();
     }
     
+    @SuppressWarnings("SuspiciousSystemArraycopy")
     private static void renderThread()
     {
         long currentTime = Engine.nanoseconds();
         
-        int  updateFrame    = 0;
-        int  updateFreq     = -1;
-        long updateFreqInv  = 0L;
-        long updateTimeLast = currentTime;
-        long updateTimeDelta;
+        int    updateFrame      = 0;
+        int    updateFreq       = -1;
+        long   updateFreqInv    = 0L;
+        long   updateTimeLast   = currentTime;
+        long   updateTimeDelta;
+        long[] updateTimeActual = new long[5];
         
-        int  drawFrame    = 0;
-        int  drawFreq     = -1;
-        long drawFreqInv  = 0L;
-        long drawTimeLast = currentTime;
-        long drawTimeDelta;
+        int    drawFrame      = 0;
+        int    drawFreq       = -1;
+        long   drawFreqInv    = 0L;
+        long   drawTimeLast   = currentTime;
+        long   drawTimeDelta;
+        long[] drawTimeActual = new long[5];
         
         try
         {
@@ -171,6 +187,13 @@ public abstract class Engine
                     updateTimeLast = currentTime;
                     
                     updateRenderThread(updateFrame++, currentTime, updateTimeDelta);
+                    
+                    System.arraycopy(updateTimeActual, 0, updateTimeActual, 1, updateTimeActual.length - 1);
+                    updateTimeActual[0] = Engine.nanoseconds() - currentTime;
+                    
+                    Engine.updateTimeActual = 0;
+                    for (long l : updateTimeActual) Engine.updateTimeActual += l;
+                    Engine.updateTimeActual /= updateTimeActual.length;
                 }
                 
                 if (drawFreq != Engine.instance.drawFreq)
@@ -188,6 +211,13 @@ public abstract class Engine
                     drawTimeLast = currentTime;
                     
                     drawRenderThread(drawFrame++, currentTime, drawTimeDelta);
+                    
+                    System.arraycopy(drawTimeActual, 0, drawTimeActual, 1, drawTimeActual.length - 1);
+                    drawTimeActual[0] = Engine.nanoseconds() - currentTime;
+                    
+                    Engine.drawTimeActual = 0;
+                    for (long l : drawTimeActual) Engine.drawTimeActual += l;
+                    Engine.drawTimeActual /= drawTimeActual.length;
                 }
                 
                 Thread.yield();
