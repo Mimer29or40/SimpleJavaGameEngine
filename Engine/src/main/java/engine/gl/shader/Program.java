@@ -7,6 +7,7 @@ import org.joml.*;
 import org.lwjgl.system.MemoryStack;
 
 import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 import java.util.*;
 
 import static org.lwjgl.opengl.GL44.*;
@@ -355,6 +356,13 @@ public class Program
         glUniform1i(Program.bound.getUniform(name), value);
     }
     
+    public static void uniformIntv(@NotNull String name, @NotNull IntBuffer buffer)
+    {
+        Program.LOGGER.trace("uniformIntv(%s, %s)", name, buffer);
+        
+        glUniform1iv(Program.bound.getUniform(name), buffer);
+    }
+    
     public static void uniformUInt(@NotNull String name, long value)
     {
         Program.LOGGER.trace("uniformUInt(%s, %s)", name, value);
@@ -362,11 +370,25 @@ public class Program
         glUniform1ui(Program.bound.getUniform(name), (int) (value & 0xFFFFFFFFL));
     }
     
+    public static void uniformUIntv(@NotNull String name, @NotNull IntBuffer buffer)
+    {
+        Program.LOGGER.trace("uniformUIntv(%s, %s)", name, buffer);
+        
+        glUniform1uiv(Program.bound.getUniform(name), buffer);
+    }
+    
     public static void uniformFloat(@NotNull String name, double value)
     {
         Program.LOGGER.trace("uniformFloat(%s, %s)", name, value);
         
         glUniform1f(Program.bound.getUniform(name), (float) value);
+    }
+    
+    public static void uniformFloatv(@NotNull String name, @NotNull FloatBuffer buffer)
+    {
+        Program.LOGGER.trace("uniformFloatv(%s, %s)", name, buffer);
+        
+        glUniform1fv(Program.bound.getUniform(name), buffer);
     }
     
     public static void uniformBool2(@NotNull String name, boolean x, boolean y)
@@ -388,6 +410,13 @@ public class Program
         uniformInt2(name, vec.x(), vec.y());
     }
     
+    public static void uniformInt2v(@NotNull String name, @NotNull IntBuffer buffer)
+    {
+        Program.LOGGER.trace("uniformInt2v(%s, %s)", name, buffer);
+        
+        glUniform2iv(Program.bound.getUniform(name), buffer);
+    }
+    
     public static void uniformUInt2(@NotNull String name, long x, long y)
     {
         Program.LOGGER.trace("uniformUInt2(%s, %s, %s)", name, x, y);
@@ -400,6 +429,13 @@ public class Program
         uniformUInt2(name, vec.x(), vec.y());
     }
     
+    public static void uniformUInt2v(@NotNull String name, @NotNull IntBuffer buffer)
+    {
+        Program.LOGGER.trace("uniformUInt2v(%s, %s)", name, buffer);
+        
+        glUniform2uiv(Program.bound.getUniform(name), buffer);
+    }
+    
     public static void uniformFloat2(@NotNull String name, double x, double y)
     {
         Program.LOGGER.trace("uniformFloat2(%s, %s, %s)", name, x, y);
@@ -410,6 +446,13 @@ public class Program
     public static void uniformFloat2(@NotNull String name, @NotNull Vector2dc vec)
     {
         uniformFloat2(name, vec.x(), vec.y());
+    }
+    
+    public static void uniformFloat2v(@NotNull String name, @NotNull FloatBuffer buffer)
+    {
+        Program.LOGGER.trace("uniformFloat2v(%s, %s)", name, buffer);
+        
+        glUniform2fv(Program.bound.getUniform(name), buffer);
     }
     
     public static void uniformBool3(@NotNull String name, boolean x, boolean y, boolean z)
@@ -431,6 +474,13 @@ public class Program
         uniformInt3(name, vec.x(), vec.y(), vec.z());
     }
     
+    public static void uniformInt3v(@NotNull String name, @NotNull IntBuffer buffer)
+    {
+        Program.LOGGER.trace("uniformInt3v(%s, %s)", name, buffer);
+        
+        glUniform3iv(Program.bound.getUniform(name), buffer);
+    }
+    
     public static void uniformUInt3(@NotNull String name, long x, long y, long z)
     {
         Program.LOGGER.trace("uniformUInt3(%s, %s, %s, %s)", name, x, y, z);
@@ -443,6 +493,13 @@ public class Program
         uniformUInt3(name, vec.x(), vec.y(), vec.z());
     }
     
+    public static void uniformUInt3v(@NotNull String name, @NotNull IntBuffer buffer)
+    {
+        Program.LOGGER.trace("uniformUInt3v(%s, %s)", name, buffer);
+        
+        glUniform3uiv(Program.bound.getUniform(name), buffer);
+    }
+    
     public static void uniformFloat3(@NotNull String name, double x, double y, double z)
     {
         Program.LOGGER.trace("uniformFloat3(%s, %s, %s, %s)", name, x, y, z);
@@ -453,6 +510,13 @@ public class Program
     public static void uniformFloat3(@NotNull String name, @NotNull Vector3dc vec)
     {
         uniformFloat3(name, vec.x(), vec.y(), vec.z());
+    }
+    
+    public static void uniformFloat3v(@NotNull String name, @NotNull FloatBuffer buffer)
+    {
+        Program.LOGGER.trace("uniformFloat3v(%s, %s)", name, buffer);
+        
+        glUniform3fv(Program.bound.getUniform(name), buffer);
     }
     
     public static void uniformBool4(@NotNull String name, boolean x, boolean y, boolean z, boolean w)
@@ -474,6 +538,13 @@ public class Program
         uniformInt4(name, vec.x(), vec.y(), vec.z(), vec.w());
     }
     
+    public static void uniformInt4v(@NotNull String name, @NotNull IntBuffer buffer)
+    {
+        Program.LOGGER.trace("uniformInt4v(%s, %s)", name, buffer);
+        
+        glUniform4iv(Program.bound.getUniform(name), buffer);
+    }
+    
     public static void uniformUInt4(@NotNull String name, long x, long y, long z, long w)
     {
         Program.LOGGER.trace("uniformUInt4(%s, %s, %s, %s, %s)", name, x, y, z, w);
@@ -486,6 +557,13 @@ public class Program
         uniformUInt4(name, vec.x(), vec.y(), vec.z(), vec.w());
     }
     
+    public static void uniformUInt4v(@NotNull String name, @NotNull IntBuffer buffer)
+    {
+        Program.LOGGER.trace("uniformUInt4v(%s, %s)", name, buffer);
+        
+        glUniform4uiv(Program.bound.getUniform(name), buffer);
+    }
+    
     public static void uniformFloat4(@NotNull String name, double x, double y, double z, double w)
     {
         Program.LOGGER.trace("uniformFloat4(%s, %s, %s, %s, %s)", name, x, y, z, w);
@@ -496,6 +574,13 @@ public class Program
     public static void uniformFloat4(@NotNull String name, @NotNull Vector4dc vec)
     {
         uniformFloat4(name, vec.x(), vec.y(), vec.z(), vec.w());
+    }
+    
+    public static void uniformFloat4v(@NotNull String name, @NotNull FloatBuffer buffer)
+    {
+        Program.LOGGER.trace("uniformFloat4v(%s, %s)", name, buffer);
+        
+        glUniform4fv(Program.bound.getUniform(name), buffer);
     }
     
     public static void uniformMatrix2(@NotNull String name, boolean transpose, @NotNull Matrix2dc mat)
