@@ -19,7 +19,7 @@ public class ColorBuffer extends CustomBuffer<ColorBuffer> implements Iterable<C
 {
     public static @NotNull ColorBuffer create(@NotNull ColorFormat format, int capacity)
     {
-        if (format == ColorFormat.UNKNOWN) throw new IllegalArgumentException("Invalid Format: " + format);
+        checkFormat(format);
         ByteBuffer container = ByteBuffer.allocateDirect(capacity * format.sizeof).order(ByteOrder.nativeOrder());
         return new ColorBuffer(format, container, capacity);
     }
@@ -31,7 +31,7 @@ public class ColorBuffer extends CustomBuffer<ColorBuffer> implements Iterable<C
     
     public static @NotNull ColorBuffer create(@NotNull ColorFormat format, long address, int capacity)
     {
-        if (format == ColorFormat.UNKNOWN) throw new IllegalArgumentException("Invalid Format: " + format);
+        checkFormat(format);
         ByteBuffer container = MemoryUtil.memByteBuffer(address, capacity * format.sizeof);
         return new ColorBuffer(format, container, capacity);
     }
@@ -53,7 +53,7 @@ public class ColorBuffer extends CustomBuffer<ColorBuffer> implements Iterable<C
     
     public static @NotNull ColorBuffer wrap(@NotNull ColorFormat format, @NotNull ByteBuffer container)
     {
-        if (format == ColorFormat.UNKNOWN) throw new IllegalArgumentException("Invalid Format: " + format);
+        checkFormat(format);
         return new ColorBuffer(format, container, container.remaining() / format.sizeof);
     }
     
@@ -74,7 +74,7 @@ public class ColorBuffer extends CustomBuffer<ColorBuffer> implements Iterable<C
     
     public static @NotNull ColorBuffer malloc(@NotNull ColorFormat format, int capacity)
     {
-        if (format == ColorFormat.UNKNOWN) throw new IllegalArgumentException("Invalid Format: " + format);
+        checkFormat(format);
         ByteBuffer container = MemoryUtil.memAlloc(capacity * format.sizeof);
         return new ColorBuffer(format, container, capacity);
     }
@@ -86,7 +86,7 @@ public class ColorBuffer extends CustomBuffer<ColorBuffer> implements Iterable<C
     
     public static @NotNull ColorBuffer malloc(@NotNull ColorFormat format, int capacity, @NotNull MemoryStack stack)
     {
-        if (format == ColorFormat.UNKNOWN) throw new IllegalArgumentException("Invalid Format: " + format);
+        checkFormat(format);
         ByteBuffer container = stack.malloc(1, capacity * format.sizeof);
         return new ColorBuffer(format, container, capacity);
     }
@@ -98,7 +98,7 @@ public class ColorBuffer extends CustomBuffer<ColorBuffer> implements Iterable<C
     
     public static @NotNull ColorBuffer calloc(@NotNull ColorFormat format, int capacity)
     {
-        if (format == ColorFormat.UNKNOWN) throw new IllegalArgumentException("Invalid Format: " + format);
+        checkFormat(format);
         ByteBuffer container = MemoryUtil.memCalloc(capacity, format.sizeof);
         return new ColorBuffer(format, container, capacity);
     }
@@ -110,7 +110,7 @@ public class ColorBuffer extends CustomBuffer<ColorBuffer> implements Iterable<C
     
     public static @NotNull ColorBuffer calloc(@NotNull ColorFormat format, int capacity, @NotNull MemoryStack stack)
     {
-        if (format == ColorFormat.UNKNOWN) throw new IllegalArgumentException("Invalid Format: " + format);
+        checkFormat(format);
         ByteBuffer container = stack.calloc(1, capacity * format.sizeof);
         return new ColorBuffer(format, container, capacity);
     }
@@ -124,6 +124,17 @@ public class ColorBuffer extends CustomBuffer<ColorBuffer> implements Iterable<C
     {
         ByteBuffer newContainer = MemoryUtil.memRealloc(ptr.container, capacity * ptr.sizeof());
         return new ColorBuffer(ptr.format, newContainer, capacity);
+    }
+    
+    private static void checkFormat(@NotNull ColorFormat format)
+    {
+        switch (format)
+        {
+            case RED, RED_ALPHA, RGB, RGBA -> {}
+            //case STENCIL, DEPTH, DEPTH_STENCIL -> {}
+            //case RGB_16F, RGBA_16F, RGB_32F, RGBA_32F -> {}
+            default -> throw new IllegalArgumentException("Invalid Format: " + format);
+        }
     }
     
     // -------------------- Instance -------------------- //

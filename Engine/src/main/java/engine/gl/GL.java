@@ -245,7 +245,7 @@ public class GL
         ByteBuffer data = MemoryUtil.memAlloc(width * height * format.sizeof);
         
         glReadBuffer(buffer);
-        glReadPixels(x, y, width, height, format.format, GL_UNSIGNED_BYTE, MemoryUtil.memAddress(data));
+        glReadPixels(x, y, width, height, format.format, format.dataType, MemoryUtil.memAddress(data));
         
         // Flip data vertically
         int    s    = width * format.sizeof;

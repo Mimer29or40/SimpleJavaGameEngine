@@ -158,7 +158,7 @@ public class Texture2D extends Texture
         }
         else
         {
-            glTexImage2D(this.type, 0, internalFormat, this.width, this.height, 0, this.format.format, GL_UNSIGNED_BYTE, data);
+            glTexImage2D(this.type, 0, internalFormat, this.width, this.height, 0, this.format.format, this.format.dataType, data);
         }
         
         try (MemoryStack stack = MemoryStack.stackPush())
@@ -189,7 +189,7 @@ public class Texture2D extends Texture
         
         ColorBuffer pixels = ColorBuffer.malloc(this.format, this.width * this.height);
         
-        glGetTexImage(this.type, 0, this.format.format, GL_UNSIGNED_BYTE, pixels.address());
+        glGetTexImage(this.type, 0, this.format.format, this.format.dataType, pixels.address());
         
         return pixels;
     }
@@ -208,7 +208,7 @@ public class Texture2D extends Texture
         
         long pixels = MemoryUtil.memAddressSafe(data);
         
-        glTexSubImage2D(this.type, 0, x, y, width, height, this.format.format, GL_UNSIGNED_BYTE, pixels);
+        glTexSubImage2D(this.type, 0, x, y, width, height, this.format.format, this.format.dataType, pixels);
     }
     
     public void update(@NotNull ColorBuffer data)
