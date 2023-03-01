@@ -7,10 +7,15 @@ import static org.lwjgl.opengl.GL44.*;
 public enum ColorFormat
 {
     UNKNOWN(0, false, -1, -1, -1),
+    
     RED(1, false, GL_RED, GL_R8, GL_SLUMINANCE),
     RED_ALPHA(2, true, GL_RG, GL_RG8, GL_SLUMINANCE_ALPHA),
     RGB(3, false, GL_RGB, GL_RGB8, GL_SRGB),
     RGBA(4, true, GL_RGBA, GL_RGBA8, GL_SRGB_ALPHA),
+    
+    STENCIL(1, false, GL_STENCIL_INDEX, GL_STENCIL_INDEX8, GL_STENCIL_INDEX8),
+    DEPTH(3, false, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT24),
+    DEPTH_STENCIL(4, false, GL_DEPTH_STENCIL, GL_DEPTH24_STENCIL8, GL_DEPTH24_STENCIL8),
     ;
     
     public static final ColorFormat DEFAULT = RGBA;

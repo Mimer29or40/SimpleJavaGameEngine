@@ -1,10 +1,8 @@
 package engine.gl;
 
 import engine.color.ColorFormat;
+import engine.gl.texture.Texture;
 import engine.gl.texture.Texture2D;
-import engine.gl.texture.TextureDepth;
-import engine.gl.texture.TextureDepthStencil;
-import engine.gl.texture.TextureStencil;
 import engine.util.Logger;
 import org.jetbrains.annotations.NotNull;
 
@@ -67,11 +65,11 @@ public class Framebuffer
     
     private int width, height;
     
-    protected final List<Texture2D> colors;
+    protected final List<Texture> colors;
     
-    protected TextureDepth        depth;
-    protected TextureStencil      stencil;
-    protected TextureDepthStencil depthStencil;
+    protected Texture depth;
+    protected Texture stencil;
+    protected Texture depthStencil;
     
     private Framebuffer()
     {
@@ -83,13 +81,13 @@ public class Framebuffer
         this.colors = Arrays.asList(new Texture2D[32]);
         Collections.fill(this.colors, Texture2D.NULL);
         
-        this.depth        = TextureDepth.NULL;
-        this.stencil      = TextureStencil.NULL;
-        this.depthStencil = TextureDepthStencil.NULL;
+        this.depth        = Texture2D.NULL;
+        this.stencil      = Texture2D.NULL;
+        this.depthStencil = Texture2D.NULL;
     }
     
     private Framebuffer(
-            int width, int height, @NotNull Texture2D[] colors, @NotNull TextureDepth depth, @NotNull TextureStencil stencil, @NotNull TextureDepthStencil depthStencil)
+            int width, int height, @NotNull Texture[] colors, @NotNull Texture depth, @NotNull Texture stencil, @NotNull Texture depthStencil)
     {
         this.id = glGenFramebuffers();
         
@@ -101,7 +99,7 @@ public class Framebuffer
         this.colors = Arrays.asList(colors);
         
         int i = 0;
-        for (Texture2D color : this.colors)
+        for (Texture color : this.colors)
         {
             if (color != Texture2D.NULL)
             {
@@ -110,21 +108,21 @@ public class Framebuffer
             }
         }
         
-        if (depth != TextureDepth.NULL)
+        if (depth != Texture2D.NULL)
         {
             Framebuffer.LOGGER.trace("Attaching Depth=%s to %s", depth, this);
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depth.type, depth.id(), 0);
             this.depth = depth;
         }
         
-        if (stencil != TextureStencil.NULL)
+        if (stencil != Texture2D.NULL)
         {
             Framebuffer.LOGGER.trace("Attaching Stencil=%s to %s", stencil, this);
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, stencil.type, stencil.id(), 0);
             this.stencil = stencil;
         }
         
-        if (depthStencil != TextureDepthStencil.NULL)
+        if (depthStencil != Texture2D.NULL)
         {
             Framebuffer.LOGGER.trace("Attaching DepthStencil=%s to %s", depthStencil, this);
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, depthStencil.type, depthStencil.id(), 0);
@@ -190,22 +188,22 @@ public class Framebuffer
         return this.height;
     }
     
-    public @NotNull Texture2D color(int index)
+    public @NotNull Texture color(int index)
     {
         return this.colors.get(index);
     }
     
-    public @NotNull TextureDepth depth()
+    public @NotNull Texture depth()
     {
         return this.depth;
     }
     
-    public @NotNull TextureStencil stencil()
+    public @NotNull Texture stencil()
     {
         return this.stencil;
     }
     
-    public @NotNull TextureDepthStencil depthStencil()
+    public @NotNull Texture depthStencil()
     {
         return this.depthStencil;
     }
@@ -218,17 +216,17 @@ public class Framebuffer
         
         glDeleteFramebuffers(this.id);
         
-        for (Texture2D color : this.colors) if (color != Texture2D.NULL) color.delete();
+        for (Texture color : this.colors) if (color != Texture2D.NULL) color.delete();
         Collections.fill(this.colors, Texture2D.NULL);
         
         if (this.depth != null) this.depth.delete();
-        this.depth = TextureDepth.NULL;
+        this.depth = Texture2D.NULL;
         
         if (this.stencil != null) this.stencil.delete();
-        this.stencil = TextureStencil.NULL;
+        this.stencil = Texture2D.NULL;
         
         if (this.depthStencil != null) this.depthStencil.delete();
-        this.depthStencil = TextureDepthStencil.NULL;
+        this.depthStencil = Texture2D.NULL;
         
         this.id = 0;
         
@@ -282,12 +280,12 @@ public class Framebuffer
         private int width, height;
         private int samples;
         
-        private       int         colorIndex;
-        private final Texture2D[] color = new Texture2D[32];
+        private       int       colorIndex;
+        private final Texture[] color = new Texture[32];
         
-        private TextureDepth        depth;
-        private TextureStencil      stencil;
-        private TextureDepthStencil depthStencil;
+        private Texture depth;
+        private Texture stencil;
+        private Texture depthStencil;
         
         private Builder reset(int width, int height, int samples)
         {
@@ -298,9 +296,9 @@ public class Framebuffer
             this.colorIndex = 0;
             Arrays.fill(this.color, Texture2D.NULL);
             
-            this.depth        = TextureDepth.NULL;
-            this.stencil      = TextureStencil.NULL;
-            this.depthStencil = TextureDepthStencil.NULL;
+            this.depth        = Texture2D.NULL;
+            this.stencil      = Texture2D.NULL;
+            this.depthStencil = Texture2D.NULL;
             
             return this;
         }
@@ -310,7 +308,7 @@ public class Framebuffer
             return new Framebuffer(this.width, this.height, this.color, this.depth, this.stencil, this.depthStencil);
         }
         
-        public @NotNull Builder color(@NotNull Texture2D texture)
+        public @NotNull Builder color(@NotNull Texture texture)
         {
             this.color[this.colorIndex++] = texture;
             
@@ -327,7 +325,7 @@ public class Framebuffer
             return color(new Texture2D(ColorFormat.DEFAULT, this.width, this.height, this.samples));
         }
         
-        public @NotNull Builder depth(@NotNull TextureDepth texture)
+        public @NotNull Builder depth(@NotNull Texture texture)
         {
             this.depth = texture;
             
@@ -336,10 +334,10 @@ public class Framebuffer
         
         public @NotNull Builder depth()
         {
-            return depth(new TextureDepth(this.width, this.height, this.samples));
+            return depth(new Texture2D(ColorFormat.DEPTH, this.width, this.height, this.samples));
         }
         
-        public @NotNull Builder stencil(@NotNull TextureStencil texture)
+        public @NotNull Builder stencil(@NotNull Texture texture)
         {
             this.stencil = texture;
             
@@ -348,10 +346,10 @@ public class Framebuffer
         
         public @NotNull Builder stencil()
         {
-            return stencil(new TextureStencil(this.width, this.height, this.samples));
+            return stencil(new Texture2D(ColorFormat.STENCIL, this.width, this.height, this.samples));
         }
         
-        public @NotNull Builder depthStencil(@NotNull TextureDepthStencil texture)
+        public @NotNull Builder depthStencil(@NotNull Texture texture)
         {
             this.depthStencil = texture;
             
@@ -360,7 +358,7 @@ public class Framebuffer
         
         public @NotNull Builder depthStencil()
         {
-            return depthStencil(new TextureDepthStencil(this.width, this.height, this.samples));
+            return depthStencil(new Texture2D(ColorFormat.DEPTH_STENCIL, this.width, this.height, this.samples));
         }
     }
 }
