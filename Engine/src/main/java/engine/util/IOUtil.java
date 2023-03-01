@@ -4,12 +4,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
+import java.util.Collections;
 import java.util.Objects;
 import java.util.function.Function;
 
@@ -24,11 +24,26 @@ public class IOUtil
      *
      * @return The path to the file
      */
+    @SuppressWarnings("DuplicateExpressions")
     public static @NotNull Path getPath(@NotNull String resource)
     {
         try
         {
-            return Path.of(Objects.requireNonNull(IOUtil.class.getClassLoader().getResource(resource)).toURI());
+            URI resourceURI = Objects.requireNonNull(IOUtil.class.getClassLoader().getResource(resource)).toURI();
+            try
+            {
+                return Path.of(resourceURI);
+            }
+            catch (FileSystemNotFoundException ignored)
+            {
+                // This is here because we need to create a zip file system before we can get the path to a file in it.
+                try
+                {
+                    FileSystems.newFileSystem(resourceURI, Collections.emptyMap());
+                    return Path.of(resourceURI);
+                }
+                catch (IOException ignoredAlso) {}
+            }
         }
         catch (URISyntaxException | NullPointerException ignored) {}
         return Path.of(resource);
