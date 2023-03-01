@@ -1,14 +1,27 @@
 package engine;
 
+import engine.renderer.TextRenderer;
 import engine.util.Logger;
+import org.jetbrains.annotations.NotNull;
 
 public class Renderer
 {
     private static final Logger LOGGER = Logger.getLogger();
     
+    private static TextRenderer textRenderer;
+    
     static void setup()
     {
         Renderer.LOGGER.debug("Setup");
+        
+        Renderer.textRenderer = new TextRenderer();
+    }
+    
+    static void destroy()
+    {
+        Renderer.LOGGER.debug("Destroy");
+    
+        Renderer.textRenderer.delete();
     }
     
     static void beforeDraw()
@@ -19,9 +32,9 @@ public class Renderer
     {
     }
     
-    static void destroy()
+    public static @NotNull TextRenderer textRenderer()
     {
-        Renderer.LOGGER.debug("Destroy");
+        return Renderer.textRenderer;
     }
     
     private Renderer() {}
