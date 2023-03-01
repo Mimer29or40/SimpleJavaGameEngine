@@ -9,6 +9,7 @@ import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
 
+import static org.lwjgl.opengl.GL30.glBindBufferRange;
 import static org.lwjgl.opengl.GL44.GL_UNIFORM_BUFFER;
 import static org.lwjgl.opengl.GL44.glBindBufferBase;
 
@@ -49,6 +50,26 @@ public class BufferUniform extends Buffer
         return this;
     }
     
+    public @NotNull BufferUniform range(int index, int offset, long size)
+    {
+        bind(this);
+    
+        BufferUniform.LOGGER.trace("%s: Binding to Range: index=%s offset=%s size=%s", this, index, offset, size);
+    
+        glBindBufferRange(this.type, index, this.id, offset, size);
+    
+        return this;
+    }
+    
+    public @NotNull BufferUniform range(int index, int size)
+    {
+        return range(index, 0, size);
+    }
+    
+    public @NotNull BufferUniform range(int index)
+    {
+        return range(index, 0, this.size);
+    }
     
     public static final BufferUniform NULL = new BufferUniform()
     {
