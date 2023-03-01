@@ -150,25 +150,15 @@ public class Texture2D extends Texture
     
     public void genMipmaps()
     {
-        // NOTE: NPOT textures support check inside function
-        // On WebGL (OpenGL ES 2.0) NPOT textures support is limited
         bind(this);
         
-        // Check if texture is power-of-two (POT)
-        if (this.width > 0 && (this.width & this.width - 1) == 0 && this.height > 0 && (this.height & this.height - 1) == 0)
-        {
-            // Hint for mipmaps generation algorithm: GL.FASTEST, GL.NICEST, GL.DONT_CARE
-            glHint(GL_GENERATE_MIPMAP_HINT, GL_DONT_CARE);
-            glGenerateMipmap(this.type); // Generate mipmaps automatically
-            
-            filter(TextureFilter.LINEAR, TextureFilter.LINEAR_MIPMAP_LINEAR); // Activate Tri-Linear filtering for mipmaps
-            
-            Texture2D.LOGGER.info("Mipmaps Generated: %s", this);
-        }
-        else
-        {
-            Texture2D.LOGGER.warning("Texture is not power of 2:", this);
-        }
+        // Hint for mipmaps generation algorithm: GL.FASTEST, GL.NICEST, GL.DONT_CARE
+        glHint(GL_GENERATE_MIPMAP_HINT, GL_DONT_CARE);
+        glGenerateMipmap(this.type); // Generate mipmaps automatically
+        
+        filter(TextureFilter.LINEAR_MIPMAP_LINEAR, TextureFilter.LINEAR); // Activate Tri-Linear filtering for mipmaps
+        
+        Texture2D.LOGGER.debug("Mipmaps Generated: %s", this);
     }
     
     public static final Texture2D NULL = new Texture2D()
