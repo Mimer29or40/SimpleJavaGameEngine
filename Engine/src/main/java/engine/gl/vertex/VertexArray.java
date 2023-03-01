@@ -78,7 +78,9 @@ public class VertexArray
                 VertexAttribute attribute = attributes[j];
                 
                 glVertexAttribPointer(attributeCount, attribute.count(), attribute.type().ref, attribute.normalized(), stride, offset);
-                glEnableVertexAttribArray(attributeCount++);
+                glEnableVertexAttribArray(attributeCount);
+                if (attribute.divisor() != null) glVertexAttribDivisor(attributeCount, attribute.divisor());
+                attributeCount++;
                 offset += attribute.size();
                 
                 this.attributes.add(attribute);
@@ -182,10 +184,9 @@ public class VertexArray
     {
         bind(this);
         
-        VertexArray.LOGGER.trace("Drawing Arrays size=%s from %s", count, this);
+        VertexArray.LOGGER.trace("%s.draw(%s, %s, %s)", this, mode, offset, count);
         
         glDrawArrays(mode.ref, offset, count);
-        // glDrawArraysInstanced(int mode, int first, int count, int primcount) // TODO
         
         return this;
     }
@@ -208,12 +209,11 @@ public class VertexArray
         
         Buffer.bind(this.indexBuffer);
         
-        VertexArray.LOGGER.trace("Drawing Elements size=%s from %s", count, this);
+        VertexArray.LOGGER.trace("%s.drawElements(%s, %s, %s)", this, mode, offset, count);
         
         GLType indexType = this.indexBuffer.indexType;
         
         glDrawElements(mode.ref, count, indexType.ref, offset * indexType.bytes);
-        // glDrawElementsInstanced(int mode, int count, int type, long indices, int primcount); // TODO
         
         return this;
     }
@@ -226,6 +226,40 @@ public class VertexArray
     public VertexArray drawElements(@NotNull DrawMode mode)
     {
         return drawElements(mode, 0L, indexCount());
+    }
+    
+    public VertexArray drawInstanced(@NotNull DrawMode mode, int offset, int count, int primitiveCount)
+    {
+        bind(this);
+        
+        VertexArray.LOGGER.trace("%s.drawInstanced(%s, %s, %s, %s)", this, mode, offset, count, primitiveCount);
+        
+        glDrawArraysInstanced(mode.ref, offset, count, primitiveCount);
+        
+        return this;
+    }
+    
+    public VertexArray drawInstanced(@NotNull DrawMode mode, int count, int primitiveCount)
+    {
+        return drawInstanced(mode, 0, count, primitiveCount);
+    }
+    
+    public VertexArray drawElementsInstanced(@NotNull DrawMode mode, long offset, int count, int primitiveCount)
+    {
+        bind(this);
+        
+        VertexArray.LOGGER.trace("%s.drawInstanced(%s, %s, %s, %s)", this, mode, offset, count, primitiveCount);
+        
+        GLType indexType = this.indexBuffer.indexType;
+        
+        glDrawElementsInstanced(mode.ref, count, indexType.ref, offset * indexType.bytes, primitiveCount);
+        
+        return this;
+    }
+    
+    public VertexArray drawElementsInstanced(@NotNull DrawMode mode, int count, int primitiveCount)
+    {
+        return drawElementsInstanced(mode, 0, count, primitiveCount);
     }
     
     // -------------------- Builder -------------------- //
