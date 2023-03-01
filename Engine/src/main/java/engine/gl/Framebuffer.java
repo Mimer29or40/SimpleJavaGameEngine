@@ -8,7 +8,7 @@ import engine.gl.texture.TextureStencil;
 import engine.util.Logger;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -56,7 +56,7 @@ public class Framebuffer
         this.width  = 0;
         this.height = 0;
         
-        this.colors = new ArrayList<>(32);
+        this.colors = Arrays.asList(new Texture2D[32]);
         Collections.fill(this.colors, Texture2D.NULL);
         
         this.depth        = TextureDepth.NULL;
@@ -65,7 +65,7 @@ public class Framebuffer
     }
     
     private Framebuffer(
-            int width, int height, @NotNull List<Texture2D> colors, @NotNull TextureDepth depth, @NotNull TextureStencil stencil, @NotNull TextureDepthStencil depthStencil)
+            int width, int height, @NotNull Texture2D[] colors, @NotNull TextureDepth depth, @NotNull TextureStencil stencil, @NotNull TextureDepthStencil depthStencil)
     {
         this.id = glGenFramebuffers();
         
@@ -74,7 +74,7 @@ public class Framebuffer
         
         bind(this);
         
-        this.colors = new ArrayList<>(colors);
+        this.colors = Arrays.asList(colors);
         
         int i = 0;
         for (Texture2D color : this.colors)
@@ -194,8 +194,8 @@ public class Framebuffer
         
         glDeleteFramebuffers(this.id);
         
-        this.colors.forEach(Texture2D::delete);
-        this.colors.clear();
+        for (Texture2D color : this.colors) if (color != Texture2D.NULL) color.delete();
+        Collections.fill(this.colors, Texture2D.NULL);
         
         if (this.depth != null) this.depth.delete();
         this.depth = TextureDepth.NULL;
@@ -252,8 +252,8 @@ public class Framebuffer
     {
         private int width, height;
         
-        private       int             colorIndex;
-        private final List<Texture2D> color = new ArrayList<>(32);
+        private       int         colorIndex;
+        private final Texture2D[] color = new Texture2D[32];
         
         private TextureDepth        depth;
         private TextureStencil      stencil;
@@ -265,7 +265,7 @@ public class Framebuffer
             this.height = height;
             
             this.colorIndex = 0;
-            Collections.fill(this.color, Texture2D.NULL);
+            Arrays.fill(this.color, Texture2D.NULL);
             
             this.depth        = TextureDepth.NULL;
             this.stencil      = TextureStencil.NULL;
@@ -281,7 +281,7 @@ public class Framebuffer
         
         public @NotNull Builder color(@NotNull Texture2D texture)
         {
-            this.color.set(this.colorIndex++, texture);
+            this.color[this.colorIndex++] = texture;
             
             return this;
         }
