@@ -6,6 +6,7 @@ import engine.Engine;
 import engine.Key;
 import engine.color.Color;
 import engine.gl.DepthMode;
+import engine.gl.Framebuffer;
 import engine.gl.GL;
 import engine.gl.ScreenBuffer;
 import engine.gl.shader.Program;
@@ -16,7 +17,7 @@ import org.joml.Matrix4d;
 import org.joml.Vector3d;
 
 import static engine.IO.*;
-import static engine.Renderer.textRenderer;
+import static engine.Renderer.*;
 
 public class LOGL_4102_Asteroids extends Engine
 {
@@ -27,7 +28,7 @@ public class LOGL_4102_Asteroids extends Engine
     
     Camera camera = new Camera(new Vector3d(0.0, 0.0, 3.0), null, null, null);
     
-    int amount = 50000;
+    int        amount = 50000;
     Matrix4d[] modelMatrices;
     
     protected LOGL_4102_Asteroids()
@@ -87,7 +88,7 @@ public class LOGL_4102_Asteroids extends Engine
         // generate a large list of semi-random model transformation matrices
         // ------------------------------------------------------------------
         modelMatrices = new Matrix4d[amount];
-    
+        
         double radius = 150.0;
         double offset = 25.0;
         for (int i = 0; i < amount; i++)
@@ -154,9 +155,11 @@ public class LOGL_4102_Asteroids extends Engine
         }
     
         GL.depthMode(DepthMode.NONE);
-        textRenderer().color.set(Color.WHITE);
-        textRenderer().size = 36;
-        textRenderer().drawText(String.format("Update: %.3f\nDraw: %.3f", updateTimeActual(), drawTimeActual()), 10, 10);
+        Framebuffer fb = Framebuffer.get();
+        rendererView(new Matrix4d().setOrtho(0, fb.width(), fb.height(), 0, -1, 1));
+        textColor(Color.WHITE);
+        textSize(36);
+        textDraw(String.format("Update: %.3f\nDraw: %.3f", updateTimeActual(), drawTimeActual()), 10, 10);
     }
     
     @Override

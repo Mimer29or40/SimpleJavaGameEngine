@@ -4,7 +4,6 @@ import engine.Image;
 import engine.color.ColorBuffer;
 import engine.color.ColorFormat;
 import engine.gl.texture.Texture2D;
-import engine.gl.texture.TextureFilter;
 import engine.util.BinaryPacker;
 import engine.util.IOUtil;
 import engine.util.Logger;
@@ -200,8 +199,6 @@ public class Font
             
             this.charData  = Collections.unmodifiableList(charData);
             this.glyphData = Collections.unmodifiableMap(glyphData);
-            
-            image.save(Path.of("SDFFont.png"));
             
             this.texture = new Texture2D(image);
             //this.texture.filter(TextureFilter.LINEAR, TextureFilter.LINEAR);

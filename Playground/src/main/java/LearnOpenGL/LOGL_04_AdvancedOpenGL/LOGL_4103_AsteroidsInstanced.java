@@ -7,6 +7,7 @@ import engine.Engine;
 import engine.Key;
 import engine.color.Color;
 import engine.gl.DepthMode;
+import engine.gl.Framebuffer;
 import engine.gl.GL;
 import engine.gl.ScreenBuffer;
 import engine.gl.buffer.Buffer;
@@ -28,7 +29,8 @@ import org.lwjgl.system.MemoryUtil;
 import java.nio.FloatBuffer;
 
 import static engine.IO.*;
-import static engine.Renderer.textRenderer;
+import static engine.Renderer.*;
+import static engine.Renderer.textDraw;
 import static org.lwjgl.opengl.GL11.GL_FLOAT;
 import static org.lwjgl.opengl.GL20.glEnableVertexAttribArray;
 import static org.lwjgl.opengl.GL20.glVertexAttribPointer;
@@ -252,9 +254,11 @@ public class LOGL_4103_AsteroidsInstanced extends Engine
         }
         
         GL.depthMode(DepthMode.NONE);
-        textRenderer().color.set(Color.WHITE);
-        textRenderer().size = 36;
-        textRenderer().drawText(String.format("Update: %.3f\nDraw:   %.3f", updateTimeActual(), drawTimeActual()), 10, 10);
+        Framebuffer fb = Framebuffer.get();
+        rendererView(new Matrix4d().setOrtho(0, fb.width(), fb.height(), 0, -1, 1));
+        textColor(Color.WHITE);
+        textSize(36);
+        textDraw(String.format("Update: %.3f\nDraw: %.3f", updateTimeActual(), drawTimeActual()), 10, 10);
     }
     
     @Override

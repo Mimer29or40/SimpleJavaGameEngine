@@ -256,11 +256,7 @@ public abstract class Engine
         
         Framebuffer.bind(Framebuffer.NULL);
         
-        Renderer.beforeDraw();
-        
         Engine.instance.draw(frame, timeD, deltaTimeD);
-        
-        Renderer.afterDraw();
         
         IO.windowSwap();
     }
