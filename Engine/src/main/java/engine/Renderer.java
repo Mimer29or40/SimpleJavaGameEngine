@@ -52,6 +52,13 @@ public class Renderer
     private static final Matrix4d      view = new Matrix4d();
     private static       BufferUniform viewBuffer;
     
+    // ---------- Points State ---------- //
+    
+    private static Program pointsProgram;
+    
+    private static double pointsSize;
+    private static Color  pointsColor;
+    
     // ---------- Lines State ---------- //
     
     private static Program linesProgram;
@@ -106,6 +113,23 @@ public class Renderer
         Renderer.viewBuffer.base(0);
         rendererView(new Matrix4d());
         
+        // ----- Point ----- //
+        {
+            Shader pointVert = new Shader(ShaderType.VERTEX, IOUtil.getPath("shader/point.vert"));
+            Shader pointGeom = new Shader(ShaderType.GEOMETRY, IOUtil.getPath("shader/point.geom"));
+            Shader pointFrag = new Shader(ShaderType.FRAGMENT, IOUtil.getPath("shader/point.frag"));
+            
+            Program.bind(Renderer.pointsProgram = new Program(pointVert, pointGeom, pointFrag));
+            Program.uniformBlock("View", 0);
+            
+            pointVert.delete();
+            pointGeom.delete();
+            pointFrag.delete();
+            
+            Renderer.pointsSize  = 10.0;
+            Renderer.pointsColor = new Color(Color.WHITE);
+        }
+        
         // ----- Lines ----- //
         {
             Shader linesVert = new Shader(ShaderType.VERTEX, IOUtil.getPath("shader/lines.vert"));
@@ -157,6 +181,8 @@ public class Renderer
         MemoryUtil.memFree(Renderer.colorBuffer);
         Renderer.vertexArray.delete();
         
+        Renderer.pointsProgram.delete();
+        
         Renderer.linesProgram.delete();
         
         Renderer.textProgram.delete();
@@ -171,6 +197,55 @@ public class Renderer
         {
             Renderer.viewBuffer.set(0, Renderer.view.set(view).get(stack.mallocFloat(16)));
         }
+    }
+    
+    // -------------------- Point -------------------- //
+    
+    public static void pointsSize(double size)
+    {
+        Renderer.pointsSize = size;
+    }
+    
+    public static void pointsColor(@NotNull Colorc color)
+    {
+        Renderer.pointsColor.set(color);
+    }
+    
+    public static void pointsDraw(double @NotNull ... points)
+    {
+        int count = points.length / 3;
+        for (int i = 0, index = 0; i < count; i++)
+        {
+            pointsVertex(points[index++], points[index++], points[index++]);
+        }
+        
+        pointsDraw();
+    }
+    
+    private static void pointsVertex(double x, double y, double z)
+    {
+        Renderer.positionBuffer.put((float) x);
+        Renderer.positionBuffer.put((float) y);
+        Renderer.positionBuffer.put((float) z);
+        
+        Renderer.vertexCount++;
+    }
+    
+    private static void pointsDraw()
+    {
+        Framebuffer fb = Framebuffer.get();
+        
+        Program.bind(Renderer.pointsProgram);
+        Program.uniformInt2("viewport", fb.width(), fb.height());
+        Program.uniformFloat("size", Renderer.pointsSize);
+        Program.uniformColor("color", Renderer.pointsColor);
+        
+        VertexArray.bind(Renderer.vertexArray);
+        Renderer.vertexArray.buffer(0).set(0, Renderer.positionBuffer.flip());
+        Renderer.vertexArray.draw(DrawMode.POINTS, Renderer.vertexCount);
+        
+        Renderer.vertexCount = 0;
+        Renderer.positionBuffer.clear();
     }
     
     // -------------------- Lines -------------------- //

@@ -52,6 +52,8 @@ public class RenderDemo extends Engine
         view.setPerspective(Math.toRadians(45), w / h, 0.1, 1000.0);
         view.lookAt(pos, new Vector3d(), new Vector3d(0, 1, 0));
         rendererView(view);
+    
+        pointsDemo();
         
         linesThickness(2.0);
         
@@ -113,6 +115,23 @@ public class RenderDemo extends Engine
         textColor(Color.DARK_GREEN);
         //textSize(mousePos().x());
         textDraw(String.format("Update: %.3f\nDraw:   %.3f", updateTimeActual(), drawTimeActual()), 0, 0);
+    }
+    
+    double[] pointPoints = null;
+    
+    void pointsDemo()
+    {
+        if (pointPoints == null)
+        {
+            pointPoints = new double[100 * 3];
+            for (int i = 0; i < pointPoints.length; i++)
+            {
+                pointPoints[i] = Math.random() * 60.0 - 30.0;
+            }
+        }
+        
+        pointsSize(10);
+        pointsDraw(pointPoints);
     }
     
     @Override
