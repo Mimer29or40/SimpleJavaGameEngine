@@ -29,7 +29,9 @@ import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Renderer
 {
@@ -47,7 +49,8 @@ public class Renderer
     
     private static VertexArray vertexArray;
     
-    private static BufferUniform viewBuffer;
+    private static final Matrix4d      view = new Matrix4d();
+    private static       BufferUniform viewBuffer;
     
     // ---------- Lines State ---------- //
     
@@ -56,6 +59,7 @@ public class Renderer
     private static double linesThickness;
     private static Color  linesColorStart;
     private static Color  linesColorEnd;
+    private static int    linesBezierDivisions;
     
     // ---------- Text State ---------- //
     
@@ -108,15 +112,17 @@ public class Renderer
             Shader linesGeom = new Shader(ShaderType.GEOMETRY, IOUtil.getPath("shader/lines.geom"));
             Shader linesFrag = new Shader(ShaderType.FRAGMENT, IOUtil.getPath("shader/lines.frag"));
             
-            Renderer.linesProgram = new Program(linesVert, linesGeom, linesFrag);
+            Program.bind(Renderer.linesProgram = new Program(linesVert, linesGeom, linesFrag));
+            Program.uniformBlock("View", 0);
             
             linesVert.delete();
             linesGeom.delete();
             linesFrag.delete();
             
-            Renderer.linesThickness  = 10.0;
-            Renderer.linesColorStart = new Color(Color.WHITE);
-            Renderer.linesColorEnd   = new Color(Color.WHITE);
+            Renderer.linesThickness       = 10.0;
+            Renderer.linesColorStart      = new Color(Color.WHITE);
+            Renderer.linesColorEnd        = new Color(Color.WHITE);
+            Renderer.linesBezierDivisions = 24;
         }
         
         // ----- Text ----- //
@@ -124,7 +130,9 @@ public class Renderer
             Shader textVert = new Shader(ShaderType.VERTEX, IOUtil.getPath("shader/text.vert"));
             Shader textFrag = new Shader(ShaderType.FRAGMENT, IOUtil.getPath("shader/text.frag"));
             
-            Renderer.textProgram = new Program(textVert, textFrag);
+            Program.bind(Renderer.textProgram = new Program(textVert, textFrag));
+            Program.uniformBlock("View", 0);
+            Program.uniformInt("fontTexture", 0);
             
             textVert.delete();
             textFrag.delete();
@@ -161,7 +169,7 @@ public class Renderer
     {
         try (MemoryStack stack = MemoryStack.stackPush())
         {
-            Renderer.viewBuffer.set(0, view.get(stack.mallocFloat(16)));
+            Renderer.viewBuffer.set(0, Renderer.view.set(view).get(stack.mallocFloat(16)));
         }
     }
     
@@ -188,6 +196,11 @@ public class Renderer
         Renderer.linesColorEnd.set(color);
     }
     
+    public static void linesBezierDivisions(int divisions)
+    {
+        Renderer.linesBezierDivisions = divisions;
+    }
+    
     public static void linesDraw(double @NotNull ... points)
     {
         int pointCount = points.length / 3;
@@ -207,28 +220,6 @@ public class Renderer
         
         // Last coordinate get repeated.
         linesVertex(points[points.length - 3], points[points.length - 2], points[points.length - 1], Renderer.linesColorEnd);
-        
-        linesDraw();
-    }
-    
-    public static void linesDraw(Vector3d @NotNull ... points)
-    {
-        int pointCount = points.length;
-        
-        // First coordinate get repeated.
-        linesVertex(points[0].x, points[0].y, points[0].z, Renderer.linesColorStart);
-        
-        Color lerp = new Color();
-        for (int i = 0; i < pointCount; i++)
-        {
-            double t = (double) i / (pointCount - 1);
-            Renderer.linesColorStart.interpolate(Renderer.linesColorEnd, t, lerp);
-            
-            linesVertex(points[i].x, points[i].y, points[i].z, lerp);
-        }
-        
-        // Last coordinate get repeated.
-        linesVertex(points[points.length - 1].x, points[points.length - 1].y, points[points.length - 1].z, Renderer.linesColorEnd);
         
         linesDraw();
     }
@@ -255,6 +246,196 @@ public class Renderer
         linesDraw();
     }
     
+    public static void linesDraw(Vector3d @NotNull ... points)
+    {
+        int pointCount = points.length;
+        
+        // First coordinate get repeated.
+        linesVertex(points[0].x, points[0].y, points[0].z, Renderer.linesColorStart);
+        
+        Color lerp = new Color();
+        for (int i = 0; i < pointCount; i++)
+        {
+            double t = (double) i / (pointCount - 1);
+            Renderer.linesColorStart.interpolate(Renderer.linesColorEnd, t, lerp);
+            
+            linesVertex(points[i].x, points[i].y, points[i].z, lerp);
+        }
+        
+        // Last coordinate get repeated.
+        linesVertex(points[points.length - 1].x, points[points.length - 1].y, points[points.length - 1].z, Renderer.linesColorEnd);
+        
+        linesDraw();
+    }
+    
+    public static void linesDrawEnclosed(double @NotNull ... points)
+    {
+        int pointCount = points.length / 3;
+        
+        // Last coordinate is first.
+        linesVertex(points[points.length - 3], points[points.length - 2], points[points.length - 1], Renderer.linesColorStart);
+        
+        Color lerp = new Color();
+        for (int index = 0; index < pointCount; index++)
+        {
+            double t = (double) index / (pointCount - 1);
+            Renderer.linesColorStart.interpolate(Renderer.linesColorEnd, t, lerp);
+            
+            int i = index * 3;
+            linesVertex(points[i], points[i + 1], points[i + 2], lerp);
+        }
+        
+        // First coordinate is last.
+        linesVertex(points[0], points[1], points[2], Renderer.linesColorEnd);
+        
+        linesDraw();
+    }
+    
+    public static void linesDrawEnclosed(Vector2d @NotNull ... points)
+    {
+        int pointCount = points.length;
+        
+        // Last coordinate is first.
+        linesVertex(points[points.length - 1].x, points[points.length - 1].y, 0, Renderer.linesColorStart);
+        
+        Color lerp = new Color();
+        for (int i = 0; i < pointCount; i++)
+        {
+            double t = (double) i / (pointCount - 1);
+            Renderer.linesColorStart.interpolate(Renderer.linesColorEnd, t, lerp);
+            
+            linesVertex(points[i].x, points[i].y, 0, lerp);
+        }
+        
+        // First coordinate is last.
+        linesVertex(points[0].x, points[0].y, 0, Renderer.linesColorEnd);
+        
+        linesDraw();
+    }
+    
+    public static void linesDrawEnclosed(Vector3d @NotNull ... points)
+    {
+        int pointCount = points.length;
+        
+        // Last coordinate is first.
+        linesVertex(points[points.length - 1].x, points[points.length - 1].y, points[points.length - 1].z, Renderer.linesColorStart);
+        
+        Color lerp = new Color();
+        for (int i = 0; i < pointCount; i++)
+        {
+            double t = (double) i / (pointCount - 1);
+            Renderer.linesColorStart.interpolate(Renderer.linesColorEnd, t, lerp);
+            
+            linesVertex(points[i].x, points[i].y, points[i].z, lerp);
+        }
+        
+        // First coordinate is last.
+        linesVertex(points[0].x, points[0].y, points[0].z, Renderer.linesColorEnd);
+        
+        linesDraw();
+    }
+    
+    public static void linesDrawBezier(double @NotNull ... points)
+    {
+        int count = points.length / 3;
+        int order = count - 1;
+        
+        // First coordinate get repeated.
+        linesVertex(points[0], points[1], points[2], Renderer.linesColorStart);
+        
+        Color lerp = new Color();
+        for (int i = 0; i <= Renderer.linesBezierDivisions; i++)
+        {
+            double t    = (double) i / (Renderer.linesBezierDivisions - 1);
+            double tInv = 1.0 - t;
+            
+            Renderer.linesColorStart.interpolate(Renderer.linesColorEnd, t, lerp);
+            
+            // sum i=0-n binome-coeff(n, i) * tInv^(n-i) * t^i * pi
+            double x = 0.0, y = 0.0, z = 0.0;
+            for (int j = 0; j <= order; j++)
+            {
+                double coeff = binomial(order, j) * Math.pow(tInv, order - j) * Math.pow(t, j);
+                x += coeff * points[(j * 3)];
+                y += coeff * points[(j * 3) + 1];
+                z += coeff * points[(j * 3) + 2];
+            }
+            linesVertex(x, y, z, lerp);
+        }
+        
+        // Last coordinate get repeated.
+        linesVertex(points[points.length - 3], points[points.length - 2], points[points.length - 1], Renderer.linesColorEnd);
+        
+        linesDraw();
+    }
+    
+    public static void linesDrawBezier(Vector2d @NotNull ... points)
+    {
+        int count = points.length;
+        int order = count - 1;
+        
+        // First coordinate get repeated.
+        linesVertex(points[0].x, points[0].y, 0.0, Renderer.linesColorStart);
+        
+        Color lerp = new Color();
+        for (int i = 0; i <= Renderer.linesBezierDivisions; i++)
+        {
+            double t    = (double) i / (Renderer.linesBezierDivisions - 1);
+            double tInv = 1.0 - t;
+            
+            Renderer.linesColorStart.interpolate(Renderer.linesColorEnd, t, lerp);
+            
+            // sum i=0-n binome-coeff(n, i) * tInv^(n-i) * t^i * pi
+            double x = 0.0, y = 0.0, z = 0.0;
+            for (int j = 0; j <= order; j++)
+            {
+                double coeff = binomial(order, j) * Math.pow(tInv, order - j) * Math.pow(t, j);
+                x += coeff * points[(j * 3)].x;
+                y += coeff * points[(j * 3)].y;
+            }
+            linesVertex(x, y, z, lerp);
+        }
+        
+        // Last coordinate get repeated.
+        linesVertex(points[points.length - 1].x, points[points.length - 1].y, 0.0, Renderer.linesColorEnd);
+        
+        linesDraw();
+    }
+    
+    public static void linesDrawBezier(Vector3d @NotNull ... points)
+    {
+        int count = points.length;
+        int order = count - 1;
+        
+        // First coordinate get repeated.
+        linesVertex(points[0].x, points[0].y, points[0].z, Renderer.linesColorStart);
+        
+        Color lerp = new Color();
+        for (int i = 0; i <= Renderer.linesBezierDivisions; i++)
+        {
+            double t    = (double) i / (Renderer.linesBezierDivisions - 1);
+            double tInv = 1.0 - t;
+            
+            Renderer.linesColorStart.interpolate(Renderer.linesColorEnd, t, lerp);
+            
+            // sum i=0-n binome-coeff(n, i) * tInv^(n-i) * t^i * pi
+            double x = 0.0, y = 0.0, z = 0.0;
+            for (int j = 0; j <= order; j++)
+            {
+                double coeff = binomial(order, j) * Math.pow(tInv, order - j) * Math.pow(t, j);
+                x += coeff * points[(j * 3)].x;
+                y += coeff * points[(j * 3)].y;
+                z += coeff * points[(j * 3)].z;
+            }
+            linesVertex(x, y, z, lerp);
+        }
+        
+        // Last coordinate get repeated.
+        linesVertex(points[points.length - 1].x, points[points.length - 1].y, points[points.length - 1].z, Renderer.linesColorEnd);
+        
+        linesDraw();
+    }
+    
     private static void linesVertex(double x, double y, double z, @NotNull Colorc color)
     {
         Renderer.positionBuffer.put((float) x);
@@ -274,7 +455,6 @@ public class Renderer
         Framebuffer fb = Framebuffer.get();
         
         Program.bind(Renderer.linesProgram);
-        Program.uniformBlock("View", 0);
         Program.uniformInt2("viewport", fb.width(), fb.height());
         Program.uniformFloat("thickness", Renderer.linesThickness);
         
@@ -409,8 +589,6 @@ public class Renderer
         Texture.bind(Renderer.textFont.texture, 0);
         
         Program.bind(Renderer.textProgram);
-        Program.uniformBlock("View", 0);
-        Program.uniformInt("fontTexture", 0);
         Program.uniformColor("fontColor", Renderer.textColor);
         
         VertexArray.bind(Renderer.vertexArray);
@@ -421,6 +599,22 @@ public class Renderer
         Renderer.vertexCount = 0;
         Renderer.positionBuffer.clear();
         Renderer.texCoordBuffer.clear();
+    }
+    
+    private static final Map<Long, Long> BINOMIAL_CACHE = new HashMap<>();
+    
+    private static long binomial(int order, int k)
+    {
+        long hash = (((long) order) << 32) | k;
+        return Renderer.BINOMIAL_CACHE.computeIfAbsent(hash, i -> _binomial(order, k));
+    }
+    
+    private static long _binomial(int order, int k)
+    {
+        if (k > order - k) k = order - k;
+        long b = 1;
+        for (int i = 1, m = order; i <= k; i++, m--) b = (b * m) / i;
+        return b;
     }
     
     private Renderer() {}

@@ -26,7 +26,7 @@ public class RenderDemo extends Engine
     protected void setup()
     {
         GL.DEFAULT_STATE.clearColor = new double[] {0.1, 0.1, 0.1, 1.0};
-        GL.DEFAULT_STATE.depthMode = DepthMode.LESS;
+        GL.DEFAULT_STATE.depthMode  = DepthMode.LESS;
     }
     
     @Override
@@ -38,22 +38,22 @@ public class RenderDemo extends Engine
     @Override
     protected void draw(int frame, double time, double deltaTime)
     {
-        double angle = mousePos().x() / windowSize().x() * Math.PI * 2.0;
-        Vector3d pos = new Vector3d(Math.cos(angle) * 200, 20, Math.sin(angle) * 200);
+        double   angle = mousePos().x() / windowSize().x() * Math.PI * 2.0;
+        Vector3d pos   = new Vector3d(Math.cos(angle) * 100, 20, Math.sin(angle) * 100);
         
         GL.clearBuffers(ScreenBuffer.COLOR, ScreenBuffer.DEPTH);
         
         Framebuffer fb = Framebuffer.get();
         
-        double w = fb.width() / 4.0;
-        double h = fb.height() / 4.0;
+        double w = fb.width();
+        double h = fb.height();
         
         Matrix4d view = new Matrix4d();
         view.setPerspective(Math.toRadians(45), w / h, 0.1, 1000.0);
         view.lookAt(pos, new Vector3d(), new Vector3d(0, 1, 0));
         rendererView(view);
         
-        linesThickness(5.0);
+        linesThickness(2.0);
         
         linesColor(Color.DARK_RED);
         linesDraw(0, 0, 0, 10, 0, 0);
@@ -63,6 +63,8 @@ public class RenderDemo extends Engine
         
         linesColor(Color.DARK_BLUE);
         linesDraw(0, 0, 0, 0, 0, 10);
+        
+        linesThickness(5.0);
         
         linesColorStart(Color.DARK_GREEN);
         linesColorEnd(Color.DARK_RED);
@@ -85,33 +87,32 @@ public class RenderDemo extends Engine
             points[(i * 3) + 2] = Math.sin(x * 50) * 5;
         }
         
-        //lineRenderer().startColor.set(Color.CYAN);
-        //lineRenderer().endColor.set(Color.MAGENTA);
-        //lineRenderer().drawLines(points);
-        
         linesColorStart(Color.CYAN);
         linesColorEnd(Color.MAGENTA);
         linesDraw(points);
         
-        //Matrix4d view = new Matrix4d().setOrtho(0, fb.width(), fb.height(), 0, -1, 1);
-        //
-        //Program.bind(this.shader);
-        //Program.uniformMatrix4("view", false, view);
-        //Program.uniformInt2("viewport", fb.width(), fb.height());
-        //Program.uniformFloat("thickness", 10);
-        //
-        //vao.draw(DrawMode.LINE_STRIP_ADJACENCY, 6);
+        for (int i = 0; i < steps; i++)
+        {
+            angle = (double) i / (steps - 1) * Math.PI * 10;
+            
+            points[(i * 3)]     = Math.cos(angle) * i / 8.0;
+            points[(i * 3) + 1] = Math.sin(angle) * i / 8.0;
+            points[(i * 3) + 2] = i / 2.0;
+        }
+        
+        linesColorStart(Color.LIGHTEST_YELLOW);
+        linesColorEnd(Color.DARKEST_YELLOW);
+        linesDrawEnclosed(points);
+        
+        linesColor(Color.BLUE);
+        linesDrawBezier(0, 0, 0, 0, 50, -20, 20, 0, 20, -20, 10, 20);
         
         view.setOrtho(0, fb.width(), fb.height(), 0, -1, 1);
         rendererView(view);
-    
+        
         textColor(Color.DARK_GREEN);
         //textSize(mousePos().x());
-        textDraw("ABCDEF\nGHIJK\nLMNOP\nQRSTU\nVWXYZ", 0, 0);
-    
-        //textRenderer().color.set(Color.DARK_GREEN);
-        ////textRenderer().size = mousePos().x();
-        //textRenderer().drawText("ABCDEF\nGHIJK\nLMNOP\nQRSTU\nVWXYZ", 0, 0);
+        textDraw(String.format("Update: %.3f\nDraw:   %.3f", updateTimeActual(), drawTimeActual()), 0, 0);
     }
     
     @Override
