@@ -38,23 +38,61 @@ public class RenderDemo extends Engine
     @Override
     protected void draw(int frame, double time, double deltaTime)
     {
-        double   angle = mousePos().x() / windowSize().x() * Math.PI * 2.0;
-        Vector3d pos   = new Vector3d(Math.cos(angle) * 100, 20, Math.sin(angle) * 100);
+        Matrix4d projection = new Matrix4d();
+        Matrix4d view       = new Matrix4d();
+        
+        double angle = mousePos().x() / windowSize().x() * Math.PI * 2.0;
+        double y = mousePos().y() - windowSize().y() / 2.0;
+        
+        Vector3d pos = new Vector3d(Math.cos(angle) * 80, y, Math.sin(angle) * 80);
         
         GL.clearBuffers(ScreenBuffer.COLOR, ScreenBuffer.DEPTH);
         
         Framebuffer fb = Framebuffer.get();
         
-        double w = fb.width();
-        double h = fb.height();
+        int w = fb.width();
+        int h = fb.height();
         
-        Matrix4d view = new Matrix4d();
-        view.setPerspective(Math.toRadians(45), w / h, 0.1, 1000.0);
-        view.lookAt(pos, new Vector3d(), new Vector3d(0, 1, 0));
+        // World Space
+        projection.setPerspective(Math.toRadians(45), (double) w / h, 0.1, 1000.0);
+        rendererProjection(projection);
+        view.setLookAt(pos, new Vector3d(), new Vector3d(0, 1, 0));
         rendererView(view);
-    
+        
         pointsDemo();
         
+        linesDemo(time);
+        
+        ellipseDemo();
+    
+        // Screen Space
+        projection.setOrtho(-w / 2.0, w / 2.0, h / 2.0, -h / 2.0, -10, 1000.0);
+        rendererProjection(projection);
+        view.identity().setTranslation(-w / 2.0, -h / 2.0, 0);
+        rendererView(view);
+        
+        textDemo();
+    }
+    
+    double[] pointPoints = null;
+    
+    void pointsDemo()
+    {
+        if (pointPoints == null)
+        {
+            pointPoints = new double[100 * 3];
+            for (int i = 0; i < pointPoints.length; i++)
+            {
+                pointPoints[i] = Math.random() * 60.0 - 30.0;
+            }
+        }
+        
+        pointsSize(10);
+        pointsDraw(pointPoints);
+    }
+    
+    void linesDemo(double time)
+    {
         linesThickness(2.0);
         
         linesColor(Color.DARK_RED);
@@ -72,7 +110,7 @@ public class RenderDemo extends Engine
         linesColorEnd(Color.DARK_RED);
         linesDraw(10, 10, 0, 20, 10, 0, 20, 20, 0, 0, 20, 0);
         
-        int steps = Math.max((int) (Math.sin(time / 2) * 50 + 50), 2);
+        int steps = Math.max((int) (Math.sin(time / 2) * 50 + 60), 2);
         
         double[] points = new double[steps * 3];
         
@@ -95,7 +133,7 @@ public class RenderDemo extends Engine
         
         for (int i = 0; i < steps; i++)
         {
-            angle = (double) i / (steps - 1) * Math.PI * 10;
+            double angle = (double) i / (steps - 1) * Math.PI * 10;
             
             points[(i * 3)]     = Math.cos(angle) * i / 8.0;
             points[(i * 3) + 1] = Math.sin(angle) * i / 8.0;
@@ -108,30 +146,24 @@ public class RenderDemo extends Engine
         
         linesColor(Color.BLUE);
         linesDrawBezier(0, 0, 0, 0, 50, -20, 20, 0, 20, -20, 10, 20);
-        
-        view.setOrtho(0, fb.width(), fb.height(), 0, -1, 1);
-        rendererView(view);
-        
+    }
+    
+    void ellipseDemo()
+    {
+        //Matrix4d view = new Matrix4d();
+        //view.setLookAlong(0, 0, -1, 0, -1, 0);
+        //rendererView(view);
+    
+        ellipseColorInner(Color.GRAY);
+        ellipseColorOuter(Color.BLANK);
+        ellipseDraw(20, 20, 0);
+    }
+    
+    void textDemo()
+    {
         textColor(Color.DARK_GREEN);
         //textSize(mousePos().x());
         textDraw(String.format("Update: %.3f\nDraw:   %.3f", updateTimeActual(), drawTimeActual()), 0, 0);
-    }
-    
-    double[] pointPoints = null;
-    
-    void pointsDemo()
-    {
-        if (pointPoints == null)
-        {
-            pointPoints = new double[100 * 3];
-            for (int i = 0; i < pointPoints.length; i++)
-            {
-                pointPoints[i] = Math.random() * 60.0 - 30.0;
-            }
-        }
-        
-        pointsSize(10);
-        pointsDraw(pointPoints);
     }
     
     @Override

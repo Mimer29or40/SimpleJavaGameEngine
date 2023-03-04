@@ -41,16 +41,24 @@ public class Renderer
     
     private static int vertexCount;
     
-    private static FloatBuffer positionBuffer; // (XYZ)  (shader-location = 0)
-    private static FloatBuffer normalBuffer;   // (XYZ)  (shader-location = 1)
-    private static FloatBuffer tangentBuffer;  // (XYZ)  (shader-location = 2)
-    private static FloatBuffer texCoordBuffer; // (UV)   (shader-location = 3)
-    private static ByteBuffer  colorBuffer;    // (RGBA) (shader-location = 4)
+    private static FloatBuffer positionBuffer;  // (XYZ)  (shader-location = 0)
+    private static FloatBuffer tangentBuffer;   // (XYZ)  (shader-location = 1)
+    private static FloatBuffer bitangentBuffer; // (XYZ)  (shader-location = 2)
+    private static FloatBuffer normalBuffer;    // (XYZ)  (shader-location = 3)
+    private static FloatBuffer texCoordBuffer;  // (UV)   (shader-location = 4)
+    private static ByteBuffer  colorBuffer;     // (RGBA) (shader-location = 5)
     
     private static VertexArray vertexArray;
     
-    private static final Matrix4d      view = new Matrix4d();
-    private static       BufferUniform viewBuffer;
+    private static Matrix4d projection;
+    private static Matrix4d view;
+    private static Matrix4d pv;
+    
+    private static BufferUniform pvBuffer;
+    private static boolean       updatePVBuffer;
+    
+    private static Matrix4d billboardFront;
+    private static boolean  billboardEnabled;
     
     // ---------- Points State ---------- //
     
@@ -67,6 +75,13 @@ public class Renderer
     private static Color  linesColorStart;
     private static Color  linesColorEnd;
     private static int    linesBezierDivisions;
+    
+    // ---------- Ellipse State ---------- //
+    
+    private static Program ellipseProgram;
+    
+    private static Color ellipseColorInner;
+    private static Color ellipseColorOuter;
     
     // ---------- Text State ---------- //
     
@@ -89,29 +104,39 @@ public class Renderer
         
         Renderer.vertexCount = 0;
         
-        Renderer.positionBuffer = MemoryUtil.memAllocFloat(vertexCount * 3); // (XYZ)  (shader-location = 0)
-        Renderer.normalBuffer   = MemoryUtil.memAllocFloat(vertexCount * 3); // (XYZ)  (shader-location = 1)
-        Renderer.tangentBuffer  = MemoryUtil.memAllocFloat(vertexCount * 3); // (XYZ)  (shader-location = 2)
-        Renderer.texCoordBuffer = MemoryUtil.memAllocFloat(vertexCount * 2); // (UV)   (shader-location = 3)
-        Renderer.colorBuffer    = MemoryUtil.memAlloc(vertexCount * 4);      // (RGBA) (shader-location = 4)
+        Renderer.positionBuffer  = MemoryUtil.memAllocFloat(vertexCount * 3); // (XYZ)  (shader-location = 0)
+        Renderer.tangentBuffer   = MemoryUtil.memAllocFloat(vertexCount * 3); // (XYZ)  (shader-location = 1)
+        Renderer.bitangentBuffer = MemoryUtil.memAllocFloat(vertexCount * 3); // (XYZ)  (shader-location = 2)
+        Renderer.normalBuffer    = MemoryUtil.memAllocFloat(vertexCount * 3); // (XYZ)  (shader-location = 3)
+        Renderer.texCoordBuffer  = MemoryUtil.memAllocFloat(vertexCount * 2); // (UV)   (shader-location = 4)
+        Renderer.colorBuffer     = MemoryUtil.memAlloc(vertexCount * 4);      // (RGBA) (shader-location = 5)
         
-        VertexAttribute position = new VertexAttribute(GLType.FLOAT, 3, false);
-        VertexAttribute normal   = new VertexAttribute(GLType.FLOAT, 3, false);
-        VertexAttribute tangent  = new VertexAttribute(GLType.FLOAT, 3, false);
-        VertexAttribute texCoord = new VertexAttribute(GLType.FLOAT, 2, false);
-        VertexAttribute color    = new VertexAttribute(GLType.UNSIGNED_BYTE, 4, true);
+        VertexAttribute position  = new VertexAttribute(GLType.FLOAT, 3, false);
+        VertexAttribute tangent   = new VertexAttribute(GLType.FLOAT, 3, false);
+        VertexAttribute bitangent = new VertexAttribute(GLType.FLOAT, 3, false);
+        VertexAttribute normal    = new VertexAttribute(GLType.FLOAT, 3, false);
+        VertexAttribute texCoord  = new VertexAttribute(GLType.FLOAT, 2, false);
+        VertexAttribute color     = new VertexAttribute(GLType.UNSIGNED_BYTE, 4, true);
         
         Renderer.vertexArray = VertexArray.builder()
                                           .buffer(BufferUsage.DYNAMIC_DRAW, Renderer.positionBuffer.clear(), position)
-                                          .buffer(BufferUsage.DYNAMIC_DRAW, Renderer.normalBuffer.clear(), normal)
                                           .buffer(BufferUsage.DYNAMIC_DRAW, Renderer.tangentBuffer.clear(), tangent)
+                                          .buffer(BufferUsage.DYNAMIC_DRAW, Renderer.bitangentBuffer.clear(), bitangent)
+                                          .buffer(BufferUsage.DYNAMIC_DRAW, Renderer.normalBuffer.clear(), normal)
                                           .buffer(BufferUsage.DYNAMIC_DRAW, Renderer.texCoordBuffer.clear(), texCoord)
                                           .buffer(BufferUsage.DYNAMIC_DRAW, Renderer.colorBuffer.clear(), color)
                                           .build();
         
-        Renderer.viewBuffer = new BufferUniform(BufferUsage.DYNAMIC_DRAW, Float.BYTES * 16);
-        Renderer.viewBuffer.base(0);
-        rendererView(new Matrix4d());
+        Renderer.projection = new Matrix4d();
+        Renderer.view       = new Matrix4d();
+        Renderer.pv         = new Matrix4d();
+        
+        Renderer.pvBuffer = new BufferUniform(BufferUsage.DYNAMIC_DRAW, Float.BYTES * 16);
+        Renderer.pvBuffer.base(0);
+        Renderer.updatePVBuffer = true;
+        
+        Renderer.billboardFront   = new Matrix4d();
+        Renderer.billboardEnabled = false;
         
         // ----- Point ----- //
         {
@@ -149,6 +174,23 @@ public class Renderer
             Renderer.linesBezierDivisions = 24;
         }
         
+        // ----- Ellipse ----- //
+        {
+            Shader ellipseVert = new Shader(ShaderType.VERTEX, IOUtil.getPath("shader/ellipse.vert"));
+            Shader ellipseGeom = new Shader(ShaderType.GEOMETRY, IOUtil.getPath("shader/ellipse.geom"));
+            Shader ellipseFrag = new Shader(ShaderType.FRAGMENT, IOUtil.getPath("shader/ellipse.frag"));
+            
+            Program.bind(Renderer.ellipseProgram = new Program(ellipseVert, ellipseGeom, ellipseFrag));
+            Program.uniformBlock("View", 0);
+            
+            ellipseVert.delete();
+            ellipseGeom.delete();
+            ellipseFrag.delete();
+            
+            Renderer.ellipseColorInner = new Color(Color.WHITE);
+            Renderer.ellipseColorOuter = new Color(Color.WHITE);
+        }
+        
         // ----- Text ----- //
         {
             Shader textVert = new Shader(ShaderType.VERTEX, IOUtil.getPath("shader/text.vert"));
@@ -175,8 +217,9 @@ public class Renderer
         Renderer.LOGGER.debug("Destroy");
         
         MemoryUtil.memFree(Renderer.positionBuffer);
-        MemoryUtil.memFree(Renderer.normalBuffer);
         MemoryUtil.memFree(Renderer.tangentBuffer);
+        MemoryUtil.memFree(Renderer.bitangentBuffer);
+        MemoryUtil.memFree(Renderer.normalBuffer);
         MemoryUtil.memFree(Renderer.texCoordBuffer);
         MemoryUtil.memFree(Renderer.colorBuffer);
         Renderer.vertexArray.delete();
@@ -185,17 +228,38 @@ public class Renderer
         
         Renderer.linesProgram.delete();
         
+        Renderer.ellipseProgram.delete();
+        
         Renderer.textProgram.delete();
         Renderer.DEFAULT_FONT.delete();
     }
     
     // -------------------- Global -------------------- //
     
+    public static void rendererProjection(@NotNull Matrix4dc projection)
+    {
+        Renderer.projection.set(projection);
+        Renderer.updatePVBuffer = true;
+    }
+    
     public static void rendererView(@NotNull Matrix4dc view)
     {
-        try (MemoryStack stack = MemoryStack.stackPush())
+        Renderer.view.set(view);
+        Renderer.updatePVBuffer = true;
+    }
+    
+    private static void updatePVBuffer()
+    {
+        if (Renderer.updatePVBuffer)
         {
-            Renderer.viewBuffer.set(0, Renderer.view.set(view).get(stack.mallocFloat(16)));
+            Renderer.projection.mul(Renderer.view, Renderer.pv);
+            
+            try (MemoryStack stack = MemoryStack.stackPush())
+            {
+                Renderer.pvBuffer.set(0, Renderer.pv.get(stack.mallocFloat(16)));
+            }
+            
+            Renderer.updatePVBuffer = false;
         }
     }
     
@@ -233,6 +297,8 @@ public class Renderer
     
     private static void pointsDraw()
     {
+        updatePVBuffer();
+        
         Framebuffer fb = Framebuffer.get();
         
         Program.bind(Renderer.pointsProgram);
@@ -527,6 +593,8 @@ public class Renderer
     
     private static void linesDraw()
     {
+        updatePVBuffer();
+        
         Framebuffer fb = Framebuffer.get();
         
         Program.bind(Renderer.linesProgram);
@@ -535,12 +603,83 @@ public class Renderer
         
         VertexArray.bind(Renderer.vertexArray);
         Renderer.vertexArray.buffer(0).set(0, Renderer.positionBuffer.flip());
-        Renderer.vertexArray.buffer(4).set(0, Renderer.colorBuffer.flip());
+        Renderer.vertexArray.buffer(5).set(0, Renderer.colorBuffer.flip());
         Renderer.vertexArray.draw(DrawMode.LINE_STRIP_ADJACENCY, Renderer.vertexCount);
         
         Renderer.vertexCount = 0;
         Renderer.positionBuffer.clear();
         Renderer.colorBuffer.clear();
+    }
+    
+    // -------------------- Ellipse -------------------- //
+    
+    public static void ellipseColor(@NotNull Colorc color)
+    {
+        Renderer.ellipseColorInner.set(color);
+        Renderer.ellipseColorOuter.set(color);
+    }
+    
+    public static void ellipseColorInner(@NotNull Colorc color)
+    {
+        Renderer.ellipseColorInner.set(color);
+    }
+    
+    public static void ellipseColorOuter(@NotNull Colorc color)
+    {
+        Renderer.ellipseColorOuter.set(color);
+    }
+    
+    public static void ellipseDraw(double x, double y, double z)
+    {
+        Renderer.positionBuffer.put((float) x);
+        Renderer.positionBuffer.put((float) y);
+        Renderer.positionBuffer.put((float) z);
+        
+        if (Renderer.billboardEnabled)
+        {
+            Renderer.tangentBuffer.put((float) Renderer.view.m00());
+            Renderer.tangentBuffer.put((float) Renderer.view.m10());
+            Renderer.tangentBuffer.put((float) Renderer.view.m20());
+    
+            Renderer.bitangentBuffer.put((float) Renderer.view.m01());
+            Renderer.bitangentBuffer.put((float) Renderer.view.m11());
+            Renderer.bitangentBuffer.put((float) Renderer.view.m21());
+        }
+        else
+        {
+            Renderer.tangentBuffer.put((float) Renderer.billboardFront.m00());
+            Renderer.tangentBuffer.put((float) Renderer.billboardFront.m01());
+            Renderer.tangentBuffer.put((float) Renderer.billboardFront.m02());
+    
+            Renderer.bitangentBuffer.put((float) Renderer.billboardFront.m10());
+            Renderer.bitangentBuffer.put((float) Renderer.billboardFront.m11());
+            Renderer.bitangentBuffer.put((float) Renderer.billboardFront.m12());
+        }
+        
+        Renderer.vertexCount++;
+        
+        ellipseDraw();
+    }
+    
+    private static void ellipseDraw()
+    {
+        updatePVBuffer();
+        
+        Program.bind(Renderer.ellipseProgram);
+        Program.uniformFloat2("size", 20, 10);
+        Program.uniformColor("colorInner", Renderer.ellipseColorInner);
+        Program.uniformColor("colorOuter", Renderer.ellipseColorOuter);
+        
+        VertexArray.bind(Renderer.vertexArray);
+        Renderer.vertexArray.buffer(0).set(0, Renderer.positionBuffer.flip());
+        Renderer.vertexArray.buffer(1).set(0, Renderer.tangentBuffer.flip());
+        Renderer.vertexArray.buffer(2).set(0, Renderer.bitangentBuffer.flip());
+        Renderer.vertexArray.draw(DrawMode.POINTS, Renderer.vertexCount);
+        
+        Renderer.vertexCount = 0;
+        Renderer.positionBuffer.clear();
+        Renderer.tangentBuffer.clear();
+        Renderer.bitangentBuffer.clear();
     }
     
     // -------------------- Text -------------------- //
@@ -661,6 +800,8 @@ public class Renderer
     
     private static void textDraw()
     {
+        updatePVBuffer();
+        
         Texture.bind(Renderer.textFont.texture, 0);
         
         Program.bind(Renderer.textProgram);
@@ -668,7 +809,7 @@ public class Renderer
         
         VertexArray.bind(Renderer.vertexArray);
         Renderer.vertexArray.buffer(0).set(0, Renderer.positionBuffer.flip());
-        Renderer.vertexArray.buffer(3).set(0, Renderer.texCoordBuffer.flip());
+        Renderer.vertexArray.buffer(4).set(0, Renderer.texCoordBuffer.flip());
         Renderer.vertexArray.draw(DrawMode.TRIANGLES, Renderer.vertexCount);
         
         Renderer.vertexCount = 0;
