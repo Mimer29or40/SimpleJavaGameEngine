@@ -253,12 +253,13 @@ public class LOGL_4103_AsteroidsInstanced extends Engine
             mesh.VAO.drawElementsInstanced(DrawMode.TRIANGLES, mesh.indices.size(), amount);
         }
         
-        GL.depthMode(DepthMode.NONE);
-        Framebuffer fb = Framebuffer.get();
-        rendererView(new Matrix4d().setOrtho(0, fb.width(), fb.height(), 0, -1, 1));
-        textColor(Color.WHITE);
-        textSize(36);
-        textDraw(String.format("Update: %.3f\nDraw: %.3f", updateTimeActual(), drawTimeActual()), 10, 10);
+        // TODO
+        //GL.depthMode(DepthMode.NONE);
+        //Framebuffer fb = Framebuffer.get();
+        //rendererView(new Matrix4d().setOrtho(0, fb.width(), fb.height(), 0, -1, 1));
+        //textColor(Color.WHITE);
+        //textSize(36);
+        //textDraw(String.format("Update: %.3f\nDraw: %.3f", updateTimeActual(), drawTimeActual()), 10, 10);
     }
     
     @Override

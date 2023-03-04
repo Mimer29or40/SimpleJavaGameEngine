@@ -6,9 +6,7 @@ layout (triangle_strip, max_vertices = 4) out;
 
 struct VertexData
 {
-    vec3 Pos;
-    vec3 Tan;
-    vec3 Bitan;
+    vec2 Pos;
     vec2 Coord;
 };
 
@@ -24,23 +22,20 @@ void main()
 {
     vec2 _size = size * 0.5;
 
-    vec3 x = vs_out[0].Tan * _size.x;
-    vec3 y = vs_out[0].Bitan * _size.y;
-
     // Generates Line Strip
-    gl_Position = view * vec4(vs_out[0].Pos - x - y, 1.0);
+    gl_Position = view * vec4(vs_out[0].Pos + vec2(-_size.x, -_size.y), 0.0, 1.0);
     gs_out.Coord = vec2(-1, -1);
     EmitVertex();
 
-    gl_Position = view * vec4(vs_out[0].Pos + x - y, 1.0);
+    gl_Position = view * vec4(vs_out[0].Pos + vec2(+_size.x, -_size.y), 0.0, 1.0);
     gs_out.Coord = vec2(+1, -1);
     EmitVertex();
 
-    gl_Position = view * vec4(vs_out[0].Pos - x + y, 1.0);
+    gl_Position = view * vec4(vs_out[0].Pos + vec2(-_size.x, +_size.y), 0.0, 1.0);
     gs_out.Coord = vec2(-1, +1);
     EmitVertex();
 
-    gl_Position = view * vec4(vs_out[0].Pos + x + y, 1.0);
+    gl_Position = view * vec4(vs_out[0].Pos + vec2(+_size.x, +_size.y), 0.0, 1.0);
     gs_out.Coord = vec2(+1, +1);
     EmitVertex();
 

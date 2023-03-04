@@ -1,6 +1,6 @@
 #version 440 core
-layout (location = 0) in vec3 aPos;
-layout (location = 4) in vec2 aTexCoord;
+layout (location = 0) in vec2 aPos;
+layout (location = 1) in vec2 aTexCoord;
 
 struct VertexData
 {
@@ -14,5 +14,5 @@ layout(std140, binding = 0) uniform View { mat4 view; };
 void main()
 {
     vs_out.TexCoord = aTexCoord;
-    gl_Position = view * vec4(aPos, 1.0);
+    gl_Position = view * vec4(aPos, 0.0, 1.0);
 }

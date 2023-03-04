@@ -255,6 +255,7 @@ public abstract class Engine
         GL.defaultState();
         
         Framebuffer.bind(Framebuffer.NULL);
+        Renderer.viewIdentity();
         
         Engine.instance.draw(frame, timeD, deltaTimeD);
         

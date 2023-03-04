@@ -553,8 +553,8 @@ public class IO
     static final EnumSet<Button> MOUSE_BUTTON_HELD    = EnumSet.noneOf(Button.class);
     static final Event           MOUSE_ON_BUTTON_HELD = new Event();
     
-    static final EnumSet<Button> MOUSE_BUTTON_DRAGGED    = EnumSet.noneOf(Button.class);
-    static final Event           MOUSE_ON_BUTTON_DRAGGED = new Event();
+    static final EnumMap<Button, Vector2dc> MOUSE_BUTTON_DRAGGED    = new EnumMap<>(Button.class);
+    static final Event                      MOUSE_ON_BUTTON_DRAGGED = new Event();
     
     private static void setupMouse(@NotNull List<Callback> callbacks)
     {
@@ -668,7 +668,7 @@ public class IO
                 if (IO.MOUSE_POS_DELTA.x != 0 || IO.MOUSE_POS_DELTA.y != 0)
                 {
                     input.dragging = true;
-                    IO.MOUSE_BUTTON_DRAGGED.add(button);
+                    IO.MOUSE_BUTTON_DRAGGED.put(button, input.downPos);
                 }
             }
         }
@@ -796,9 +796,9 @@ public class IO
         return IO.MOUSE_BUTTON_STATES.get(button).dragging;
     }
     
-    public static @NotNull @UnmodifiableView Set<Button> mouseButtonDragged()
+    public static @NotNull @UnmodifiableView Map<Button, Vector2dc> mouseButtonDragged()
     {
-        return Collections.unmodifiableSet(IO.MOUSE_BUTTON_DRAGGED);
+        return Collections.unmodifiableMap(IO.MOUSE_BUTTON_DRAGGED);
     }
     
     public static @NotNull Event mouseOnButtonDragged()

@@ -1,5 +1,6 @@
 include ":Engine"
 include ":Playground"
-include ':Plugins:Image'
-include ':Plugins:GIF'
-include ':Plugins:Shader'
+include ":Plugins:Image"
+include ":Plugins:GIF"
+include ":Plugins:Shader"
+include ":Plugins:Graphics3D"

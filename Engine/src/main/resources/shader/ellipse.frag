@@ -2,9 +2,7 @@
 
 struct VertexData
 {
-    vec3 Pos;
-    vec3 Tan;
-    vec3 Bitan;
+    vec2 Pos;
     vec2 Coord;
 };
 
