@@ -177,7 +177,7 @@ public class RenderDemo extends Engine
         for (int i = 0; i < steps; i++)
         {
             double angle = (i + 0.5) / steps * Math.PI * 2;
-            double dist = Math.cos(time + 9 * angle) * 25 + 100;
+            double dist  = Math.cos(time + 9 * angle) * 25 + 100;
             
             points[(i << 1)]     = 500 + Math.cos(angle) * dist;
             points[(i << 1) + 1] = 300 + Math.sin(angle) * dist;
@@ -187,6 +187,7 @@ public class RenderDemo extends Engine
         lineColorEnd(Color.DARKEST_YELLOW);
         lineDrawEnclosed(points);
         
+        lineBezierDivisions(steps);
         lineThicknessStart(50.0);
         lineThicknessEnd(5.0);
         lineColor(Color.BLUE);
@@ -222,9 +223,13 @@ public class RenderDemo extends Engine
         }
         ellipseBatchEnd();
         
-        ellipseColorInner(Color.GRAY);
-        ellipseColorOuter(Color.BLANK);
-        ellipseDraw(200, 200, 200, 100);
+        statePush();
+        viewTranslate(windowSize().x() / 2.0, windowSize().y() / 2.0);
+        viewRotate(time * 2);
+        viewScale(new Vector2d(Math.sin(time) * 2));
+        ellipseColor(Color.GRAY);
+        ellipseDraw(0, 0, 200, 100);
+        statePop();
     }
     
     void textDemo()

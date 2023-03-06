@@ -49,9 +49,11 @@ public class Renderer
     
     private static Batch batch = Batch.NONE;
     
+    private static int stackIndex = 0;
+    
     // -------------------- View -------------------- //
     
-    private static Matrix4d      view;
+    private static Matrix4d[]    view;
     private static boolean       updateViewBuffer;
     private static BufferUniform viewBuffer;
     
@@ -59,25 +61,25 @@ public class Renderer
     
     private static Program pointProgram;
     
-    private static double pointSize;
-    private static Color  pointColor;
+    private static double[] pointSize;
+    private static Color[]  pointColor;
     
     // ---------- Lines State ---------- //
     
     private static Program lineProgram;
     
-    private static double lineThicknessStart;
-    private static double lineThicknessEnd;
-    private static Color  lineColorStart;
-    private static Color  lineColorEnd;
-    private static int    lineBezierDivisions;
+    private static double[] lineThicknessStart;
+    private static double[] lineThicknessEnd;
+    private static Color[]  lineColorStart;
+    private static Color[]  lineColorEnd;
+    private static int[]    lineBezierDivisions;
     
     // ---------- Ellipse State ---------- //
     
     private static Program ellipseProgram;
     
-    private static Color ellipseColorInner;
-    private static Color ellipseColorOuter;
+    private static Color[] ellipseColorInner;
+    private static Color[] ellipseColorOuter;
     
     // ---------- Text State ---------- //
     
@@ -95,6 +97,7 @@ public class Renderer
         Renderer.LOGGER.debug("Setup");
         
         int quadCount = 8192;
+        int stackSize = 32;
         
         int vertexCount = quadCount * 4; // 4 vertices per quads
         
@@ -117,7 +120,7 @@ public class Renderer
                                           .buffer(BufferUsage.DYNAMIC_DRAW, Renderer.color1Buffer.clear(), color1)
                                           .build();
         
-        Renderer.view             = new Matrix4d();
+        Renderer.view             = new Matrix4d[stackSize];
         Renderer.updateViewBuffer = true;
         Renderer.viewBuffer       = new BufferUniform(BufferUsage.DYNAMIC_DRAW, Float.BYTES * 16);
         Renderer.viewBuffer.base(0);
@@ -135,8 +138,8 @@ public class Renderer
             pointGeom.delete();
             pointFrag.delete();
             
-            Renderer.pointSize  = 10.0;
-            Renderer.pointColor = new Color(Color.WHITE);
+            Renderer.pointSize  = new double[stackSize];
+            Renderer.pointColor = new Color[stackSize];
         }
         
         // ----- Lines ----- //
@@ -152,11 +155,11 @@ public class Renderer
             linesGeom.delete();
             linesFrag.delete();
             
-            Renderer.lineThicknessStart  = 10.0;
-            Renderer.lineThicknessEnd    = 10.0;
-            Renderer.lineColorStart      = new Color(Color.WHITE);
-            Renderer.lineColorEnd        = new Color(Color.WHITE);
-            Renderer.lineBezierDivisions = 24;
+            Renderer.lineThicknessStart  = new double[stackSize];
+            Renderer.lineThicknessEnd    = new double[stackSize];
+            Renderer.lineColorStart      = new Color[stackSize];
+            Renderer.lineColorEnd        = new Color[stackSize];
+            Renderer.lineBezierDivisions = new int[stackSize];
         }
         
         // ----- Ellipse ----- //
@@ -172,8 +175,8 @@ public class Renderer
             ellipseGeom.delete();
             ellipseFrag.delete();
             
-            Renderer.ellipseColorInner = new Color(Color.WHITE);
-            Renderer.ellipseColorOuter = new Color(Color.WHITE);
+            Renderer.ellipseColorInner = new Color[stackSize];
+            Renderer.ellipseColorOuter = new Color[stackSize];
         }
         
         // ----- Text ----- //
@@ -195,6 +198,24 @@ public class Renderer
             Renderer.textAlign = TextAlign.TOP_LEFT;
             Renderer.textFont  = Renderer.DEFAULT_FONT;
         }
+        
+        // ----- Defaults ----- //
+        for (int i = 0; i < stackSize; i++)
+        {
+            Renderer.view[i] = new Matrix4d();
+            
+            Renderer.pointSize[i]  = 5.0;
+            Renderer.pointColor[i] = new Color(Color.WHITE);
+            
+            Renderer.lineThicknessStart[i]  = 5.0;
+            Renderer.lineThicknessEnd[i]    = 5.0;
+            Renderer.lineColorStart[i]      = new Color();
+            Renderer.lineColorEnd[i]        = new Color();
+            Renderer.lineBezierDivisions[i] = 24;
+            
+            Renderer.ellipseColorInner[i] = new Color(Color.WHITE);
+            Renderer.ellipseColorOuter[i] = new Color(Color.WHITE);
+        }
     }
     
     static void destroy()
@@ -215,6 +236,32 @@ public class Renderer
         
         Renderer.textProgram.delete();
         Renderer.DEFAULT_FONT.delete();
+    }
+    
+    public static void statePush()
+    {
+        int i = Renderer.stackIndex++;
+        
+        Renderer.view[Renderer.stackIndex].set(Renderer.view[i]);
+        
+        Renderer.pointSize[Renderer.stackIndex]  = Renderer.pointSize[i];
+        Renderer.pointColor[Renderer.stackIndex].set(Renderer.pointColor[i]);
+        
+        Renderer.lineThicknessStart[Renderer.stackIndex]  = Renderer.lineThicknessStart[i];
+        Renderer.lineThicknessEnd[Renderer.stackIndex]    = Renderer.lineThicknessEnd[i];
+        Renderer.lineColorStart[Renderer.stackIndex].set(Renderer.lineColorStart[i]);
+        Renderer.lineColorEnd[Renderer.stackIndex].set(Renderer.lineColorEnd[i]);
+        Renderer.lineBezierDivisions[Renderer.stackIndex] = Renderer.lineBezierDivisions[i];
+        
+        Renderer.ellipseColorInner[Renderer.stackIndex].set(Renderer.ellipseColorInner[i]);
+        Renderer.ellipseColorOuter[Renderer.stackIndex].set(Renderer.ellipseColorOuter[i]);
+    }
+    
+    public static void statePop()
+    {
+        Renderer.stackIndex--;
+        
+        Renderer.updateViewBuffer = true;
     }
     
     // -------------------- Vertices -------------------- //
@@ -255,7 +302,7 @@ public class Renderer
         {
             try (MemoryStack stack = MemoryStack.stackPush())
             {
-                Renderer.viewBuffer.set(0, Renderer.view.get(stack.mallocFloat(16)));
+                Renderer.viewBuffer.set(0, Renderer.view[Renderer.stackIndex].get(stack.mallocFloat(16)));
             }
             Renderer.updateViewBuffer = false;
         }
@@ -280,7 +327,7 @@ public class Renderer
     {
         Framebuffer fb = Framebuffer.get();
         
-        Renderer.view.setOrtho(0.0, fb.width(), fb.height(), 0.0, -1.0, 1.0);
+        Renderer.view[Renderer.stackIndex].setOrtho(0.0, fb.width(), fb.height(), 0.0, -1.0, 1.0);
         Renderer.updateViewBuffer = true;
     }
     
@@ -288,7 +335,7 @@ public class Renderer
     {
         if (!Runtime.equals(x, 0.0, 1e-9) || !Runtime.equals(y, 0.0, 1e-9))
         {
-            Renderer.view.translate(x, y, 0.0);
+            Renderer.view[Renderer.stackIndex].translate(x, y, 0.0);
             Renderer.updateViewBuffer = true;
         }
     }
@@ -302,7 +349,7 @@ public class Renderer
     {
         if (!Runtime.equals(angle, 0.0, 1e-9))
         {
-            Renderer.view.rotate(angle, 0, 0, 1);
+            Renderer.view[Renderer.stackIndex].rotate(angle, 0, 0, 1);
             Renderer.updateViewBuffer = true;
         }
     }
@@ -311,7 +358,7 @@ public class Renderer
     {
         if (!Runtime.equals(sx, 1.0, 1e-9) || !Runtime.equals(sy, 1.0, 1e-9))
         {
-            Renderer.view.scale(sx, sy, 1.0);
+            Renderer.view[Renderer.stackIndex].scale(sx, sy, 1.0);
             Renderer.updateViewBuffer = true;
         }
     }
@@ -330,12 +377,12 @@ public class Renderer
     
     public static void pointSize(double size)
     {
-        Renderer.pointSize = size;
+        Renderer.pointSize[Renderer.stackIndex] = size;
     }
     
     public static void pointColor(@NotNull Colorc color)
     {
-        Renderer.pointColor.set(color);
+        Renderer.pointColor[Renderer.stackIndex].set(color);
     }
     
     public static void pointBatchBegin()
@@ -355,7 +402,7 @@ public class Renderer
     public static void pointDraw(double x, double y)
     {
         if (Renderer.batch != Batch.NONE && Renderer.batch != Batch.POINT) throw new IllegalStateException(Renderer.batch + " is active");
-        pointVertex(x, y, Renderer.pointSize, Renderer.pointColor);
+        pointVertex(x, y, Renderer.pointSize[Renderer.stackIndex], Renderer.pointColor[Renderer.stackIndex]);
         
         if (Renderer.batch == Batch.NONE) pointDrawBuffer();
     }
@@ -382,39 +429,39 @@ public class Renderer
     
     public static void lineThickness(double thickness)
     {
-        Renderer.lineThicknessStart = thickness;
-        Renderer.lineThicknessEnd   = thickness;
+        Renderer.lineThicknessStart[Renderer.stackIndex] = thickness;
+        Renderer.lineThicknessEnd[Renderer.stackIndex]   = thickness;
     }
     
     public static void lineThicknessStart(double thickness)
     {
-        Renderer.lineThicknessStart = thickness;
+        Renderer.lineThicknessStart[Renderer.stackIndex] = thickness;
     }
     
     public static void lineThicknessEnd(double thickness)
     {
-        Renderer.lineThicknessEnd = thickness;
+        Renderer.lineThicknessEnd[Renderer.stackIndex] = thickness;
     }
     
     public static void lineColor(@NotNull Colorc color)
     {
-        Renderer.lineColorStart.set(color);
-        Renderer.lineColorEnd.set(color);
+        Renderer.lineColorStart[Renderer.stackIndex].set(color);
+        Renderer.lineColorEnd[Renderer.stackIndex].set(color);
     }
     
     public static void lineColorStart(@NotNull Colorc color)
     {
-        Renderer.lineColorStart.set(color);
+        Renderer.lineColorStart[Renderer.stackIndex].set(color);
     }
     
     public static void lineColorEnd(@NotNull Colorc color)
     {
-        Renderer.lineColorEnd.set(color);
+        Renderer.lineColorEnd[Renderer.stackIndex].set(color);
     }
     
     public static void lineBezierDivisions(int divisions)
     {
-        Renderer.lineBezierDivisions = divisions;
+        Renderer.lineBezierDivisions[Renderer.stackIndex] = divisions;
     }
     
     public static void lineBatchBegin()
@@ -435,6 +482,12 @@ public class Renderer
     {
         int count = points.length >> 1;
         
+        double thicknessStart = Renderer.lineThicknessStart[Renderer.stackIndex];
+        double thicknessEnd   = Renderer.lineThicknessEnd[Renderer.stackIndex];
+        
+        Color colorStart = Renderer.lineColorStart[Renderer.stackIndex];
+        Color colorEnd   = Renderer.lineColorEnd[Renderer.stackIndex];
+        
         double[] thickness = new double[count];
         Color[]  color     = new Color[count];
         
@@ -442,8 +495,8 @@ public class Renderer
         {
             double t = (double) i / (count - 1);
             
-            thickness[i] = Renderer.lineThicknessStart * (1.0 - t) + Renderer.lineThicknessEnd * t;
-            color[i]     = Renderer.lineColorStart.interpolate(Renderer.lineColorEnd, t, new Color());
+            thickness[i] = thicknessStart * (1.0 - t) + thicknessEnd * t;
+            color[i]     = colorStart.interpolate(colorEnd, t, new Color());
         }
         
         for (int p1 = 0; p1 < count - 1; p1++)
@@ -465,6 +518,12 @@ public class Renderer
     {
         int count = points.length >> 1;
         
+        double thicknessStart = Renderer.lineThicknessStart[Renderer.stackIndex];
+        double thicknessEnd   = Renderer.lineThicknessEnd[Renderer.stackIndex];
+        
+        Color colorStart = Renderer.lineColorStart[Renderer.stackIndex];
+        Color colorEnd   = Renderer.lineColorEnd[Renderer.stackIndex];
+        
         double[] thickness = new double[count];
         Color[]  color     = new Color[count];
         
@@ -472,8 +531,8 @@ public class Renderer
         {
             double t = (double) i / (count - 1);
             
-            thickness[i] = Renderer.lineThicknessStart * (1.0 - t) + Renderer.lineThicknessEnd * t;
-            color[i]     = Renderer.lineColorStart.interpolate(Renderer.lineColorEnd, t, new Color());
+            thickness[i] = thicknessStart * (1.0 - t) + thicknessEnd * t;
+            color[i]     = colorStart.interpolate(colorEnd, t, new Color());
         }
         
         for (int p1 = 0; p1 < count; p1++)
@@ -496,10 +555,12 @@ public class Renderer
         int count = controlPoints.length >> 1;
         int order = count - 1;
         
-        double[] points = new double[Renderer.lineBezierDivisions * 2];
-        for (int i = 0, index = 0; i < Renderer.lineBezierDivisions; i++)
+        int divisions = Renderer.lineBezierDivisions[Renderer.stackIndex];
+        
+        double[] points = new double[divisions * 2];
+        for (int i = 0, index = 0; i < divisions; i++)
         {
-            double t    = (double) i / (Renderer.lineBezierDivisions - 1);
+            double t    = (double) i / (divisions - 1);
             double tInv = 1.0 - t;
             
             // sum i=0-n binome-coeff(n, i) * tInv^(n-i) * t^i * pi
@@ -538,18 +599,18 @@ public class Renderer
     
     public static void ellipseColor(@NotNull Colorc color)
     {
-        Renderer.ellipseColorInner.set(color);
-        Renderer.ellipseColorOuter.set(color);
+        Renderer.ellipseColorInner[Renderer.stackIndex].set(color);
+        Renderer.ellipseColorOuter[Renderer.stackIndex].set(color);
     }
     
     public static void ellipseColorInner(@NotNull Colorc color)
     {
-        Renderer.ellipseColorInner.set(color);
+        Renderer.ellipseColorInner[Renderer.stackIndex].set(color);
     }
     
     public static void ellipseColorOuter(@NotNull Colorc color)
     {
-        Renderer.ellipseColorOuter.set(color);
+        Renderer.ellipseColorOuter[Renderer.stackIndex].set(color);
     }
     
     public static void ellipseBatchBegin()
@@ -569,7 +630,7 @@ public class Renderer
     public static void ellipseDraw(double x, double y, double w, double h)
     {
         if (Renderer.batch != Batch.NONE && Renderer.batch != Batch.ELLIPSE) throw new IllegalStateException(Renderer.batch + " is active");
-        ellipseVertex(x, y, w, h, Renderer.ellipseColorInner, Renderer.ellipseColorOuter);
+        ellipseVertex(x, y, w, h, Renderer.ellipseColorInner[Renderer.stackIndex], Renderer.ellipseColorOuter[Renderer.stackIndex]);
         
         if (Renderer.batch == Batch.NONE) ellipseDrawBuffer();
     }
