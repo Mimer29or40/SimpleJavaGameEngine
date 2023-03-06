@@ -1,11 +1,11 @@
 #version 440 core
 
-struct VertexData
+struct GSOut
 {
     vec4 Color;
 };
 
-in VertexData gs_out;
+in GSOut gs_out;
 
 out vec4 FragColor;
 

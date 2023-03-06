@@ -4,17 +4,22 @@ out vec4 FragColor;
 layout(lines_adjacency) in;
 layout(triangle_strip, max_vertices = 7) out;
 
-struct VertexData
+struct VSOut
+{
+    float Thickness;
+    vec4 Color;
+};
+
+struct GSOut
 {
     vec4 Color;
 };
 
-in VertexData vs_out[];
+in VSOut vs_out[];
 
-out VertexData gs_out;
+out GSOut gs_out;
 
 uniform ivec2 viewport;
-uniform float thickness;
 
 vec4 toScreenSpace(vec4 clip)
 {
@@ -32,8 +37,6 @@ vec4 toClipSpace(vec4 screen)
 
 void main()
 {
-    float _thickness = thickness * 0.5;
-
     vec4 p[4];
     p[0] = toScreenSpace(gl_in[0].gl_Position);
     p[1] = toScreenSpace(gl_in[1].gl_Position);
@@ -49,49 +52,50 @@ void main()
     vec2 v2u;
 
     vec2 n0;
-    vec2 n1 = vec2(-v1u.y, v1u.x) * _thickness;
+    vec2 n11 = vec2(-v1u.y, v1u.x) * vs_out[1].Thickness * 0.5;
+    vec2 n12 = vec2(-v1u.y, v1u.x) * vs_out[2].Thickness * 0.5;
     vec2 n2;
 
     // Line Start
-    bool buttStart = v0.x == 0.0 && v0.y == 0.0;
+    bool buttStart = abs(v0.x) < 0.00001 && abs(v0.y) < 0.00001;
     if (buttStart)
     {
         v0u = v1u;
-        n0  = n1;
+        n0  = n11;
     }
     else
     {
         v0u = normalize(v0);
-        n0 = vec2(-v0u.y, v0u.x) * _thickness;
+        n0 = vec2(-v0u.y, v0u.x) * vs_out[1].Thickness * 0.5;
     }
 
     // Line End
-    bool buttEnd = v2.x == 0.0 && v2.y == 0.0;
+    bool buttEnd = abs(v2.x) < 0.00001 && abs(v2.y) < 0.00001;
     if (buttEnd)
     {
         v2u = v1u;
-        n2  = n1;
+        n2  = n11;
     }
     else
     {
         v2u = normalize(v2);
-        n2 = vec2(-v2u.y, v2u.x) * _thickness;
+        n2 = vec2(-v2u.y, v2u.x) * vs_out[2].Thickness * 0.5;
     }
 
     // Butt Start
     vec2 o0 = vec2(0.0);
-    vec2 o1 = p[1].xy + n1;
-    vec2 o2 = p[1].xy - n1;
+    vec2 o1 = p[1].xy + n11;
+    vec2 o2 = p[1].xy - n11;
 
     // Generates Bevel at Joint
-    bool drawBevel = !(buttStart || abs(dot(v0u, v1u)) > 0.999999);
+    bool drawBevel = !(buttStart || abs(dot(v0u, v1u)) > 0.99999);
     if (drawBevel)
     {
         if (dot(n0, v1) > 0)
         {
             o0 = p[1].xy - n0;
 
-            float temp = ((n0.x - n1.x) * v0.y - (n0.y - n1.y) * v0.x) / (v1.x * v0.y - v1.y * v0.x);
+            float temp = ((n0.x - n11.x) * v0.y - (n0.y - n11.y) * v0.x) / (v1.x * v0.y - v1.y * v0.x);
             if ((temp * v1.x) * (temp * v1.x) + (temp * v1.y) * (temp * v1.y) < v0.x * v0.x + v0.y * v0.y)
             {
                 o1 += temp * v1;
@@ -101,7 +105,7 @@ void main()
         {
             o0 = p[1].xy + n0;
 
-            float temp = ((n1.x - n0.x) * v0.y - (n1.y - n0.y) * v0.x) / (v1.x * v0.y - v1.y * v0.x);
+            float temp = ((n11.x - n0.x) * v0.y - (n11.y - n0.y) * v0.x) / (v1.x * v0.y - v1.y * v0.x);
             if ((temp * v1.x) * (temp * v1.x) + (temp * v1.y) * (temp * v1.y) < v0.x * v0.x + v0.y * v0.y)
             {
                 o2 += temp * v1;
@@ -110,15 +114,15 @@ void main()
     }
 
     // Butt End
-    vec2 o3 = p[2].xy + n1;
-    vec2 o4 = p[2].xy - n1;
+    vec2 o3 = p[2].xy + n12;
+    vec2 o4 = p[2].xy - n12;
 
     // Generates Bevel at Joint
-    if (!buttEnd && abs(dot(v1u, v2u)) <= 0.999999)
+    if (!buttEnd && abs(dot(v1u, v2u)) <= 0.99999)
     {
-        if (dot(n1, v2) > 0)
+        if (dot(n12, v2) > 0)
         {
-            float temp = ((n2.x - n1.x) * v2.y - (n2.y - n1.y) * v2.x) / (v1.x * v2.y - v1.y * v2.x);
+            float temp = ((n2.x - n12.x) * v2.y - (n2.y - n12.y) * v2.x) / (v1.x * v2.y - v1.y * v2.x);
             if ((temp * v1.x) * (temp * v1.x) + (temp * v1.y) * (temp * v1.y) < v2.x * v2.x + v2.y * v2.y)
             {
                 o3 += temp * v1;
@@ -126,7 +130,7 @@ void main()
         }
         else
         {
-            float temp = ((n1.x - n2.x) * v2.y - (n1.y - n2.y) * v2.x) / (v1.x * v2.y - v1.y * v2.x);
+            float temp = ((n12.x - n2.x) * v2.y - (n12.y - n2.y) * v2.x) / (v1.x * v2.y - v1.y * v2.x);
             if ((temp * v1.x) * (temp * v1.x) + (temp * v1.y) * (temp * v1.y) < v2.x * v2.x + v2.y * v2.y)
             {
                 o4 += temp * v1;
@@ -136,28 +140,28 @@ void main()
 
     if (dot(o3 - o1, v1) <= 0.0)
     {
-        o1 = p[1].xy + n1;
-        o3 = p[2].xy + n1;
+        o1 = p[1].xy + n11;
+        o3 = p[2].xy + n12;
     }
 
     if (dot(o4 - o2, v1) <= 0.0)
     {
-        o2 = p[1].xy - n1;
-        o4 = p[2].xy - n1;
+        o2 = p[1].xy - n11;
+        o4 = p[2].xy - n12;
     }
 
     if (drawBevel)
     {
         gl_Position = toClipSpace(vec4(o0, p[1].zw));
-        gs_out = vs_out[1];
+        gs_out.Color = vs_out[1].Color;
         EmitVertex();
 
         gl_Position = toClipSpace(vec4(o1, p[1].zw));
-        gs_out = vs_out[1];
+        gs_out.Color = vs_out[1].Color;
         EmitVertex();
 
         gl_Position = toClipSpace(vec4(o2, p[1].zw));
-        gs_out = vs_out[1];
+        gs_out.Color = vs_out[1].Color;
         EmitVertex();
 
         EndPrimitive();
@@ -165,19 +169,19 @@ void main()
 
     // Generates Line Strip
     gl_Position = toClipSpace(vec4(o1, p[1].zw));
-    gs_out = vs_out[1];
+    gs_out.Color = vs_out[1].Color;
     EmitVertex();
 
     gl_Position = toClipSpace(vec4(o2, p[1].zw));
-    gs_out = vs_out[1];
+    gs_out.Color = vs_out[1].Color;
     EmitVertex();
 
     gl_Position = toClipSpace(vec4(o3, p[2].zw));
-    gs_out = vs_out[2];
+    gs_out.Color = vs_out[2].Color;
     EmitVertex();
 
     gl_Position = toClipSpace(vec4(o4, p[2].zw));
-    gs_out = vs_out[2];
+    gs_out.Color = vs_out[2].Color;
     EmitVertex();
 
     EndPrimitive();

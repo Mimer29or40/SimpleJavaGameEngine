@@ -22,7 +22,6 @@ import engine.util.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix4d;
 import org.joml.Runtime;
-import org.joml.Vector2d;
 import org.joml.Vector2dc;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
@@ -65,12 +64,13 @@ public class Renderer
     
     // ---------- Lines State ---------- //
     
-    private static Program linesProgram;
+    private static Program lineProgram;
     
-    private static double linesThickness;
-    private static Color  linesColorStart;
-    private static Color  linesColorEnd;
-    private static int    linesBezierDivisions;
+    private static double lineThicknessStart;
+    private static double lineThicknessEnd;
+    private static Color  lineColorStart;
+    private static Color  lineColorEnd;
+    private static int    lineBezierDivisions;
     
     // ---------- Ellipse State ---------- //
     
@@ -145,17 +145,18 @@ public class Renderer
             Shader linesGeom = new Shader(ShaderType.GEOMETRY, IOUtil.getPath("shader/lines.geom"));
             Shader linesFrag = new Shader(ShaderType.FRAGMENT, IOUtil.getPath("shader/lines.frag"));
             
-            Program.bind(Renderer.linesProgram = new Program(linesVert, linesGeom, linesFrag));
+            Program.bind(Renderer.lineProgram = new Program(linesVert, linesGeom, linesFrag));
             Program.uniformBlock("View", 0);
             
             linesVert.delete();
             linesGeom.delete();
             linesFrag.delete();
             
-            Renderer.linesThickness       = 10.0;
-            Renderer.linesColorStart      = new Color(Color.WHITE);
-            Renderer.linesColorEnd        = new Color(Color.WHITE);
-            Renderer.linesBezierDivisions = 24;
+            Renderer.lineThicknessStart  = 10.0;
+            Renderer.lineThicknessEnd    = 10.0;
+            Renderer.lineColorStart      = new Color(Color.WHITE);
+            Renderer.lineColorEnd        = new Color(Color.WHITE);
+            Renderer.lineBezierDivisions = 24;
         }
         
         // ----- Ellipse ----- //
@@ -208,7 +209,7 @@ public class Renderer
         
         Renderer.pointProgram.delete();
         
-        Renderer.linesProgram.delete();
+        Renderer.lineProgram.delete();
         
         Renderer.ellipseProgram.delete();
         
@@ -341,12 +342,17 @@ public class Renderer
     public static void pointDraw(double x, double y)
     {
         if (Renderer.batch != Batch.NONE && Renderer.batch != Batch.POINT) throw new IllegalStateException(Renderer.batch + " is active");
-        position(x, y, Renderer.pointSize, 0);
-        color0(Renderer.pointColor);
-        
-        Renderer.vertexCount++;
+        pointVertex(x, y, Renderer.pointSize, Renderer.pointColor);
         
         if (Renderer.batch == Batch.NONE) pointDrawBuffer();
+    }
+    
+    private static void pointVertex(double x, double y, double thickness, @NotNull Colorc color)
+    {
+        position(x, y, thickness, 0);
+        color0(color);
+        
+        Renderer.vertexCount++;
     }
     
     private static void pointDrawBuffer()
@@ -370,138 +376,163 @@ public class Renderer
     
     // -------------------- Lines -------------------- //
     
-    public static void linesThickness(double thickness)
+    public static void lineThickness(double thickness)
     {
-        Renderer.linesThickness = thickness;
+        Renderer.lineThicknessStart = thickness;
+        Renderer.lineThicknessEnd   = thickness;
     }
     
-    public static void linesColor(@NotNull Colorc color)
+    public static void lineThicknessStart(double thickness)
     {
-        Renderer.linesColorStart.set(color);
-        Renderer.linesColorEnd.set(color);
+        Renderer.lineThicknessStart = thickness;
     }
     
-    public static void linesColorStart(@NotNull Colorc color)
+    public static void lineThicknessEnd(double thickness)
     {
-        Renderer.linesColorStart.set(color);
+        Renderer.lineThicknessEnd = thickness;
     }
     
-    public static void linesColorEnd(@NotNull Colorc color)
+    public static void lineColor(@NotNull Colorc color)
     {
-        Renderer.linesColorEnd.set(color);
+        Renderer.lineColorStart.set(color);
+        Renderer.lineColorEnd.set(color);
     }
     
-    public static void linesBezierDivisions(int divisions)
+    public static void lineColorStart(@NotNull Colorc color)
     {
-        Renderer.linesBezierDivisions = divisions;
+        Renderer.lineColorStart.set(color);
     }
     
-    public static void linesDraw(double @NotNull ... points)
+    public static void lineColorEnd(@NotNull Colorc color)
     {
-        int pointCount = points.length >> 1;
-        
-        // First coordinate get repeated.
-        linesVertex(points[0], points[1], Renderer.linesThickness, Renderer.linesColorStart);
-        
-        Color lerp = new Color();
-        for (int i = 0, index = 0; i < pointCount; i++)
-        {
-            double t = (double) i / (pointCount - 1);
-            Renderer.linesColorStart.interpolate(Renderer.linesColorEnd, t, lerp);
-            
-            linesVertex(points[index++], points[index++], Renderer.linesThickness, lerp);
-        }
-        
-        // Last coordinate get repeated.
-        linesVertex(points[points.length - 2], points[points.length - 1], Renderer.linesThickness, Renderer.linesColorEnd);
-        
-        linesDrawBuffer();
+        Renderer.lineColorEnd.set(color);
     }
     
-    public static void linesDrawEnclosed(double @NotNull ... points)
+    public static void lineBezierDivisions(int divisions)
     {
-        int pointCount = points.length >> 1;
-        
-        // Last coordinate is first.
-        linesVertex(points[points.length - 2], points[points.length - 1], Renderer.linesThickness, Renderer.linesColorStart);
-        
-        Color lerp = new Color();
-        for (int i = 0, index = 0; i < pointCount; i++)
-        {
-            double t = (double) i / (pointCount - 1);
-            Renderer.linesColorStart.interpolate(Renderer.linesColorEnd, t, lerp);
-            
-            linesVertex(points[index++], points[index++], Renderer.linesThickness, lerp);
-        }
-        
-        // First coordinate is last.
-        linesVertex(points[0], points[1], Renderer.linesThickness, Renderer.linesColorEnd);
-        
-        linesDrawBuffer();
+        Renderer.lineBezierDivisions = divisions;
     }
     
-    public static void linesDrawBezier(double @NotNull ... points)
+    public static void lineBatchBegin()
+    {
+        if (Renderer.batch != Batch.NONE) throw new IllegalStateException("Batch was never ended: " + Renderer.batch);
+        Renderer.batch = Batch.LINE;
+    }
+    
+    public static void lineBatchEnd()
+    {
+        if (Renderer.batch != Batch.LINE) throw new IllegalStateException("Line Batch was not started");
+        Renderer.batch = Batch.NONE;
+        
+        lineDrawBuffer();
+    }
+    
+    public static void lineDraw(double @NotNull ... points)
     {
         int count = points.length >> 1;
+        
+        double[] thickness = new double[count];
+        Color[]  color     = new Color[count];
+        
+        for (int i = 0; i < count; i++)
+        {
+            double t = (double) i / (count - 1);
+            
+            thickness[i] = Renderer.lineThicknessStart * (1.0 - t) + Renderer.lineThicknessEnd * t;
+            color[i]     = Renderer.lineColorStart.interpolate(Renderer.lineColorEnd, t, new Color());
+        }
+        
+        for (int p1 = 0; p1 < count - 1; p1++)
+        {
+            int p0 = Math.max(p1 - 1, 0);
+            int p2 = Math.min(p1 + 1, count - 1);
+            int p3 = Math.min(p1 + 2, count - 1);
+            
+            lineVertex(points[p0 << 1], points[(p0 << 1) + 1], thickness[p0], color[p0]);
+            lineVertex(points[p1 << 1], points[(p1 << 1) + 1], thickness[p1], color[p1]);
+            lineVertex(points[p2 << 1], points[(p2 << 1) + 1], thickness[p2], color[p2]);
+            lineVertex(points[p3 << 1], points[(p3 << 1) + 1], thickness[p3], color[p3]);
+        }
+        
+        if (Renderer.batch == Batch.NONE) lineDrawBuffer();
+    }
+    
+    public static void lineDrawEnclosed(double @NotNull ... points)
+    {
+        int count = points.length >> 1;
+        
+        double[] thickness = new double[count];
+        Color[]  color     = new Color[count];
+        
+        for (int i = 0; i < count; i++)
+        {
+            double t = (double) i / (count - 1);
+            
+            thickness[i] = Renderer.lineThicknessStart * (1.0 - t) + Renderer.lineThicknessEnd * t;
+            color[i]     = Renderer.lineColorStart.interpolate(Renderer.lineColorEnd, t, new Color());
+        }
+        
+        for (int p1 = 0; p1 < count; p1++)
+        {
+            int p0 = (p1 - 1 + count) % count;
+            int p2 = (p1 + 1 + count) % count;
+            int p3 = (p1 + 2 + count) % count;
+            
+            lineVertex(points[p0 << 1], points[(p0 << 1) + 1], thickness[p0], color[p0]);
+            lineVertex(points[p1 << 1], points[(p1 << 1) + 1], thickness[p1], color[p1]);
+            lineVertex(points[p2 << 1], points[(p2 << 1) + 1], thickness[p2], color[p2]);
+            lineVertex(points[p3 << 1], points[(p3 << 1) + 1], thickness[p3], color[p3]);
+        }
+        
+        if (Renderer.batch == Batch.NONE) lineDrawBuffer();
+    }
+    
+    public static void lineDrawBezier(double @NotNull ... controlPoints)
+    {
+        int count = controlPoints.length >> 1;
         int order = count - 1;
         
-        // First coordinate get repeated.
-        linesVertex(points[0], points[1], Renderer.linesThickness, Renderer.linesColorStart);
-        
-        Color lerp = new Color();
-        for (int i = 0; i <= Renderer.linesBezierDivisions; i++)
+        double[] points = new double[Renderer.lineBezierDivisions * 2];
+        for (int i = 0, index = 0; i < Renderer.lineBezierDivisions; i++)
         {
-            double t    = (double) i / (Renderer.linesBezierDivisions - 1);
+            double t    = (double) i / (Renderer.lineBezierDivisions - 1);
             double tInv = 1.0 - t;
-            
-            Renderer.linesColorStart.interpolate(Renderer.linesColorEnd, t, lerp);
             
             // sum i=0-n binome-coeff(n, i) * tInv^(n-i) * t^i * pi
             double x = 0.0, y = 0.0;
             for (int j = 0; j <= order; j++)
             {
                 double coeff = binomial(order, j) * Math.pow(tInv, order - j) * Math.pow(t, j);
-                x += coeff * points[(j << 1)];
-                y += coeff * points[(j << 1) + 1];
+                x += coeff * controlPoints[(j << 1)];
+                y += coeff * controlPoints[(j << 1) + 1];
             }
-            linesVertex(x, y, Renderer.linesThickness, lerp);
+            points[index++] = x;
+            points[index++] = y;
         }
-        
-        // Last coordinate get repeated.
-        linesVertex(points[points.length - 2], points[points.length - 1], Renderer.linesThickness, Renderer.linesColorEnd);
-        
-        linesDrawBuffer();
+        lineDraw(points);
     }
     
-    private static void linesVertex(double x, double y, double thickness, @NotNull Colorc color)
+    private static void lineVertex(double x, double y, double thickness, @NotNull Colorc color)
     {
-        Renderer.positionBuffer.put((float) x);
-        Renderer.positionBuffer.put((float) y);
-        Renderer.positionBuffer.put((float) thickness);
-        Renderer.positionBuffer.put(0);
-        
-        Renderer.color0Buffer.put((byte) color.r());
-        Renderer.color0Buffer.put((byte) color.g());
-        Renderer.color0Buffer.put((byte) color.b());
-        Renderer.color0Buffer.put((byte) color.a());
+        position(x, y, thickness, 0);
+        color0(color);
         
         Renderer.vertexCount++;
     }
     
-    private static void linesDrawBuffer()
+    private static void lineDrawBuffer()
     {
         viewUpdateBuffer();
         
         Framebuffer fb = Framebuffer.get();
         
-        Program.bind(Renderer.linesProgram);
+        Program.bind(Renderer.lineProgram);
         Program.uniformInt2("viewport", fb.width(), fb.height());
-        Program.uniformFloat("thickness", Renderer.linesThickness);
         
         VertexArray.bind(Renderer.vertexArray);
         Renderer.vertexArray.buffer(0).set(0, Renderer.positionBuffer.flip());
         Renderer.vertexArray.buffer(2).set(0, Renderer.color0Buffer.flip());
-        Renderer.vertexArray.draw(DrawMode.LINE_STRIP_ADJACENCY, Renderer.vertexCount);
+        Renderer.vertexArray.draw(DrawMode.LINES_ADJACENCY, Renderer.vertexCount);
         
         Renderer.vertexCount = 0;
         Renderer.positionBuffer.clear();
@@ -543,13 +574,18 @@ public class Renderer
     public static void ellipseDraw(double x, double y, double w, double h)
     {
         if (Renderer.batch != Batch.NONE && Renderer.batch != Batch.ELLIPSE) throw new IllegalStateException(Renderer.batch + " is active");
-        position(x, y, w, h);
-        color0(Renderer.ellipseColorInner);
-        color1(Renderer.ellipseColorOuter);
-        
-        Renderer.vertexCount++;
+        ellipseVertex(x, y, w, h, Renderer.ellipseColorInner, Renderer.ellipseColorOuter);
         
         if (Renderer.batch == Batch.NONE) ellipseDrawBuffer();
+    }
+    
+    private static void ellipseVertex(double x, double y, double w, double h, @NotNull Colorc inner, @NotNull Colorc outer)
+    {
+        position(x, y, w, h);
+        color0(inner);
+        color1(outer);
+        
+        Renderer.vertexCount++;
     }
     
     private static void ellipseDrawBuffer()
@@ -633,7 +669,7 @@ public class Renderer
             yOffset += lineHeight;
         }
         
-        textDraw();
+        textDrawBuffer();
     }
     
     public static void textDraw(@NotNull String text, double x, double y)
@@ -674,18 +710,13 @@ public class Renderer
     
     private static void textVertex(double x, double y, double u, double v)
     {
-        Renderer.positionBuffer.put((float) x);
-        Renderer.positionBuffer.put((float) y);
-        Renderer.positionBuffer.put(0);
-        Renderer.positionBuffer.put(0);
-        
-        Renderer.texCoordBuffer.put((float) u);
-        Renderer.texCoordBuffer.put((float) v);
+        position(x, y, 0, 0);
+        texCoord(u, v);
         
         Renderer.vertexCount++;
     }
     
-    private static void textDraw()
+    private static void textDrawBuffer()
     {
         viewUpdateBuffer();
         

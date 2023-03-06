@@ -65,9 +65,9 @@ public class RenderDemo extends Engine
         
         pointsDemo(time);
         
-        linesDemo(time);
-        
         ellipseDemo(time);
+        
+        linesDemo(time);
         
         viewIdentity();
         
@@ -139,19 +139,19 @@ public class RenderDemo extends Engine
     
     void linesDemo(double time)
     {
-        linesThickness(2.0);
+        lineBatchBegin();
+        lineThickness(2.0);
         
-        linesColor(Color.DARK_RED);
-        linesDraw(0, 0, 100, 0);
+        lineColor(Color.DARK_RED);
+        lineDraw(0, 0, 100, 0);
         
-        linesColor(Color.DARK_GREEN);
-        linesDraw(0, 0, 0, 100);
+        lineColor(Color.DARK_GREEN);
+        lineDraw(0, 0, 0, 100);
         
-        linesThickness(5.0);
-        
-        linesColorStart(Color.DARK_GREEN);
-        linesColorEnd(Color.DARK_RED);
-        linesDraw(100, 100, 200, 100, 200, 200, 0, 200);
+        lineThickness(5.0);
+        lineColorStart(Color.DARK_GREEN);
+        lineColorEnd(Color.DARK_RED);
+        lineDraw(50, 75, 100, 100, 150, 50, 200, 200);
         
         int steps = Math.max((int) (Math.sin(time / 2) * 50 + 55), 2);
         
@@ -169,24 +169,29 @@ public class RenderDemo extends Engine
             points[(i << 1) + 1] = y * 200;
         }
         
-        linesColorStart(Color.CYAN);
-        linesColorEnd(Color.MAGENTA);
-        linesDraw(points);
+        lineThicknessStart(5.0);
+        lineColorStart(Color.CYAN);
+        lineColorEnd(Color.MAGENTA);
+        lineDraw(points);
         
         for (int i = 0; i < steps; i++)
         {
-            double angle = (double) i / (steps - 1) * Math.PI * 5;
+            double angle = (i + 0.5) / steps * Math.PI * 2;
+            double dist = Math.cos(time + 9 * angle) * 25 + 100;
             
-            points[(i << 1)]     = Math.cos(angle) * i * 2 + 500;
-            points[(i << 1) + 1] = Math.sin(angle) * i * 2 + 300;
+            points[(i << 1)]     = 500 + Math.cos(angle) * dist;
+            points[(i << 1) + 1] = 300 + Math.sin(angle) * dist;
         }
         
-        linesColorStart(Color.LIGHTEST_YELLOW);
-        linesColorEnd(Color.DARKEST_YELLOW);
-        linesDrawEnclosed(points);
+        lineColorStart(Color.LIGHTEST_YELLOW);
+        lineColorEnd(Color.DARKEST_YELLOW);
+        lineDrawEnclosed(points);
         
-        linesColor(Color.BLUE);
-        linesDrawBezier(0, 0, 0, 500, 200, 0, 200, 100);
+        lineThicknessStart(50.0);
+        lineThicknessEnd(5.0);
+        lineColor(Color.BLUE);
+        lineDrawBezier(0, 0, 0, 500, 200, 0, 200, 100);
+        lineBatchEnd();
     }
     
     double[] ellipsePoints = null;
@@ -197,7 +202,7 @@ public class RenderDemo extends Engine
         {
             int w = windowSize().x();
             int h = windowSize().y();
-        
+            
             ellipsePoints = new double[100 * 2];
             for (int i = 0, n = ellipsePoints.length; i < n; )
             {
@@ -205,7 +210,7 @@ public class RenderDemo extends Engine
                 ellipsePoints[i++] = Math.random() * h;
             }
         }
-    
+        
         ellipseBatchBegin();
         for (int i = 0, n = ellipsePoints.length; i < n; )
         {
