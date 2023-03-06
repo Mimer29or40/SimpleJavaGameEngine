@@ -3,6 +3,8 @@ version "unspecified"
 dependencies {
     implementation project(":Engine")
     implementation project(":Plugins:GIF")
+    implementation project(":Plugins:Graphics3D")
+    implementation project(":Plugins:GUI")
     implementation project(":Plugins:Image")
     implementation project(":Plugins:Shader")
 
