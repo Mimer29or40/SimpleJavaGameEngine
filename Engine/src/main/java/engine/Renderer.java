@@ -249,6 +249,31 @@ public class Renderer
         Renderer.color1Buffer.put((byte) color.a());
     }
     
+    private static void drawVertices(@NotNull DrawMode mode)
+    {
+        if (Renderer.updateViewBuffer)
+        {
+            try (MemoryStack stack = MemoryStack.stackPush())
+            {
+                Renderer.viewBuffer.set(0, Renderer.view.get(stack.mallocFloat(16)));
+            }
+            Renderer.updateViewBuffer = false;
+        }
+        
+        VertexArray.bind(Renderer.vertexArray);
+        Renderer.vertexArray.buffer(0).set(0, Renderer.positionBuffer.flip());
+        Renderer.vertexArray.buffer(1).set(0, Renderer.texCoordBuffer.flip());
+        Renderer.vertexArray.buffer(2).set(0, Renderer.color0Buffer.flip());
+        Renderer.vertexArray.buffer(3).set(0, Renderer.color1Buffer.flip());
+        Renderer.vertexArray.draw(mode, 0, Renderer.vertexCount);
+        
+        Renderer.vertexCount = 0;
+        Renderer.positionBuffer.clear();
+        Renderer.texCoordBuffer.clear();
+        Renderer.color0Buffer.clear();
+        Renderer.color1Buffer.clear();
+    }
+    
     // -------------------- View -------------------- //
     
     public static void viewIdentity()
@@ -301,18 +326,6 @@ public class Renderer
         viewScale(scale.x(), scale.y());
     }
     
-    private static void viewUpdateBuffer()
-    {
-        if (Renderer.updateViewBuffer)
-        {
-            try (MemoryStack stack = MemoryStack.stackPush())
-            {
-                Renderer.viewBuffer.set(0, Renderer.view.get(stack.mallocFloat(16)));
-            }
-            Renderer.updateViewBuffer = false;
-        }
-    }
-    
     // -------------------- Point -------------------- //
     
     public static void pointSize(double size)
@@ -357,21 +370,12 @@ public class Renderer
     
     private static void pointDrawBuffer()
     {
-        viewUpdateBuffer();
-        
         Framebuffer fb = Framebuffer.get();
         
         Program.bind(Renderer.pointProgram);
         Program.uniformInt2("viewport", fb.width(), fb.height());
         
-        VertexArray.bind(Renderer.vertexArray);
-        Renderer.vertexArray.buffer(0).set(0, Renderer.positionBuffer.flip());
-        Renderer.vertexArray.buffer(2).set(0, Renderer.color0Buffer.flip());
-        Renderer.vertexArray.draw(DrawMode.POINTS, Renderer.vertexCount);
-        
-        Renderer.vertexCount = 0;
-        Renderer.positionBuffer.clear();
-        Renderer.color0Buffer.clear();
+        drawVertices(DrawMode.POINTS);
     }
     
     // -------------------- Lines -------------------- //
@@ -522,21 +526,12 @@ public class Renderer
     
     private static void lineDrawBuffer()
     {
-        viewUpdateBuffer();
-        
         Framebuffer fb = Framebuffer.get();
         
         Program.bind(Renderer.lineProgram);
         Program.uniformInt2("viewport", fb.width(), fb.height());
         
-        VertexArray.bind(Renderer.vertexArray);
-        Renderer.vertexArray.buffer(0).set(0, Renderer.positionBuffer.flip());
-        Renderer.vertexArray.buffer(2).set(0, Renderer.color0Buffer.flip());
-        Renderer.vertexArray.draw(DrawMode.LINES_ADJACENCY, Renderer.vertexCount);
-        
-        Renderer.vertexCount = 0;
-        Renderer.positionBuffer.clear();
-        Renderer.color0Buffer.clear();
+        drawVertices(DrawMode.LINES_ADJACENCY);
     }
     
     // -------------------- Ellipse -------------------- //
@@ -590,20 +585,9 @@ public class Renderer
     
     private static void ellipseDrawBuffer()
     {
-        viewUpdateBuffer();
-        
         Program.bind(Renderer.ellipseProgram);
         
-        VertexArray.bind(Renderer.vertexArray);
-        Renderer.vertexArray.buffer(0).set(0, Renderer.positionBuffer.flip());
-        Renderer.vertexArray.buffer(2).set(0, Renderer.color0Buffer.flip());
-        Renderer.vertexArray.buffer(3).set(0, Renderer.color1Buffer.flip());
-        Renderer.vertexArray.draw(DrawMode.POINTS, Renderer.vertexCount);
-        
-        Renderer.vertexCount = 0;
-        Renderer.positionBuffer.clear();
-        Renderer.color0Buffer.clear();
-        Renderer.color1Buffer.clear();
+        drawVertices(DrawMode.POINTS);
     }
     
     // -------------------- Text -------------------- //
@@ -718,21 +702,12 @@ public class Renderer
     
     private static void textDrawBuffer()
     {
-        viewUpdateBuffer();
-        
         Texture.bind(Renderer.textFont.texture, 0);
         
         Program.bind(Renderer.textProgram);
         Program.uniformColor("fontColor", Renderer.textColor);
         
-        VertexArray.bind(Renderer.vertexArray);
-        Renderer.vertexArray.buffer(0).set(0, Renderer.positionBuffer.flip());
-        Renderer.vertexArray.buffer(1).set(0, Renderer.texCoordBuffer.flip());
-        Renderer.vertexArray.draw(DrawMode.TRIANGLES, Renderer.vertexCount);
-        
-        Renderer.vertexCount = 0;
-        Renderer.positionBuffer.clear();
-        Renderer.texCoordBuffer.clear();
+        drawVertices(DrawMode.TRIANGLES);
     }
     
     private static final Map<Long, Long> BINOMIAL_CACHE = new HashMap<>();
