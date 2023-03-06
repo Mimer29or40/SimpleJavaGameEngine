@@ -63,11 +63,11 @@ public class RenderDemo extends Engine
         //viewRotate(time);
         //viewTranslate(-w, -h);
         
-        pointsDemo();
+        pointsDemo(time);
         
         linesDemo(time);
         
-        ellipseDemo();
+        ellipseDemo(time);
         
         viewIdentity();
         
@@ -111,7 +111,7 @@ public class RenderDemo extends Engine
     
     double[] pointPoints = null;
     
-    void pointsDemo()
+    void pointsDemo(double time)
     {
         if (pointPoints == null)
         {
@@ -119,15 +119,22 @@ public class RenderDemo extends Engine
             int h = windowSize().y();
             
             pointPoints = new double[100 * 2];
-            for (int i = 0, n = pointPoints.length >> 1, index = 0; i < n; i++)
+            for (int i = 0, n = pointPoints.length; i < n; )
             {
-                pointPoints[index++] = Math.random() * w;
-                pointPoints[index++] = Math.random() * h;
+                pointPoints[i++] = Math.random() * w;
+                pointPoints[i++] = Math.random() * h;
             }
         }
         
-        pointsSize(10);
-        pointsDraw(pointPoints);
+        pointBatchBegin();
+        for (int i = 0, n = pointPoints.length; i < n; )
+        {
+            int color = (int) (Math.sin(7 * time - i) * 127.5 + 127.5);
+            pointSize(Math.sin(2 * time + i) * 5 + 10);
+            pointColor(new Color(color, color, color, 255));
+            pointDraw(pointPoints[i++], pointPoints[i++]);
+        }
+        pointBatchEnd();
     }
     
     void linesDemo(double time)
@@ -182,15 +189,37 @@ public class RenderDemo extends Engine
         linesDrawBezier(0, 0, 0, 500, 200, 0, 200, 100);
     }
     
-    void ellipseDemo()
+    double[] ellipsePoints = null;
+    
+    void ellipseDemo(double time)
     {
-        //Matrix4d view = new Matrix4d();
-        //view.setLookAlong(0, 0, -1, 0, -1, 0);
-        //rendererView(view);
+        if (ellipsePoints == null)
+        {
+            int w = windowSize().x();
+            int h = windowSize().y();
+        
+            ellipsePoints = new double[100 * 2];
+            for (int i = 0, n = ellipsePoints.length; i < n; )
+            {
+                ellipsePoints[i++] = Math.random() * w;
+                ellipsePoints[i++] = Math.random() * h;
+            }
+        }
+    
+        ellipseBatchBegin();
+        for (int i = 0, n = ellipsePoints.length; i < n; )
+        {
+            int color0 = (int) (Math.sin(7 * time - i) * 127.5 + 127.5);
+            int color1 = (int) (Math.cos(13 * time + i) * 127.5 + 127.5);
+            ellipseColorInner(new Color(color0, 255, color0, 255));
+            ellipseColorOuter(new Color(0, 0, color1, 255));
+            ellipseDraw(ellipsePoints[i++], ellipsePoints[i++], Math.cos(2 * time + i) * 20 + 40, Math.sin(5 * time + i) * 20 + 40);
+        }
+        ellipseBatchEnd();
         
         ellipseColorInner(Color.GRAY);
         ellipseColorOuter(Color.BLANK);
-        ellipseDraw(200, 200);
+        ellipseDraw(200, 200, 200, 100);
     }
     
     void textDemo()

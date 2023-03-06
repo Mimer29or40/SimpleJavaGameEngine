@@ -1,5 +1,5 @@
 #version 440 core
-layout (location = 0) in vec2 aPos;
+layout (location = 0) in vec4 aPos;
 layout (location = 2) in vec4 aColor;
 
 struct VertexData
@@ -15,5 +15,5 @@ void main()
 {
     vs_out.Color = aColor;
 
-    gl_Position = view * vec4(aPos, 1.0, 1.0);
+    gl_Position = view * vec4(aPos.xy, 1.0, 1.0);
 }

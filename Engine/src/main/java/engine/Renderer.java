@@ -41,11 +41,14 @@ public class Renderer
     
     private static int vertexCount;
     
-    private static FloatBuffer positionBuffer;  // (XYZ)  (shader-location = 0)
+    private static FloatBuffer positionBuffer;  // (XYZW) (shader-location = 0)
     private static FloatBuffer texCoordBuffer;  // (UV)   (shader-location = 1)
-    private static ByteBuffer  colorBuffer;     // (RGBA) (shader-location = 2)
+    private static ByteBuffer  color0Buffer;    // (RGBA) (shader-location = 2)
+    private static ByteBuffer  color1Buffer;    // (RGBA) (shader-location = 3)
     
     private static VertexArray vertexArray;
+    
+    private static Batch batch = Batch.NONE;
     
     // -------------------- View -------------------- //
     
@@ -55,10 +58,10 @@ public class Renderer
     
     // ---------- Points State ---------- //
     
-    private static Program pointsProgram;
+    private static Program pointProgram;
     
-    private static double pointsSize;
-    private static Color  pointsColor;
+    private static double pointSize;
+    private static Color  pointColor;
     
     // ---------- Lines State ---------- //
     
@@ -97,18 +100,21 @@ public class Renderer
         
         Renderer.vertexCount = 0;
         
-        Renderer.positionBuffer = MemoryUtil.memAllocFloat(vertexCount * 3); // (XYZ)  (shader-location = 0)
+        Renderer.positionBuffer = MemoryUtil.memAllocFloat(vertexCount * 4); // (XYZW) (shader-location = 0)
         Renderer.texCoordBuffer = MemoryUtil.memAllocFloat(vertexCount * 2); // (UV)   (shader-location = 1)
-        Renderer.colorBuffer    = MemoryUtil.memAlloc(vertexCount * 4);      // (RGBA) (shader-location = 2)
+        Renderer.color0Buffer   = MemoryUtil.memAlloc(vertexCount * 4);      // (RGBA) (shader-location = 2)
+        Renderer.color1Buffer   = MemoryUtil.memAlloc(vertexCount * 4);      // (RGBA) (shader-location = 3)
         
-        VertexAttribute position = new VertexAttribute(GLType.FLOAT, 3, false);
+        VertexAttribute position = new VertexAttribute(GLType.FLOAT, 4, false);
         VertexAttribute texCoord = new VertexAttribute(GLType.FLOAT, 2, false);
-        VertexAttribute color    = new VertexAttribute(GLType.UNSIGNED_BYTE, 4, true);
+        VertexAttribute color0   = new VertexAttribute(GLType.UNSIGNED_BYTE, 4, true);
+        VertexAttribute color1   = new VertexAttribute(GLType.UNSIGNED_BYTE, 4, true);
         
         Renderer.vertexArray = VertexArray.builder()
                                           .buffer(BufferUsage.DYNAMIC_DRAW, Renderer.positionBuffer.clear(), position)
                                           .buffer(BufferUsage.DYNAMIC_DRAW, Renderer.texCoordBuffer.clear(), texCoord)
-                                          .buffer(BufferUsage.DYNAMIC_DRAW, Renderer.colorBuffer.clear(), color)
+                                          .buffer(BufferUsage.DYNAMIC_DRAW, Renderer.color0Buffer.clear(), color0)
+                                          .buffer(BufferUsage.DYNAMIC_DRAW, Renderer.color1Buffer.clear(), color1)
                                           .build();
         
         Renderer.view             = new Matrix4d();
@@ -122,15 +128,15 @@ public class Renderer
             Shader pointGeom = new Shader(ShaderType.GEOMETRY, IOUtil.getPath("shader/point.geom"));
             Shader pointFrag = new Shader(ShaderType.FRAGMENT, IOUtil.getPath("shader/point.frag"));
             
-            Program.bind(Renderer.pointsProgram = new Program(pointVert, pointGeom, pointFrag));
+            Program.bind(Renderer.pointProgram = new Program(pointVert, pointGeom, pointFrag));
             Program.uniformBlock("View", 0);
             
             pointVert.delete();
             pointGeom.delete();
             pointFrag.delete();
             
-            Renderer.pointsSize  = 10.0;
-            Renderer.pointsColor = new Color(Color.WHITE);
+            Renderer.pointSize  = 10.0;
+            Renderer.pointColor = new Color(Color.WHITE);
         }
         
         // ----- Lines ----- //
@@ -196,10 +202,11 @@ public class Renderer
         
         MemoryUtil.memFree(Renderer.positionBuffer);
         MemoryUtil.memFree(Renderer.texCoordBuffer);
-        MemoryUtil.memFree(Renderer.colorBuffer);
+        MemoryUtil.memFree(Renderer.color0Buffer);
+        MemoryUtil.memFree(Renderer.color1Buffer);
         Renderer.vertexArray.delete();
         
-        Renderer.pointsProgram.delete();
+        Renderer.pointProgram.delete();
         
         Renderer.linesProgram.delete();
         
@@ -207,6 +214,38 @@ public class Renderer
         
         Renderer.textProgram.delete();
         Renderer.DEFAULT_FONT.delete();
+    }
+    
+    // -------------------- Vertices -------------------- //
+    
+    private static void position(double x, double y, double z, double w)
+    {
+        Renderer.positionBuffer.put((float) x);
+        Renderer.positionBuffer.put((float) y);
+        Renderer.positionBuffer.put((float) z);
+        Renderer.positionBuffer.put((float) w);
+    }
+    
+    private static void texCoord(double u, double V)
+    {
+        Renderer.texCoordBuffer.put((float) u);
+        Renderer.texCoordBuffer.put((float) V);
+    }
+    
+    private static void color0(@NotNull Colorc color)
+    {
+        Renderer.color0Buffer.put((byte) color.r());
+        Renderer.color0Buffer.put((byte) color.g());
+        Renderer.color0Buffer.put((byte) color.b());
+        Renderer.color0Buffer.put((byte) color.a());
+    }
+    
+    private static void color1(@NotNull Colorc color)
+    {
+        Renderer.color1Buffer.put((byte) color.r());
+        Renderer.color1Buffer.put((byte) color.g());
+        Renderer.color1Buffer.put((byte) color.b());
+        Renderer.color1Buffer.put((byte) color.a());
     }
     
     // -------------------- View -------------------- //
@@ -275,53 +314,58 @@ public class Renderer
     
     // -------------------- Point -------------------- //
     
-    public static void pointsSize(double size)
+    public static void pointSize(double size)
     {
-        Renderer.pointsSize = size;
+        Renderer.pointSize = size;
     }
     
-    public static void pointsColor(@NotNull Colorc color)
+    public static void pointColor(@NotNull Colorc color)
     {
-        Renderer.pointsColor.set(color);
+        Renderer.pointColor.set(color);
     }
     
-    public static void pointsDraw(double @NotNull ... points)
+    public static void pointBatchBegin()
     {
-        int count = points.length >> 1;
-        for (int i = 0, index = 0; i < count; i++)
-        {
-            pointsVertex(points[index++], points[index++]);
-        }
+        if (Renderer.batch != Batch.NONE) throw new IllegalStateException("Batch was never ended: " + Renderer.batch);
+        Renderer.batch = Batch.POINT;
+    }
+    
+    public static void pointBatchEnd()
+    {
+        if (Renderer.batch != Batch.POINT) throw new IllegalStateException("Point Batch was not started");
+        Renderer.batch = Batch.NONE;
         
-        pointsDraw();
+        pointDrawBuffer();
     }
     
-    private static void pointsVertex(double x, double y)
+    public static void pointDraw(double x, double y)
     {
-        Renderer.positionBuffer.put((float) x);
-        Renderer.positionBuffer.put((float) y);
-        Renderer.positionBuffer.put(0);
+        if (Renderer.batch != Batch.NONE && Renderer.batch != Batch.POINT) throw new IllegalStateException(Renderer.batch + " is active");
+        position(x, y, Renderer.pointSize, 0);
+        color0(Renderer.pointColor);
         
         Renderer.vertexCount++;
+        
+        if (Renderer.batch == Batch.NONE) pointDrawBuffer();
     }
     
-    private static void pointsDraw()
+    private static void pointDrawBuffer()
     {
         viewUpdateBuffer();
         
         Framebuffer fb = Framebuffer.get();
         
-        Program.bind(Renderer.pointsProgram);
+        Program.bind(Renderer.pointProgram);
         Program.uniformInt2("viewport", fb.width(), fb.height());
-        Program.uniformFloat("size", Renderer.pointsSize);
-        Program.uniformColor("color", Renderer.pointsColor);
         
         VertexArray.bind(Renderer.vertexArray);
         Renderer.vertexArray.buffer(0).set(0, Renderer.positionBuffer.flip());
+        Renderer.vertexArray.buffer(2).set(0, Renderer.color0Buffer.flip());
         Renderer.vertexArray.draw(DrawMode.POINTS, Renderer.vertexCount);
         
         Renderer.vertexCount = 0;
         Renderer.positionBuffer.clear();
+        Renderer.color0Buffer.clear();
     }
     
     // -------------------- Lines -------------------- //
@@ -357,7 +401,7 @@ public class Renderer
         int pointCount = points.length >> 1;
         
         // First coordinate get repeated.
-        linesVertex(points[0], points[1], Renderer.linesColorStart);
+        linesVertex(points[0], points[1], Renderer.linesThickness, Renderer.linesColorStart);
         
         Color lerp = new Color();
         for (int i = 0, index = 0; i < pointCount; i++)
@@ -365,35 +409,13 @@ public class Renderer
             double t = (double) i / (pointCount - 1);
             Renderer.linesColorStart.interpolate(Renderer.linesColorEnd, t, lerp);
             
-            linesVertex(points[index++], points[index++], lerp);
+            linesVertex(points[index++], points[index++], Renderer.linesThickness, lerp);
         }
         
         // Last coordinate get repeated.
-        linesVertex(points[points.length - 2], points[points.length - 1], Renderer.linesColorEnd);
+        linesVertex(points[points.length - 2], points[points.length - 1], Renderer.linesThickness, Renderer.linesColorEnd);
         
-        linesDraw();
-    }
-    
-    public static void linesDraw(Vector2d @NotNull ... points)
-    {
-        int pointCount = points.length;
-        
-        // First coordinate get repeated.
-        linesVertex(points[0].x, points[0].y, Renderer.linesColorStart);
-        
-        Color lerp = new Color();
-        for (int i = 0; i < pointCount; i++)
-        {
-            double t = (double) i / (pointCount - 1);
-            Renderer.linesColorStart.interpolate(Renderer.linesColorEnd, t, lerp);
-            
-            linesVertex(points[i].x, points[i].y, lerp);
-        }
-        
-        // Last coordinate get repeated.
-        linesVertex(points[points.length - 1].x, points[points.length - 1].y, Renderer.linesColorEnd);
-        
-        linesDraw();
+        linesDrawBuffer();
     }
     
     public static void linesDrawEnclosed(double @NotNull ... points)
@@ -401,7 +423,7 @@ public class Renderer
         int pointCount = points.length >> 1;
         
         // Last coordinate is first.
-        linesVertex(points[points.length - 2], points[points.length - 1], Renderer.linesColorStart);
+        linesVertex(points[points.length - 2], points[points.length - 1], Renderer.linesThickness, Renderer.linesColorStart);
         
         Color lerp = new Color();
         for (int i = 0, index = 0; i < pointCount; i++)
@@ -409,35 +431,13 @@ public class Renderer
             double t = (double) i / (pointCount - 1);
             Renderer.linesColorStart.interpolate(Renderer.linesColorEnd, t, lerp);
             
-            linesVertex(points[index++], points[index++], lerp);
+            linesVertex(points[index++], points[index++], Renderer.linesThickness, lerp);
         }
         
         // First coordinate is last.
-        linesVertex(points[0], points[1], Renderer.linesColorEnd);
+        linesVertex(points[0], points[1], Renderer.linesThickness, Renderer.linesColorEnd);
         
-        linesDraw();
-    }
-    
-    public static void linesDrawEnclosed(Vector2d @NotNull ... points)
-    {
-        int pointCount = points.length;
-        
-        // Last coordinate is first.
-        linesVertex(points[points.length - 1].x, points[points.length - 1].y, Renderer.linesColorStart);
-        
-        Color lerp = new Color();
-        for (int i = 0; i < pointCount; i++)
-        {
-            double t = (double) i / (pointCount - 1);
-            Renderer.linesColorStart.interpolate(Renderer.linesColorEnd, t, lerp);
-            
-            linesVertex(points[i].x, points[i].y, lerp);
-        }
-        
-        // First coordinate is last.
-        linesVertex(points[0].x, points[0].y, Renderer.linesColorEnd);
-        
-        linesDraw();
+        linesDrawBuffer();
     }
     
     public static void linesDrawBezier(double @NotNull ... points)
@@ -446,7 +446,7 @@ public class Renderer
         int order = count - 1;
         
         // First coordinate get repeated.
-        linesVertex(points[0], points[1], Renderer.linesColorStart);
+        linesVertex(points[0], points[1], Renderer.linesThickness, Renderer.linesColorStart);
         
         Color lerp = new Color();
         for (int i = 0; i <= Renderer.linesBezierDivisions; i++)
@@ -464,63 +464,31 @@ public class Renderer
                 x += coeff * points[(j << 1)];
                 y += coeff * points[(j << 1) + 1];
             }
-            linesVertex(x, y, lerp);
+            linesVertex(x, y, Renderer.linesThickness, lerp);
         }
         
         // Last coordinate get repeated.
-        linesVertex(points[points.length - 2], points[points.length - 1], Renderer.linesColorEnd);
+        linesVertex(points[points.length - 2], points[points.length - 1], Renderer.linesThickness, Renderer.linesColorEnd);
         
-        linesDraw();
+        linesDrawBuffer();
     }
     
-    public static void linesDrawBezier(Vector2d @NotNull ... points)
-    {
-        int count = points.length;
-        int order = count - 1;
-        
-        // First coordinate get repeated.
-        linesVertex(points[0].x, points[0].y, Renderer.linesColorStart);
-        
-        Color lerp = new Color();
-        for (int i = 0; i <= Renderer.linesBezierDivisions; i++)
-        {
-            double t    = (double) i / (Renderer.linesBezierDivisions - 1);
-            double tInv = 1.0 - t;
-            
-            Renderer.linesColorStart.interpolate(Renderer.linesColorEnd, t, lerp);
-            
-            // sum i=0-n binome-coeff(n, i) * tInv^(n-i) * t^i * pi
-            double x = 0.0, y = 0.0;
-            for (int j = 0; j <= order; j++)
-            {
-                double coeff = binomial(order, j) * Math.pow(tInv, order - j) * Math.pow(t, j);
-                x += coeff * points[j].x;
-                y += coeff * points[j].y;
-            }
-            linesVertex(x, y, lerp);
-        }
-        
-        // Last coordinate get repeated.
-        linesVertex(points[points.length - 1].x, points[points.length - 1].y, Renderer.linesColorEnd);
-        
-        linesDraw();
-    }
-    
-    private static void linesVertex(double x, double y, @NotNull Colorc color)
+    private static void linesVertex(double x, double y, double thickness, @NotNull Colorc color)
     {
         Renderer.positionBuffer.put((float) x);
         Renderer.positionBuffer.put((float) y);
+        Renderer.positionBuffer.put((float) thickness);
         Renderer.positionBuffer.put(0);
         
-        Renderer.colorBuffer.put((byte) color.r());
-        Renderer.colorBuffer.put((byte) color.g());
-        Renderer.colorBuffer.put((byte) color.b());
-        Renderer.colorBuffer.put((byte) color.a());
+        Renderer.color0Buffer.put((byte) color.r());
+        Renderer.color0Buffer.put((byte) color.g());
+        Renderer.color0Buffer.put((byte) color.b());
+        Renderer.color0Buffer.put((byte) color.a());
         
         Renderer.vertexCount++;
     }
     
-    private static void linesDraw()
+    private static void linesDrawBuffer()
     {
         viewUpdateBuffer();
         
@@ -532,12 +500,12 @@ public class Renderer
         
         VertexArray.bind(Renderer.vertexArray);
         Renderer.vertexArray.buffer(0).set(0, Renderer.positionBuffer.flip());
-        Renderer.vertexArray.buffer(2).set(0, Renderer.colorBuffer.flip());
+        Renderer.vertexArray.buffer(2).set(0, Renderer.color0Buffer.flip());
         Renderer.vertexArray.draw(DrawMode.LINE_STRIP_ADJACENCY, Renderer.vertexCount);
         
         Renderer.vertexCount = 0;
         Renderer.positionBuffer.clear();
-        Renderer.colorBuffer.clear();
+        Renderer.color0Buffer.clear();
     }
     
     // -------------------- Ellipse -------------------- //
@@ -558,32 +526,48 @@ public class Renderer
         Renderer.ellipseColorOuter.set(color);
     }
     
-    public static void ellipseDraw(double x, double y)
+    public static void ellipseBatchBegin()
     {
-        Renderer.positionBuffer.put((float) x);
-        Renderer.positionBuffer.put((float) y);
-        Renderer.positionBuffer.put(0);
+        if (Renderer.batch != Batch.NONE) throw new IllegalStateException("Batch was never ended: " + Renderer.batch);
+        Renderer.batch = Batch.ELLIPSE;
+    }
+    
+    public static void ellipseBatchEnd()
+    {
+        if (Renderer.batch != Batch.ELLIPSE) throw new IllegalStateException("Ellipse Batch was not started");
+        Renderer.batch = Batch.NONE;
+        
+        ellipseDrawBuffer();
+    }
+    
+    public static void ellipseDraw(double x, double y, double w, double h)
+    {
+        if (Renderer.batch != Batch.NONE && Renderer.batch != Batch.ELLIPSE) throw new IllegalStateException(Renderer.batch + " is active");
+        position(x, y, w, h);
+        color0(Renderer.ellipseColorInner);
+        color1(Renderer.ellipseColorOuter);
         
         Renderer.vertexCount++;
         
-        ellipseDraw();
+        if (Renderer.batch == Batch.NONE) ellipseDrawBuffer();
     }
     
-    private static void ellipseDraw()
+    private static void ellipseDrawBuffer()
     {
         viewUpdateBuffer();
         
         Program.bind(Renderer.ellipseProgram);
-        Program.uniformFloat2("size", 200, 100);
-        Program.uniformColor("colorInner", Renderer.ellipseColorInner);
-        Program.uniformColor("colorOuter", Renderer.ellipseColorOuter);
         
         VertexArray.bind(Renderer.vertexArray);
         Renderer.vertexArray.buffer(0).set(0, Renderer.positionBuffer.flip());
+        Renderer.vertexArray.buffer(2).set(0, Renderer.color0Buffer.flip());
+        Renderer.vertexArray.buffer(3).set(0, Renderer.color1Buffer.flip());
         Renderer.vertexArray.draw(DrawMode.POINTS, Renderer.vertexCount);
         
         Renderer.vertexCount = 0;
         Renderer.positionBuffer.clear();
+        Renderer.color0Buffer.clear();
+        Renderer.color1Buffer.clear();
     }
     
     // -------------------- Text -------------------- //
@@ -693,6 +677,7 @@ public class Renderer
         Renderer.positionBuffer.put((float) x);
         Renderer.positionBuffer.put((float) y);
         Renderer.positionBuffer.put(0);
+        Renderer.positionBuffer.put(0);
         
         Renderer.texCoordBuffer.put((float) u);
         Renderer.texCoordBuffer.put((float) v);
@@ -736,4 +721,13 @@ public class Renderer
     }
     
     private Renderer() {}
+    
+    private enum Batch
+    {
+        NONE,
+        POINT,
+        LINE,
+        ELLIPSE,
+        TEXT
+    }
 }

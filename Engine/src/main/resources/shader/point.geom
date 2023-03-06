@@ -4,15 +4,23 @@ out vec4 FragColor;
 layout (points) in;
 layout (triangle_strip, max_vertices = 4) out;
 
-struct VertexData
+struct VSOut
 {
-    vec2 Coord;
+    float Size;
+    vec4 Color;
 };
 
-out VertexData gs_out;
+struct GSOut
+{
+    vec2 Coord;
+    vec4 Color;
+};
+
+in VSOut vs_out[];
+
+out GSOut gs_out;
 
 uniform ivec2 viewport;
-uniform float size;
 
 vec4 toScreenSpace(vec4 clip)
 {
@@ -30,7 +38,7 @@ vec4 toClipSpace(vec4 screen)
 
 void main()
 {
-    float _size = size * 0.5;
+    float _size = vs_out[0].Size * 0.5;
 
     vec4 p[1];
     p[0] = toScreenSpace(gl_in[0].gl_Position);
@@ -38,18 +46,22 @@ void main()
     // Generates Line Strip
     gl_Position = toClipSpace(p[0] + vec4(-_size, -_size, 0, 0));
     gs_out.Coord = vec2(-1, -1);
+    gs_out.Color = vs_out[0].Color;
     EmitVertex();
 
     gl_Position = toClipSpace(p[0] + vec4(+_size, -_size, 0, 0));
     gs_out.Coord = vec2(+1, -1);
+    gs_out.Color = vs_out[0].Color;
     EmitVertex();
 
     gl_Position = toClipSpace(p[0] + vec4(-_size, +_size, 0, 0));
     gs_out.Coord = vec2(-1, +1);
+    gs_out.Color = vs_out[0].Color;
     EmitVertex();
 
     gl_Position = toClipSpace(p[0] + vec4(+_size, +_size, 0, 0));
     gs_out.Coord = vec2(+1, +1);
+    gs_out.Color = vs_out[0].Color;
     EmitVertex();
 
     EndPrimitive();
