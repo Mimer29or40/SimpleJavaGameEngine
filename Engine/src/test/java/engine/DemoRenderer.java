@@ -439,61 +439,69 @@ public class DemoRenderer extends Engine
                 }
                 pointBatchEnd();
             }
-            //case F6 ->
-            //{
-            //    if (toggle)
-            //    {
-            //        Draw.fillTriangle2D().point0(draggableTriangle[0]).point1(draggableTriangle[1]).point2(draggableTriangle[2]).color(Color.YELLOW).draw();
-            //    }
-            //    else
-            //    {
-            //        Draw.fillTriangle2D()
-            //            .point0(draggableTriangle[0])
-            //            .point1(draggableTriangle[1])
-            //            .point2(draggableTriangle[2])
-            //            .color0(Color.RED)
-            //            .color1(Color.GREEN)
-            //            .color2(Color.BLUE)
-            //            .draw();
-            //    }
-            //    Draw.drawTriangle2D().point0(draggableTriangle[0]).point1(draggableTriangle[1]).point2(draggableTriangle[2]).thickness(thickness).color(Color.GREY).draw();
-            //
-            //    for (Vector2d point : draggableTriangle)
-            //    {
-            //        Draw.point2D().point(point).thickness(5).color(Color.WHITE).draw();
-            //    }
-            //}
-            //case F7 ->
-            //{
-            //    if (toggle)
-            //    {
-            //        Draw.fillQuad2D()
-            //            .point0(draggableQuad[0])
-            //            .point1(draggableQuad[1])
-            //            .point2(draggableQuad[2])
-            //            .point3(draggableQuad[3])
-            //            .color(Color.YELLOW).draw();
-            //    }
-            //    else
-            //    {
-            //        Draw.fillQuad2D()
-            //            .point0(draggableQuad[0])
-            //            .point1(draggableQuad[1])
-            //            .point2(draggableQuad[2])
-            //            .point3(draggableQuad[3])
-            //            .color0(Color.RED)
-            //            .color1(Color.GREEN)
-            //            .color2(Color.BLUE)
-            //            .color3(Color.WHITE)
-            //            .draw();
-            //    }
-            //    Draw.drawQuad2D().point0(draggableQuad[0]).point1(draggableQuad[1]).point2(draggableQuad[2]).point3(draggableQuad[3]).thickness(thickness).color(Color.GREY).draw();
-            //
-            //    for (Vector2d point : draggableQuad)
-            //    {
-            //        Draw.point2D().point(point).thickness(5).color(Color.WHITE).draw();
-            //    }
-            //}
+            case F6 ->
+            {
+                double x0 = draggableTriangle[0].x, y0 = draggableTriangle[0].y;
+                double x1 = draggableTriangle[1].x, y1 = draggableTriangle[1].y;
+                double x2 = draggableTriangle[2].x, y2 = draggableTriangle[2].y;
+                if (toggle)
+                {
+                    triangleColor(Color.YELLOW);
+                    triangleDraw(x0, y0, x1, y1, x2, y2);
+                }
+                else
+                {
+                    triangleColor0(Color.RED);
+                    triangleColor1(Color.GREEN);
+                    triangleColor2(Color.BLUE);
+                    triangleDraw(x0, y0, x1, y1, x2, y2);
+                }
+                
+                lineColor(Color.GRAY);
+                lineThickness(thickness);
+                lineDraw(x0, y0, x1, y1, x2, y2);
+                
+                pointBatchBegin();
+                for (Vector2d p : draggableTriangle)
+                {
+                    pointSize(5);
+                    pointColor(Color.WHITE);
+                    pointDraw(p.x, p.y);
+                }
+                pointBatchEnd();
+            }
+            case F7 ->
+            {
+                double x0 = draggableQuad[0].x, y0 = draggableQuad[0].y;
+                double x1 = draggableQuad[1].x, y1 = draggableQuad[1].y;
+                double x2 = draggableQuad[2].x, y2 = draggableQuad[2].y;
+                double x3 = draggableQuad[3].x, y3 = draggableQuad[3].y;
+                if (toggle)
+                {
+                    quadColor(Color.YELLOW);
+                    quadDraw(x0, y0, x1, y1, x2, y2, x3, y3);
+                }
+                else
+                {
+                    quadColor0(Color.RED);
+                    quadColor1(Color.GREEN);
+                    quadColor2(Color.BLUE);
+                    quadColor3(Color.WHITE);
+                    quadDraw(x0, y0, x1, y1, x2, y2, x3, y3);
+                }
+                lineColor(Color.GRAY);
+                lineThickness(thickness);
+                lineDraw(x0, y0, x1, y1, x2, y2, x3, y3);
+                
+                pointBatchBegin();
+                for (Vector2d p : draggableQuad)
+                {
+                    pointSize(5);
+                    pointColor(Color.WHITE);
+                    pointDraw(p.x, p.y);
+                }
+                pointBatchEnd();
+            }
             case F8 ->
             {
                 double cx = width * 0.5;

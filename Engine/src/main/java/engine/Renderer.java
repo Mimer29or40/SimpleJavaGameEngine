@@ -78,6 +78,23 @@ public class Renderer
     private static Color[]  lineColorEnd;
     private static int[]    lineBezierDivisions;
     
+    // ---------- Triangle State ---------- //
+    
+    private static Program triangleProgram;
+    
+    private static Color[] triangleColor0;
+    private static Color[] triangleColor1;
+    private static Color[] triangleColor2;
+    
+    // ---------- Quad State ---------- //
+    
+    private static Program quadProgram;
+    
+    private static Color[] quadColor0;
+    private static Color[] quadColor1;
+    private static Color[] quadColor2;
+    private static Color[] quadColor3;
+    
     // ---------- Rect State ---------- //
     
     private static Program rectProgram;
@@ -177,6 +194,39 @@ public class Renderer
             Renderer.lineBezierDivisions = new int[stackSize];
         }
         
+        // ----- Triangle ----- //
+        {
+            Shader triangleVert = new Shader(ShaderType.VERTEX, IOUtil.getPath("shader/triangle.vert"));
+            Shader triangleFrag = new Shader(ShaderType.FRAGMENT, IOUtil.getPath("shader/triangle.frag"));
+            
+            Program.bind(Renderer.triangleProgram = new Program(triangleVert, triangleFrag));
+            Program.uniformBlock("View", 0);
+            
+            triangleVert.delete();
+            triangleFrag.delete();
+            
+            Renderer.triangleColor0 = new Color[stackSize];
+            Renderer.triangleColor1 = new Color[stackSize];
+            Renderer.triangleColor2 = new Color[stackSize];
+        }
+        
+        // ----- Quad ----- //
+        {
+            Shader quadVert = new Shader(ShaderType.VERTEX, IOUtil.getPath("shader/quad.vert"));
+            Shader quadFrag = new Shader(ShaderType.FRAGMENT, IOUtil.getPath("shader/quad.frag"));
+            
+            Program.bind(Renderer.quadProgram = new Program(quadVert, quadFrag));
+            Program.uniformBlock("View", 0);
+            
+            quadVert.delete();
+            quadFrag.delete();
+            
+            Renderer.quadColor0 = new Color[stackSize];
+            Renderer.quadColor1 = new Color[stackSize];
+            Renderer.quadColor2 = new Color[stackSize];
+            Renderer.quadColor3 = new Color[stackSize];
+        }
+        
         // ----- Rect ----- //
         {
             Shader rectVert = new Shader(ShaderType.VERTEX, IOUtil.getPath("shader/rect.vert"));
@@ -247,6 +297,15 @@ public class Renderer
             Renderer.lineColorEnd[i]        = new Color();
             Renderer.lineBezierDivisions[i] = 24;
             
+            Renderer.triangleColor0[i] = new Color(Color.WHITE);
+            Renderer.triangleColor1[i] = new Color(Color.WHITE);
+            Renderer.triangleColor2[i] = new Color(Color.WHITE);
+            
+            Renderer.quadColor0[i] = new Color(Color.WHITE);
+            Renderer.quadColor1[i] = new Color(Color.WHITE);
+            Renderer.quadColor2[i] = new Color(Color.WHITE);
+            Renderer.quadColor3[i] = new Color(Color.WHITE);
+            
             Renderer.rectColorTL[i] = new Color(Color.WHITE);
             Renderer.rectColorTR[i] = new Color(Color.WHITE);
             Renderer.rectColorBL[i] = new Color(Color.WHITE);
@@ -273,6 +332,10 @@ public class Renderer
         
         Renderer.lineProgram.delete();
         
+        Renderer.triangleProgram.delete();
+        
+        Renderer.quadProgram.delete();
+        
         Renderer.rectProgram.delete();
         
         Renderer.ellipseProgram.delete();
@@ -295,6 +358,10 @@ public class Renderer
         Renderer.lineColorStart[Renderer.stackIndex].set(Renderer.lineColorStart[i]);
         Renderer.lineColorEnd[Renderer.stackIndex].set(Renderer.lineColorEnd[i]);
         Renderer.lineBezierDivisions[Renderer.stackIndex] = Renderer.lineBezierDivisions[i];
+        
+        Renderer.triangleColor0[Renderer.stackIndex].set(Renderer.triangleColor0[i]);
+        Renderer.triangleColor1[Renderer.stackIndex].set(Renderer.triangleColor1[i]);
+        Renderer.triangleColor2[Renderer.stackIndex].set(Renderer.triangleColor2[i]);
         
         Renderer.rectColorTL[Renderer.stackIndex].set(Renderer.rectColorTL[i]);
         Renderer.rectColorTR[Renderer.stackIndex].set(Renderer.rectColorTR[i]);
@@ -681,6 +748,153 @@ public class Renderer
         drawVertices(DrawMode.LINES_ADJACENCY);
     }
     
+    // -------------------- Triangle -------------------- //
+    
+    public static void triangleColor(@NotNull Colorc color)
+    {
+        Renderer.triangleColor0[Renderer.stackIndex].set(color);
+        Renderer.triangleColor1[Renderer.stackIndex].set(color);
+        Renderer.triangleColor2[Renderer.stackIndex].set(color);
+    }
+    
+    public static void triangleColor0(@NotNull Colorc color)
+    {
+        Renderer.triangleColor0[Renderer.stackIndex].set(color);
+    }
+    
+    public static void triangleColor1(@NotNull Colorc color)
+    {
+        Renderer.triangleColor1[Renderer.stackIndex].set(color);
+    }
+    
+    public static void triangleColor2(@NotNull Colorc color)
+    {
+        Renderer.triangleColor2[Renderer.stackIndex].set(color);
+    }
+    
+    public static void triangleBatchBegin()
+    {
+        if (Renderer.batch != Batch.NONE) throw new IllegalStateException("Batch was never ended: " + Renderer.batch);
+        Renderer.batch = Batch.TRIANGLE;
+    }
+    
+    public static void triangleBatchEnd()
+    {
+        if (Renderer.batch != Batch.TRIANGLE) throw new IllegalStateException("Triangle Batch was not started");
+        Renderer.batch = Batch.NONE;
+        
+        triangleDrawBuffer();
+    }
+    
+    public static void triangleDraw(double x0, double y0, double x1, double y1, double x2, double y2)
+    {
+        if (Renderer.batch != Batch.NONE && Renderer.batch != Batch.TRIANGLE) throw new IllegalStateException(Renderer.batch + " is active");
+        
+        Colorc color0 = Renderer.triangleColor0[Renderer.stackIndex];
+        Colorc color1 = Renderer.triangleColor1[Renderer.stackIndex];
+        Colorc color2 = Renderer.triangleColor2[Renderer.stackIndex];
+    
+        triangleVertex(x0, y0, color0);
+        triangleVertex(x1, y1, color1);
+        triangleVertex(x2, y2, color2);
+        
+        if (Renderer.batch == Batch.NONE) triangleDrawBuffer();
+    }
+    
+    private static void triangleVertex(double x, double y, @NotNull Colorc color)
+    {
+        position(x, y, 0, 0);
+        color0(color);
+        
+        Renderer.vertexCount++;
+    }
+    
+    private static void triangleDrawBuffer()
+    {
+        Program.bind(Renderer.triangleProgram);
+        
+        drawVertices(DrawMode.TRIANGLES);
+    }
+    
+    // -------------------- Quad -------------------- //
+    
+    public static void quadColor(@NotNull Colorc color)
+    {
+        Renderer.quadColor0[Renderer.stackIndex].set(color);
+        Renderer.quadColor1[Renderer.stackIndex].set(color);
+        Renderer.quadColor2[Renderer.stackIndex].set(color);
+        Renderer.quadColor3[Renderer.stackIndex].set(color);
+    }
+    
+    public static void quadColor0(@NotNull Colorc color)
+    {
+        Renderer.quadColor0[Renderer.stackIndex].set(color);
+    }
+    
+    public static void quadColor1(@NotNull Colorc color)
+    {
+        Renderer.quadColor1[Renderer.stackIndex].set(color);
+    }
+    
+    public static void quadColor2(@NotNull Colorc color)
+    {
+        Renderer.quadColor2[Renderer.stackIndex].set(color);
+    }
+    
+    public static void quadColor3(@NotNull Colorc color)
+    {
+        Renderer.quadColor3[Renderer.stackIndex].set(color);
+    }
+    
+    public static void quadBatchBegin()
+    {
+        if (Renderer.batch != Batch.NONE) throw new IllegalStateException("Batch was never ended: " + Renderer.batch);
+        Renderer.batch = Batch.QUAD;
+    }
+    
+    public static void quadBatchEnd()
+    {
+        if (Renderer.batch != Batch.QUAD) throw new IllegalStateException("Quad Batch was not started");
+        Renderer.batch = Batch.NONE;
+        
+        quadDrawBuffer();
+    }
+    
+    public static void quadDraw(double x0, double y0, double x1, double y1, double x2, double y2, double x3, double y3)
+    {
+        if (Renderer.batch != Batch.NONE && Renderer.batch != Batch.QUAD) throw new IllegalStateException(Renderer.batch + " is active");
+        
+        Colorc color0 = Renderer.quadColor0[Renderer.stackIndex];
+        Colorc color1 = Renderer.quadColor1[Renderer.stackIndex];
+        Colorc color2 = Renderer.quadColor2[Renderer.stackIndex];
+        Colorc color3 = Renderer.quadColor3[Renderer.stackIndex];
+    
+        quadVertex(x0, y0, color0);
+        quadVertex(x1, y1, color1);
+        quadVertex(x2, y2, color2);
+        
+        quadVertex(x0, y0, color0);
+        quadVertex(x2, y2, color2);
+        quadVertex(x3, y3, color3);
+        
+        if (Renderer.batch == Batch.NONE) quadDrawBuffer();
+    }
+    
+    private static void quadVertex(double x, double y, @NotNull Colorc color)
+    {
+        position(x, y, 0, 0);
+        color0(color);
+        
+        Renderer.vertexCount++;
+    }
+    
+    private static void quadDrawBuffer()
+    {
+        Program.bind(Renderer.quadProgram);
+        
+        drawVertices(DrawMode.TRIANGLES);
+    }
+    
     // -------------------- Rect -------------------- //
     
     public static void rectColor(@NotNull Colorc color)
@@ -975,6 +1189,8 @@ public class Renderer
         NONE,
         POINT,
         LINE,
+        TRIANGLE,
+        QUAD,
         RECT,
         ELLIPSE,
         TEXT
