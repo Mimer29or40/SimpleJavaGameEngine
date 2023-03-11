@@ -7,7 +7,9 @@ import engine.font.Font;
 import engine.font.GlyphData;
 import engine.font.TextAlign;
 import engine.gl.Framebuffer;
+import engine.gl.GL;
 import engine.gl.GLType;
+import engine.gl.ScreenBuffer;
 import engine.gl.buffer.BufferUniform;
 import engine.gl.buffer.BufferUsage;
 import engine.gl.shader.Program;
@@ -41,9 +43,11 @@ public class Renderer
     private static int vertexCount;
     
     private static FloatBuffer positionBuffer;  // (XYZW) (shader-location = 0)
-    private static FloatBuffer texCoordBuffer;  // (UV)   (shader-location = 1)
+    private static FloatBuffer texCoordBuffer;  // (UVST) (shader-location = 1)
     private static ByteBuffer  color0Buffer;    // (RGBA) (shader-location = 2)
     private static ByteBuffer  color1Buffer;    // (RGBA) (shader-location = 3)
+    private static ByteBuffer  color2Buffer;    // (RGBA) (shader-location = 4)
+    private static ByteBuffer  color3Buffer;    // (RGBA) (shader-location = 5)
     
     private static VertexArray vertexArray;
     
@@ -73,6 +77,15 @@ public class Renderer
     private static Color[]  lineColorStart;
     private static Color[]  lineColorEnd;
     private static int[]    lineBezierDivisions;
+    
+    // ---------- Rect State ---------- //
+    
+    private static Program rectProgram;
+    
+    private static Color[] rectColorTL;
+    private static Color[] rectColorTR;
+    private static Color[] rectColorBL;
+    private static Color[] rectColorBR;
     
     // ---------- Ellipse State ---------- //
     
@@ -104,20 +117,22 @@ public class Renderer
         Renderer.vertexCount = 0;
         
         Renderer.positionBuffer = MemoryUtil.memAllocFloat(vertexCount * 4); // (XYZW) (shader-location = 0)
-        Renderer.texCoordBuffer = MemoryUtil.memAllocFloat(vertexCount * 2); // (UV)   (shader-location = 1)
+        Renderer.texCoordBuffer = MemoryUtil.memAllocFloat(vertexCount * 4); // (UV)   (shader-location = 1)
         Renderer.color0Buffer   = MemoryUtil.memAlloc(vertexCount * 4);      // (RGBA) (shader-location = 2)
         Renderer.color1Buffer   = MemoryUtil.memAlloc(vertexCount * 4);      // (RGBA) (shader-location = 3)
+        Renderer.color2Buffer   = MemoryUtil.memAlloc(vertexCount * 4);      // (RGBA) (shader-location = 3)
+        Renderer.color3Buffer   = MemoryUtil.memAlloc(vertexCount * 4);      // (RGBA) (shader-location = 3)
         
-        VertexAttribute position = new VertexAttribute(GLType.FLOAT, 4, false);
-        VertexAttribute texCoord = new VertexAttribute(GLType.FLOAT, 2, false);
-        VertexAttribute color0   = new VertexAttribute(GLType.UNSIGNED_BYTE, 4, true);
-        VertexAttribute color1   = new VertexAttribute(GLType.UNSIGNED_BYTE, 4, true);
+        VertexAttribute float4 = new VertexAttribute(GLType.FLOAT, 4, false);
+        VertexAttribute ubyte4 = new VertexAttribute(GLType.UNSIGNED_BYTE, 4, true);
         
         Renderer.vertexArray = VertexArray.builder()
-                                          .buffer(BufferUsage.DYNAMIC_DRAW, Renderer.positionBuffer.clear(), position)
-                                          .buffer(BufferUsage.DYNAMIC_DRAW, Renderer.texCoordBuffer.clear(), texCoord)
-                                          .buffer(BufferUsage.DYNAMIC_DRAW, Renderer.color0Buffer.clear(), color0)
-                                          .buffer(BufferUsage.DYNAMIC_DRAW, Renderer.color1Buffer.clear(), color1)
+                                          .buffer(BufferUsage.DYNAMIC_DRAW, Renderer.positionBuffer.clear(), float4)
+                                          .buffer(BufferUsage.DYNAMIC_DRAW, Renderer.texCoordBuffer.clear(), float4)
+                                          .buffer(BufferUsage.DYNAMIC_DRAW, Renderer.color0Buffer.clear(), ubyte4)
+                                          .buffer(BufferUsage.DYNAMIC_DRAW, Renderer.color1Buffer.clear(), ubyte4)
+                                          .buffer(BufferUsage.DYNAMIC_DRAW, Renderer.color2Buffer.clear(), ubyte4)
+                                          .buffer(BufferUsage.DYNAMIC_DRAW, Renderer.color3Buffer.clear(), ubyte4)
                                           .build();
         
         Renderer.view             = new Matrix4d[stackSize];
@@ -160,6 +175,25 @@ public class Renderer
             Renderer.lineColorStart      = new Color[stackSize];
             Renderer.lineColorEnd        = new Color[stackSize];
             Renderer.lineBezierDivisions = new int[stackSize];
+        }
+        
+        // ----- Rect ----- //
+        {
+            Shader rectVert = new Shader(ShaderType.VERTEX, IOUtil.getPath("shader/rect.vert"));
+            Shader rectGeom = new Shader(ShaderType.GEOMETRY, IOUtil.getPath("shader/rect.geom"));
+            Shader rectFrag = new Shader(ShaderType.FRAGMENT, IOUtil.getPath("shader/rect.frag"));
+            
+            Program.bind(Renderer.rectProgram = new Program(rectVert, rectGeom, rectFrag));
+            Program.uniformBlock("View", 0);
+            
+            rectVert.delete();
+            rectGeom.delete();
+            rectFrag.delete();
+            
+            Renderer.rectColorTL = new Color[stackSize];
+            Renderer.rectColorTR = new Color[stackSize];
+            Renderer.rectColorBL = new Color[stackSize];
+            Renderer.rectColorBR = new Color[stackSize];
         }
         
         // ----- Ellipse ----- //
@@ -213,6 +247,11 @@ public class Renderer
             Renderer.lineColorEnd[i]        = new Color();
             Renderer.lineBezierDivisions[i] = 24;
             
+            Renderer.rectColorTL[i] = new Color(Color.WHITE);
+            Renderer.rectColorTR[i] = new Color(Color.WHITE);
+            Renderer.rectColorBL[i] = new Color(Color.WHITE);
+            Renderer.rectColorBR[i] = new Color(Color.WHITE);
+            
             Renderer.ellipseColorInner[i] = new Color(Color.WHITE);
             Renderer.ellipseColorOuter[i] = new Color(Color.WHITE);
         }
@@ -226,11 +265,15 @@ public class Renderer
         MemoryUtil.memFree(Renderer.texCoordBuffer);
         MemoryUtil.memFree(Renderer.color0Buffer);
         MemoryUtil.memFree(Renderer.color1Buffer);
+        MemoryUtil.memFree(Renderer.color2Buffer);
+        MemoryUtil.memFree(Renderer.color3Buffer);
         Renderer.vertexArray.delete();
         
         Renderer.pointProgram.delete();
         
         Renderer.lineProgram.delete();
+        
+        Renderer.rectProgram.delete();
         
         Renderer.ellipseProgram.delete();
         
@@ -244,14 +287,19 @@ public class Renderer
         
         Renderer.view[Renderer.stackIndex].set(Renderer.view[i]);
         
-        Renderer.pointSize[Renderer.stackIndex]  = Renderer.pointSize[i];
+        Renderer.pointSize[Renderer.stackIndex] = Renderer.pointSize[i];
         Renderer.pointColor[Renderer.stackIndex].set(Renderer.pointColor[i]);
         
-        Renderer.lineThicknessStart[Renderer.stackIndex]  = Renderer.lineThicknessStart[i];
-        Renderer.lineThicknessEnd[Renderer.stackIndex]    = Renderer.lineThicknessEnd[i];
+        Renderer.lineThicknessStart[Renderer.stackIndex] = Renderer.lineThicknessStart[i];
+        Renderer.lineThicknessEnd[Renderer.stackIndex]   = Renderer.lineThicknessEnd[i];
         Renderer.lineColorStart[Renderer.stackIndex].set(Renderer.lineColorStart[i]);
         Renderer.lineColorEnd[Renderer.stackIndex].set(Renderer.lineColorEnd[i]);
         Renderer.lineBezierDivisions[Renderer.stackIndex] = Renderer.lineBezierDivisions[i];
+        
+        Renderer.rectColorTL[Renderer.stackIndex].set(Renderer.rectColorTL[i]);
+        Renderer.rectColorTR[Renderer.stackIndex].set(Renderer.rectColorTR[i]);
+        Renderer.rectColorBL[Renderer.stackIndex].set(Renderer.rectColorBL[i]);
+        Renderer.rectColorBR[Renderer.stackIndex].set(Renderer.rectColorBR[i]);
         
         Renderer.ellipseColorInner[Renderer.stackIndex].set(Renderer.ellipseColorInner[i]);
         Renderer.ellipseColorOuter[Renderer.stackIndex].set(Renderer.ellipseColorOuter[i]);
@@ -264,6 +312,17 @@ public class Renderer
         Renderer.updateViewBuffer = true;
     }
     
+    public static void clear(double r, double g, double b, double a)
+    {
+        GL.clearColor(r, g, b, a);
+        GL.clearBuffers(ScreenBuffer.COLOR);
+    }
+    
+    public static void clear(@NotNull Colorc color)
+    {
+        clear(color.rf(), color.gf(), color.bf(), color.af());
+    }
+    
     // -------------------- Vertices -------------------- //
     
     private static void position(double x, double y, double z, double w)
@@ -274,10 +333,12 @@ public class Renderer
         Renderer.positionBuffer.put((float) w);
     }
     
-    private static void texCoord(double u, double V)
+    private static void texCoord(double u, double v, double s, double t)
     {
         Renderer.texCoordBuffer.put((float) u);
-        Renderer.texCoordBuffer.put((float) V);
+        Renderer.texCoordBuffer.put((float) v);
+        Renderer.texCoordBuffer.put((float) s);
+        Renderer.texCoordBuffer.put((float) t);
     }
     
     private static void color0(@NotNull Colorc color)
@@ -296,6 +357,22 @@ public class Renderer
         Renderer.color1Buffer.put((byte) color.a());
     }
     
+    private static void color2(@NotNull Colorc color)
+    {
+        Renderer.color2Buffer.put((byte) color.r());
+        Renderer.color2Buffer.put((byte) color.g());
+        Renderer.color2Buffer.put((byte) color.b());
+        Renderer.color2Buffer.put((byte) color.a());
+    }
+    
+    private static void color3(@NotNull Colorc color)
+    {
+        Renderer.color3Buffer.put((byte) color.r());
+        Renderer.color3Buffer.put((byte) color.g());
+        Renderer.color3Buffer.put((byte) color.b());
+        Renderer.color3Buffer.put((byte) color.a());
+    }
+    
     private static void drawVertices(@NotNull DrawMode mode)
     {
         if (Renderer.updateViewBuffer)
@@ -312,6 +389,8 @@ public class Renderer
         Renderer.vertexArray.buffer(1).set(0, Renderer.texCoordBuffer.flip());
         Renderer.vertexArray.buffer(2).set(0, Renderer.color0Buffer.flip());
         Renderer.vertexArray.buffer(3).set(0, Renderer.color1Buffer.flip());
+        Renderer.vertexArray.buffer(4).set(0, Renderer.color2Buffer.flip());
+        Renderer.vertexArray.buffer(5).set(0, Renderer.color3Buffer.flip());
         Renderer.vertexArray.draw(mode, 0, Renderer.vertexCount);
         
         Renderer.vertexCount = 0;
@@ -319,6 +398,8 @@ public class Renderer
         Renderer.texCoordBuffer.clear();
         Renderer.color0Buffer.clear();
         Renderer.color1Buffer.clear();
+        Renderer.color2Buffer.clear();
+        Renderer.color3Buffer.clear();
     }
     
     // -------------------- View -------------------- //
@@ -378,6 +459,11 @@ public class Renderer
     public static void pointSize(double size)
     {
         Renderer.pointSize[Renderer.stackIndex] = size;
+    }
+    
+    public static void pointColor(int r, int g, int b, int a)
+    {
+        Renderer.pointColor[Renderer.stackIndex].set(r, g, b, a);
     }
     
     public static void pointColor(@NotNull Colorc color)
@@ -595,6 +681,98 @@ public class Renderer
         drawVertices(DrawMode.LINES_ADJACENCY);
     }
     
+    // -------------------- Rect -------------------- //
+    
+    public static void rectColor(@NotNull Colorc color)
+    {
+        Renderer.rectColorTL[Renderer.stackIndex].set(color);
+        Renderer.rectColorTR[Renderer.stackIndex].set(color);
+        Renderer.rectColorBL[Renderer.stackIndex].set(color);
+        Renderer.rectColorBR[Renderer.stackIndex].set(color);
+    }
+    
+    public static void rectColorGradientH(@NotNull Colorc left, @NotNull Colorc right)
+    {
+        Renderer.rectColorTL[Renderer.stackIndex].set(left);
+        Renderer.rectColorTR[Renderer.stackIndex].set(right);
+        Renderer.rectColorBL[Renderer.stackIndex].set(left);
+        Renderer.rectColorBR[Renderer.stackIndex].set(right);
+    }
+    
+    public static void rectColorGradientV(@NotNull Colorc top, @NotNull Colorc bottom)
+    {
+        Renderer.rectColorTL[Renderer.stackIndex].set(top);
+        Renderer.rectColorTR[Renderer.stackIndex].set(top);
+        Renderer.rectColorBL[Renderer.stackIndex].set(bottom);
+        Renderer.rectColorBR[Renderer.stackIndex].set(bottom);
+    }
+    
+    public static void rectColorTopLeft(@NotNull Colorc color)
+    {
+        Renderer.rectColorTL[Renderer.stackIndex].set(color);
+    }
+    
+    public static void rectColorTopRight(@NotNull Colorc color)
+    {
+        Renderer.rectColorTR[Renderer.stackIndex].set(color);
+    }
+    
+    public static void rectColorBottomLeft(@NotNull Colorc color)
+    {
+        Renderer.rectColorBL[Renderer.stackIndex].set(color);
+    }
+    
+    public static void rectColorBottomRight(@NotNull Colorc color)
+    {
+        Renderer.rectColorBR[Renderer.stackIndex].set(color);
+    }
+    
+    public static void rectBatchBegin()
+    {
+        if (Renderer.batch != Batch.NONE) throw new IllegalStateException("Batch was never ended: " + Renderer.batch);
+        Renderer.batch = Batch.RECT;
+    }
+    
+    public static void rectBatchEnd()
+    {
+        if (Renderer.batch != Batch.RECT) throw new IllegalStateException("Rect Batch was not started");
+        Renderer.batch = Batch.NONE;
+        
+        rectDrawBuffer();
+    }
+    
+    public static void rectDraw(double x, double y, double w, double h)
+    {
+        if (Renderer.batch != Batch.NONE && Renderer.batch != Batch.RECT) throw new IllegalStateException(Renderer.batch + " is active");
+        
+        Colorc topLeft     = Renderer.rectColorTL[Renderer.stackIndex];
+        Colorc topRight    = Renderer.rectColorTR[Renderer.stackIndex];
+        Colorc bottomLeft  = Renderer.rectColorBL[Renderer.stackIndex];
+        Colorc bottomRight = Renderer.rectColorBR[Renderer.stackIndex];
+        
+        rectVertex(x, y, w, h, topLeft, topRight, bottomLeft, bottomRight);
+        
+        if (Renderer.batch == Batch.NONE) rectDrawBuffer();
+    }
+    
+    private static void rectVertex(double x, double y, double w, double h, @NotNull Colorc colorTL, @NotNull Colorc colorTR, @NotNull Colorc colorBL, @NotNull Colorc colorBR)
+    {
+        position(x, y, w, h);
+        color0(colorTL);
+        color1(colorTR);
+        color2(colorBL);
+        color3(colorBR);
+        
+        Renderer.vertexCount++;
+    }
+    
+    private static void rectDrawBuffer()
+    {
+        Program.bind(Renderer.rectProgram);
+        
+        drawVertices(DrawMode.POINTS);
+    }
+    
     // -------------------- Ellipse -------------------- //
     
     public static void ellipseColor(@NotNull Colorc color)
@@ -630,7 +808,10 @@ public class Renderer
     public static void ellipseDraw(double x, double y, double w, double h)
     {
         if (Renderer.batch != Batch.NONE && Renderer.batch != Batch.ELLIPSE) throw new IllegalStateException(Renderer.batch + " is active");
-        ellipseVertex(x, y, w, h, Renderer.ellipseColorInner[Renderer.stackIndex], Renderer.ellipseColorOuter[Renderer.stackIndex]);
+        
+        Colorc inner = Renderer.ellipseColorInner[Renderer.stackIndex];
+        Colorc outer = Renderer.ellipseColorOuter[Renderer.stackIndex];
+        ellipseVertex(x, y, w, h, inner, outer);
         
         if (Renderer.batch == Batch.NONE) ellipseDrawBuffer();
     }
@@ -756,7 +937,7 @@ public class Renderer
     private static void textVertex(double x, double y, double u, double v)
     {
         position(x, y, 0, 0);
-        texCoord(u, v);
+        texCoord(u, v, 0, 0);
         
         Renderer.vertexCount++;
     }
@@ -794,6 +975,7 @@ public class Renderer
         NONE,
         POINT,
         LINE,
+        RECT,
         ELLIPSE,
         TEXT
     }

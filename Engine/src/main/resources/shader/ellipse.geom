@@ -27,28 +27,27 @@ layout(std140, binding = 0) uniform View { mat4 view; };
 
 void main()
 {
-    vec2 _size = vs_out[0].Size * 0.5;
+    vec2 radius = vs_out[0].Size * 0.5;
 
-    // Generates Line Strip
-    gl_Position = view * vec4(vs_out[0].Pos + vec2(-_size.x, -_size.y), 0.0, 1.0);
+    gl_Position = view * vec4(vs_out[0].Pos + vec2(-radius.x, -radius.y), 0.0, 1.0);
     gs_out.Coord = vec2(-1, -1);
     gs_out.ColorInner = vs_out[0].ColorInner;
     gs_out.ColorOuter = vs_out[0].ColorOuter;
     EmitVertex();
 
-    gl_Position = view * vec4(vs_out[0].Pos + vec2(+_size.x, -_size.y), 0.0, 1.0);
+    gl_Position = view * vec4(vs_out[0].Pos + vec2(+radius.x, -radius.y), 0.0, 1.0);
     gs_out.Coord = vec2(+1, -1);
     gs_out.ColorInner = vs_out[0].ColorInner;
     gs_out.ColorOuter = vs_out[0].ColorOuter;
     EmitVertex();
 
-    gl_Position = view * vec4(vs_out[0].Pos + vec2(-_size.x, +_size.y), 0.0, 1.0);
+    gl_Position = view * vec4(vs_out[0].Pos + vec2(-radius.x, +radius.y), 0.0, 1.0);
     gs_out.Coord = vec2(-1, +1);
     gs_out.ColorInner = vs_out[0].ColorInner;
     gs_out.ColorOuter = vs_out[0].ColorOuter;
     EmitVertex();
 
-    gl_Position = view * vec4(vs_out[0].Pos + vec2(+_size.x, +_size.y), 0.0, 1.0);
+    gl_Position = view * vec4(vs_out[0].Pos + vec2(+radius.x, +radius.y), 0.0, 1.0);
     gs_out.Coord = vec2(+1, +1);
     gs_out.ColorInner = vs_out[0].ColorInner;
     gs_out.ColorOuter = vs_out[0].ColorOuter;

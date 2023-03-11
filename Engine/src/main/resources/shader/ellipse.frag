@@ -15,6 +15,5 @@ void main()
 {
     float centerDist = dot(gs_out.Coord, gs_out.Coord);
     if (centerDist > 1.0) discard;
-    FragColor = vec4(gs_out.Coord, 1.0, 1.0);
     FragColor = (1.0 - centerDist) * gs_out.ColorInner + centerDist * gs_out.ColorOuter;
 }
