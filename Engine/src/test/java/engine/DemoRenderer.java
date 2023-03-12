@@ -1,6 +1,9 @@
 package engine;
 
 import engine.color.Color;
+import engine.color.ColorBuffer;
+import engine.color.ColorFormat;
+import engine.color.Colorc;
 import engine.font.TextAlign;
 import engine.gl.texture.Texture2D;
 import engine.util.MathUtil;
@@ -130,10 +133,35 @@ public class DemoRenderer extends Engine
         draggableText = new Vector2d[] {
                 new Vector2d(width >> 1, height >> 1), new Vector2d(width - 10, height - 10), new Vector2d(10, height >> 1)
         };
+    
+        int imageWidth  = 30;
+        int imageHeight = 30;
+        ColorBuffer buffer = ColorBuffer.malloc(ColorFormat.RGBA, imageWidth * imageHeight);
         
-        //Image image = Image.genColorGradient(30, 30, Color.BLUE, Color.MAGENTA, Color.CYAN, Color.WHITE);
-        //texture = Texture.load(image);
-        //image.delete();
+        Colorc colorTL = Color.BLUE;
+        Colorc colorTR = Color.MAGENTA;
+        Colorc colorBL = Color.CYAN;
+        Colorc colorBR = Color.WHITE;
+        Color colorL = new Color();
+        Color colorR = new Color();
+        Color color = new Color();
+        for (int j = 0; j < imageHeight; j++)
+        {
+            double t = (double) j / (imageHeight - 1);
+            colorTL.interpolate(colorBL, t, colorL);
+            colorTR.interpolate(colorBR, t, colorR);
+            
+            for (int i = 0; i < imageWidth; i++)
+            {
+                t = (double) i / (imageWidth - 1);
+                colorL.interpolate(colorR, t, color);
+    
+                buffer.put(j * imageWidth + i, color);
+            }
+        }
+        
+        texture = new Texture2D(buffer, imageWidth, imageHeight);
+        buffer.free();
         
         //Font.registerFamily("demo/FiraSans", "FiraSans", true, false, true);
     }
@@ -638,38 +666,42 @@ public class DemoRenderer extends Engine
             //        Draw.point2D().point(point).thickness(5).color(Color.WHITE).draw();
             //    }
             //}
-            //case F11 ->
-            //{
-            //    if (toggle)
-            //    {
-            //        double rotation = Math.toRadians(hValue);
-            //
-            //        double cx = width >> 1;
-            //        double cy = height >> 1;
-            //
-            //        double mul = Math.map(vValue, 0, 1000, 0, 10);
-            //
-            //        double w = texture.width() * mul;
-            //        double h = texture.height() * mul;
-            //
-            //        Draw.drawTexture2D().texture(texture).dst(cx, cy, w, h).rotationOrigin(w * 0.5, h * 0.5).rotationAngle(rotation).draw();
-            //    }
-            //    else
-            //    {
-            //        Draw.drawTextureWarped2D()
-            //            .texture(texture)
-            //            .point0(draggableTexture[0])
-            //            .point1(draggableTexture[1])
-            //            .point2(draggableTexture[2])
-            //            .point3(draggableTexture[3])
-            //            .draw();
-            //
-            //        for (Vector2d point : draggableTexture)
-            //        {
-            //            Draw.point2D().point(point).thickness(5).color(Color.WHITE).draw();
-            //        }
-            //    }
-            //}
+            case F11 ->
+            {
+                if (toggle)
+                {
+                    double rotation = Math.toRadians(hValue);
+
+                    double cx = width >> 1;
+                    double cy = height >> 1;
+
+                    double mul = MathUtil.map(vValue, 0, 1000, 0, 10);
+
+                    double w = texture.width() * mul;
+                    double h = texture.height() * mul;
+
+                    //Draw.drawTexture2D().texture(texture).dst(cx, cy, w, h).rotationOrigin(w * 0.5, h * 0.5).rotationAngle(rotation).draw();
+                }
+                else
+                {
+                    //Draw.drawTextureWarped2D()
+                    //    .texture(texture)
+                    //    .point0(draggableTexture[0])
+                    //    .point1(draggableTexture[1])
+                    //    .point2(draggableTexture[2])
+                    //    .point3(draggableTexture[3])
+                    //    .draw();
+
+                    pointBatchBegin();
+                    for (Vector2d p : draggableTexture)
+                    {
+                        pointSize(5);
+                        pointColor(Color.WHITE);
+                        pointDraw(p.x, p.y);
+                    }
+                    pointBatchEnd();
+                }
+            }
             //case F12 -> drawText(thickness);
         }
         
